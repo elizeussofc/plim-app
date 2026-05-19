@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
+import '../global.css';
 import { AuthProvider } from '@/components/AuthProvider';
 
 const queryClient = new QueryClient({
