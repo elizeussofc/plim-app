@@ -1,4 +1,5 @@
 import { Text } from '@/components/ui';
+import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -29,6 +30,7 @@ export default function SessaoFocoScreen() {
   const addXp = useUserStore((s) => s.addXp);
   const addMoedas = useUserStore((s) => s.addMoedas);
   const unlockConquista = useUserStore((s) => s.unlockConquista);
+  const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
 
   useEffect(() => {
     if (!rodando) return;
@@ -41,6 +43,7 @@ export default function SessaoFocoScreen() {
           addXp(30);
           addMoedas(15);
           unlockConquista('foco_total');
+          if (totalSegundos.current >= 20 * 60) registrarEvento('foco_20min')(addXp, addMoedas);
           return 0;
         }
         return prev - 1;
@@ -72,12 +75,6 @@ export default function SessaoFocoScreen() {
     setRodando(false);
     router.back();
   }
-
-  const progresso = totalSegundos.current > 0
-    ? (totalSegundos.current - segundos) / totalSegundos.current
-    : 0;
-
-  const graus = progresso * 360;
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">

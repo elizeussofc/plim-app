@@ -3,6 +3,7 @@ import { adicionarAoCalendario } from '@/lib/calendar';
 import { agendarLembreteDiario, cancelarLembrete } from '@/lib/notifications';
 import { sincronizarPontuacao } from '@/lib/ranking';
 import { useAuthStore } from '@/stores/authStore';
+import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useEffect, useState } from 'react';
@@ -29,6 +30,7 @@ const statusConfig = {
 export default function RotinaScreen() {
   const { tarefas, alternarStatus, adicionarTarefa, removerTarefa, marcarLembrete, marcarCalendario } = useRotinaStore();
   const { addXp, addMoedas, unlockConquista, profile } = useUserStore();
+  const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
   const session = useAuthStore((s) => s.session);
 
   const [modalAberto, setModalAberto] = useState(false);
@@ -64,6 +66,9 @@ export default function RotinaScreen() {
       addXp(10);
       addMoedas(5);
       if (feitas === 0) unlockConquista('primeiro_passo');
+      const novasFeitas = feitas + 1;
+      registrarEvento('tarefas_dia', 1)(addXp, addMoedas);
+      if (novasFeitas >= 3) registrarEvento('streak_3')(addXp, addMoedas);
     }
     alternarStatus(id);
   }

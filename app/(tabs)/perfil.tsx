@@ -1,11 +1,30 @@
 import { Badge, Button, Card, Text } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { useDesafiosStore } from '@/stores/desafiosStore';
+import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+const corDia: Record<StatusDia, string> = {
+  vazia:    '#E2E8F0',
+  parcial:  '#C4B5FD',
+  completa: '#7C3AED',
+};
+
+function gerarUltimos35Dias(): string[] {
+  const dias: string[] = [];
+  const hoje = new Date();
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() - i);
+    dias.push(d.toISOString().slice(0, 10));
+  }
+  return dias;
+}
 
 const avatarEmojis = ['⚡', '🧠', '🎯', '🦋', '🌟', '🔥', '🦊', '🐉', '🚀', '🌈', '💎', '🎸', '🏄', '🌿', '🦁', '🐺', '🎭', '🎨'];
 
@@ -13,6 +32,10 @@ export default function PerfilScreen() {
   const session = useAuthStore((s) => s.session);
   const router = useRouter();
   const { profile, updateProfile } = useUserStore();
+  const historicoDias = useRotinaStore((s) => s.historicoDias);
+  const desafios = useDesafiosStore((s) => s.desafios);
+  const dias35 = gerarUltimos35Dias();
+  const semanas = Array.from({ length: 5 }, (_, i) => dias35.slice(i * 7, i * 7 + 7));
 
   const [modalAvatar, setModalAvatar] = useState(false);
   const [modalPerfil, setModalPerfil] = useState(false);
@@ -119,6 +142,74 @@ export default function PerfilScreen() {
           </View>
         </Card>
 
+        {/* Heatmap */}
+        <Pressable onPress={() => router.push('/historico')} className="active:opacity-70">
+          <Card variant="default" padding="md" className="mb-5">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text variant="h3" className="text-slate-800">📊 Histórico</Text>
+              <Text variant="caption" className="text-violet-600">Ver tudo →</Text>
+            </View>
+            {semanas.map((semana, si) => (
+              <View key={si} className="flex-row gap-1 mb-1">
+                {semana.map((dia) => {
+                  const status: StatusDia = historicoDias[dia] ?? 'vazia';
+                  const ehHoje = dia === new Date().toISOString().slice(0, 10);
+                  return (
+                    <View
+                      key={dia}
+                      className={`flex-1 h-5 rounded-sm ${ehHoje ? 'border border-violet-500' : ''}`}
+                      style={{ backgroundColor: corDia[status] }}
+                    />
+                  );
+                })}
+              </View>
+            ))}
+            <View className="flex-row gap-3 mt-2 justify-end">
+              {(['vazia', 'parcial', 'completa'] as StatusDia[]).map((s) => (
+                <View key={s} className="flex-row items-center gap-1">
+                  <View className="w-3 h-3 rounded-sm" style={{ backgroundColor: corDia[s] }} />
+                  <Text style={{ fontSize: 10, color: '#94A3B8' }}>
+                    {s === 'vazia' ? 'Nenhuma' : s === 'parcial' ? 'Parcial' : 'Completa'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </Card>
+        </Pressable>
+
+        {/* Desafios semanais */}
+        <View className="flex-row items-center justify-between mb-3">
+          <Text variant="h3">Desafios da semana</Text>
+          <Text variant="caption" className="text-violet-600">
+            {desafios.filter((d) => d.completo).length}/5 completos
+          </Text>
+        </View>
+        <View className="gap-2 mb-5">
+          {desafios.map((d) => (
+            <Card key={d.id} variant="flat" padding="md" className={d.completo ? 'opacity-60' : ''}>
+              <View className="flex-row items-center gap-3">
+                <Text className="text-xl">{d.icone}</Text>
+                <View className="flex-1">
+                  <Text className="font-semibold text-slate-800 text-sm">{d.titulo}</Text>
+                  <View className="flex-row items-center gap-2 mt-1">
+                    <View className="flex-1 bg-slate-200 rounded-full h-1.5">
+                      <View
+                        className={`h-1.5 rounded-full ${d.completo ? 'bg-emerald-500' : 'bg-violet-500'}`}
+                        style={{ width: `${Math.round((d.progresso / d.meta) * 100)}%` as any }}
+                      />
+                    </View>
+                    <Text style={{ fontSize: 10, color: '#94A3B8' }}>{d.progresso}/{d.meta}</Text>
+                  </View>
+                </View>
+                {d.completo
+                  ? <Text className="text-emerald-500 font-bold">✓</Text>
+                  : <Text variant="caption" className="text-violet-600 font-semibold">+{d.xp}XP</Text>
+                }
+              </View>
+            </Card>
+          ))}
+        </View>
+
         {/* Conquistas */}
         <Text variant="h3" className="mb-3">Conquistas</Text>
         <View className="gap-3 mb-6">
@@ -140,6 +231,28 @@ export default function PerfilScreen() {
               </View>
             </Card>
           ))}
+        </View>
+
+        {/* Atalhos de ferramentas */}
+        <View className="flex-row gap-3 mb-5">
+          <Pressable onPress={() => router.push('/medicacao')} className="flex-1 active:opacity-70">
+            <Card variant="flat" padding="md" className="items-center">
+              <Text className="text-2xl mb-1">💊</Text>
+              <Text variant="caption" color="secondary">Medicação</Text>
+            </Card>
+          </Pressable>
+          <Pressable onPress={() => router.push('/parceiro')} className="flex-1 active:opacity-70">
+            <Card variant="flat" padding="md" className="items-center">
+              <Text className="text-2xl mb-1">👫</Text>
+              <Text variant="caption" color="secondary">Parceiro</Text>
+            </Card>
+          </Pressable>
+          <Pressable onPress={() => router.push('/ranking')} className="flex-1 active:opacity-70">
+            <Card variant="flat" padding="md" className="items-center">
+              <Text className="text-2xl mb-1">🏆</Text>
+              <Text variant="caption" color="secondary">Ranking</Text>
+            </Card>
+          </Pressable>
         </View>
 
         {/* Plano / Auth */}

@@ -1,18 +1,25 @@
 import { Badge, Card, Text } from '@/components/ui';
+import { humorConfig, useHumorStore } from '@/stores/humorStore';
+import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const atalhos = [
-  { icone: '🧠', label: 'Despejo\nMental', route: '/despejo-mental' },
-  { icone: '🎯', label: 'Sessão\nde Foco', route: '/sessao-foco' },
-  { icone: '😌', label: 'Modo\nCalma', route: '/modo-calma' },
+  { icone: '🧠', label: 'Despejo\nMental',  route: '/despejo-mental' },
+  { icone: '🎯', label: 'Sessão\nde Foco',  route: '/sessao-foco'    },
+  { icone: '😌', label: 'Modo\nCalma',      route: '/modo-calma'     },
+  { icone: '🤖', label: 'Plim\nIA',         route: '/ia-tdah'        },
 ];
 
 export default function InicioScreen() {
   const router = useRouter();
   const profile = useUserStore((s) => s.profile);
+  const registrarHumor = useHumorStore((s) => s.registrarHumor);
+  const humorHoje = useHumorStore((s) => s.humorHoje)();
+  const desafios = useDesafiosStore((s) => s.desafios);
+
   const apelido = profile?.apelido ?? profile?.nome ?? 'Viajante';
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
@@ -20,12 +27,13 @@ export default function InicioScreen() {
   const xpProxNivel = profile.nivel * 100;
   const xpProgresso = Math.min(profile.xp_total / xpProxNivel, 1);
 
+  const desafiosAtivos = desafios.filter((d) => !d.completo);
+  const desafiosCompletos = desafios.filter((d) => d.completo).length;
+
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+
         {/* Cabeçalho */}
         <View className="flex-row items-center justify-between mb-6">
           <View>
@@ -45,8 +53,33 @@ export default function InicioScreen() {
           </Text>
         </Card>
 
-        {/* Stats */}
-        <View className="flex-row gap-3 mb-5">
+        {/* Widget Humor do dia */}
+        <Card variant="default" padding="md" className="mb-5">
+          <Text variant="small" className="font-semibold text-slate-700 mb-3">
+            🌡️ Como você está hoje?
+          </Text>
+          <View className="flex-row justify-between">
+            {([1, 2, 3, 4, 5] as const).map((n) => {
+              const c = humorConfig[n];
+              const selecionado = humorHoje?.humor === n;
+              return (
+                <Pressable
+                  key={n}
+                  onPress={() => registrarHumor(n)}
+                  className={`flex-1 mx-0.5 py-2 rounded-2xl items-center active:opacity-70 ${selecionado ? 'bg-violet-100 border-2 border-violet-400' : 'bg-slate-50'}`}
+                >
+                  <Text className="text-2xl">{c.emoji}</Text>
+                  <Text style={{ fontSize: 9, color: selecionado ? '#7C3AED' : '#94A3B8', fontWeight: selecionado ? '700' : '400', marginTop: 2 }}>
+                    {c.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </Card>
+
+        {/* Stats + XP */}
+        <View className="flex-row gap-3 mb-4">
           <Card variant="flat" padding="md" className="flex-1 items-center">
             <Text className="text-2xl font-bold text-violet-600">{profile.xp_total}</Text>
             <Text variant="caption" color="secondary">XP</Text>
@@ -61,48 +94,63 @@ export default function InicioScreen() {
           </Card>
         </View>
 
-        {/* Barra XP */}
         <Card variant="default" padding="md" className="mb-5">
-          <View className="flex-row justify-between mb-2">
+          <View className="flex-row justify-between mb-1.5">
             <Text variant="small" color="secondary">Nível {profile.nivel}</Text>
-            <Text variant="small" className="text-violet-600 font-semibold">{profile.xp_total} / {xpProxNivel} XP</Text>
+            <Text variant="small" className="text-violet-600 font-semibold">{profile.xp_total}/{xpProxNivel} XP</Text>
           </View>
           <View className="bg-slate-100 rounded-full h-2">
-            <View
-              className="bg-violet-500 h-2 rounded-full"
-              style={{ width: `${Math.round(xpProgresso * 100)}%` as any }}
-            />
+            <View className="bg-violet-500 h-2 rounded-full" style={{ width: `${Math.round(xpProgresso * 100)}%` as any }} />
           </View>
         </Card>
 
-        {/* Próximo passo */}
-        <Card variant="elevated" padding="lg" className="mb-5">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text variant="small" color="secondary" className="font-semibold uppercase tracking-wide">⚡ Próximo passo</Text>
-            <Badge label="Rotina" variant="primary" />
-          </View>
-          <Pressable onPress={() => router.push('/(tabs)/rotina')} className="active:opacity-70">
-            <Text variant="h3" className="text-slate-800">Ver minha rotina de hoje</Text>
-            <Text variant="small" color="muted" className="mt-1">Toque para abrir →</Text>
-          </Pressable>
-        </Card>
+        {/* Desafios semanais — prévia */}
+        <View className="flex-row items-center justify-between mb-3">
+          <Text variant="h3">Desafios da semana</Text>
+          <Badge label={`${desafiosCompletos}/5`} variant={desafiosCompletos === 5 ? 'success' : 'primary'} />
+        </View>
+        <View className="gap-2 mb-5">
+          {desafiosAtivos.slice(0, 3).map((d) => (
+            <Card key={d.id} variant="flat" padding="md">
+              <View className="flex-row items-center gap-3">
+                <Text className="text-xl">{d.icone}</Text>
+                <View className="flex-1">
+                  <Text className="font-semibold text-slate-800 text-sm">{d.titulo}</Text>
+                  <View className="flex-row items-center gap-2 mt-1">
+                    <View className="flex-1 bg-slate-200 rounded-full h-1.5">
+                      <View
+                        className="bg-violet-500 h-1.5 rounded-full"
+                        style={{ width: `${Math.round((d.progresso / d.meta) * 100)}%` as any }}
+                      />
+                    </View>
+                    <Text style={{ fontSize: 10, color: '#94A3B8' }}>{d.progresso}/{d.meta}</Text>
+                  </View>
+                </View>
+                <Text variant="caption" className="text-violet-600 font-semibold">+{d.xp} XP</Text>
+              </View>
+            </Card>
+          ))}
+          {desafiosAtivos.length === 0 && (
+            <Card variant="flat" padding="md" className="items-center">
+              <Text className="text-2xl mb-1">🏆</Text>
+              <Text variant="small" className="text-violet-600 font-semibold">Todos os desafios completos!</Text>
+            </Card>
+          )}
+        </View>
 
         {/* Atalhos rápidos */}
         <Text variant="h3" className="mb-3">Atalhos rápidos</Text>
-        <View className="flex-row gap-3">
+        <View className="flex-row flex-wrap gap-3">
           {atalhos.map((a) => (
-            <Pressable
-              key={a.route}
-              onPress={() => router.push(a.route as any)}
-              className="flex-1 active:opacity-70"
-            >
+            <Pressable key={a.route} onPress={() => router.push(a.route as any)} className="active:opacity-70" style={{ width: '22%' }}>
               <Card variant="default" padding="md" className="items-center">
-                <Text className="text-3xl mb-1">{a.icone}</Text>
-                <Text variant="caption" color="secondary" className="text-center">{a.label}</Text>
+                <Text className="text-2xl mb-1">{a.icone}</Text>
+                <Text style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>{a.label}</Text>
               </Card>
             </Pressable>
           ))}
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );

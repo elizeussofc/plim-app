@@ -1,4 +1,5 @@
 import { Badge, Card, Text } from '@/components/ui';
+import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
@@ -65,6 +66,8 @@ export default function ComunidadeScreen() {
   const profile = useUserStore((s) => s.profile);
   const unlockConquista = useUserStore((s) => s.unlockConquista);
   const addXp = useUserStore((s) => s.addXp);
+  const addMoedas = useUserStore((s) => s.addMoedas);
+  const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
 
   const [posts, setPosts] = useState<Post[]>(postsMock);
   const [modalAberto, setModalAberto] = useState(false);
@@ -106,6 +109,8 @@ export default function ComunidadeScreen() {
     setPosts((prev) => [novoPost, ...prev]);
     unlockConquista('comunidade');
     addXp(10);
+    addMoedas(5);
+    registrarEvento('comunidade')(addXp, addMoedas);
     setNovoTexto('');
     setNovoTipo('texto');
     setModalAberto(false);

@@ -1,4 +1,6 @@
 import { Text } from '@/components/ui';
+import { useDesafiosStore } from '@/stores/desafiosStore';
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, View } from 'react-native';
@@ -13,6 +15,9 @@ const frases = [
 
 export default function ModoCalmaScreen() {
   const router = useRouter();
+  const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
+  const addXp = useUserStore((s) => s.addXp);
+  const addMoedas = useUserStore((s) => s.addMoedas);
   const escala = useRef(new Animated.Value(1)).current;
   const opacidade = useRef(new Animated.Value(0.6)).current;
   const [faseIndex, setFaseIndex] = useState(0);
@@ -103,7 +108,11 @@ export default function ModoCalmaScreen() {
 
           {/* Botão */}
           <Pressable
-            onPress={() => setAtivo((v) => !v)}
+            onPress={() => {
+              const novoAtivo = !ativo;
+              setAtivo(novoAtivo);
+              if (novoAtivo) registrarEvento('calma_3x')(addXp, addMoedas);
+            }}
             className={`px-10 py-4 rounded-full ${ativo ? 'bg-orange-500' : 'bg-violet-600'}`}
             style={{ shadowColor: ativo ? '#F97316' : '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 }}
           >
