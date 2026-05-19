@@ -26,8 +26,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#F5F3FF"
       },
-      "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false,
       "package": "com.elizzeuscorp.plim",
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
