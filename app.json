@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "plim",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -61,6 +61,12 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "4118b5d4-1ca6-41dd-8a36-88c7135a3da8"
+      }
     }
   }
 }
