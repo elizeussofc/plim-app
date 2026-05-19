@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "plim",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "newArchEnabled": false,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -61,7 +61,8 @@
         {
           "android": {
             "compileSdkVersion": 35,
-            "targetSdkVersion": 35
+            "targetSdkVersion": 35,
+            "kotlinVersion": "1.9.24"
           }
         }
       ]
