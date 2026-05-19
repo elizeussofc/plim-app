@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Platform, View } from 'react-native';
+import { Platform, Text as RNText, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 // Ícones SVG inline para não depender de biblioteca externa no MVP
@@ -33,20 +33,6 @@ function IconRotina({ color, focused }: { color: string; focused: boolean }) {
   );
 }
 
-function IconFoco({ color }: { color: string }) {
-  return (
-    <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-      <Circle cx={12} cy={12} r={10} fill={color} />
-      <Path
-        d="M12 8v4l3 3"
-        stroke="white"
-        strokeWidth={2.5}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </Svg>
-  );
-}
 
 function IconComunidade({ color, focused }: { color: string; focused: boolean }) {
   return (
@@ -120,10 +106,10 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="foco"
         options={{
-          title: 'Foco',
-          tabBarIcon: ({ color }) => (
+          title: 'Plim',
+          tabBarIcon: () => (
             <View className="bg-violet-600 w-14 h-14 rounded-full items-center justify-center -mt-6 shadow-lg" style={{ shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.4, shadowRadius: 8, elevation: 8 }}>
-              <IconFoco color="#FFFFFF" />
+              <RNText style={{ fontSize: 22 }}>⚡</RNText>
             </View>
           ),
           tabBarLabel: () => null,

@@ -1,85 +1,85 @@
-import { Button, Card, Text } from '@/components/ui';
-import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Card, Text } from '@/components/ui';
+import { useRouter } from 'expo-router';
+import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const duracoes = [
-  { label: '5 min', value: 5 },
-  { label: '15 min', value: 15 },
-  { label: '25 min', value: 25 },
-  { label: '45 min', value: 45 },
+const opcoes = [
+  {
+    route: '/despejo-mental',
+    icone: '🧠',
+    titulo: 'Despejo Mental',
+    desc: 'Jogue seus pensamentos pra fora. Sem filtro, sem julgamento.',
+    cor: 'bg-violet-100',
+    corTexto: 'text-violet-700',
+  },
+  {
+    route: '/sessao-foco',
+    icone: '🎯',
+    titulo: 'Sessão de Foco',
+    desc: 'Timer Pomodoro. Cada minuto conta, mesmo que não seja perfeito.',
+    cor: 'bg-orange-100',
+    corTexto: 'text-orange-700',
+  },
+  {
+    route: '/modo-calma',
+    icone: '😌',
+    titulo: 'Modo Calma',
+    desc: 'Respira. Desacelera. Um passo de cada vez.',
+    cor: 'bg-emerald-100',
+    corTexto: 'text-emerald-700',
+  },
 ];
 
-export default function FocoScreen() {
-  const [duracaoSelecionada, setDuracaoSelecionada] = useState(25);
-  const [ativo, setAtivo] = useState(false);
-
-  const progresso = 0; // 0-1, será calculado quando o timer estiver ativo
+export default function PlimScreen() {
+  const router = useRouter();
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <View className="flex-1 px-6 pt-6 pb-4">
-        <Text variant="h2" className="text-violet-800 mb-1">Sessão de Foco</Text>
-        <Text variant="small" color="secondary" className="mb-8">
-          Parou no meio? Tudo bem — ainda conta. ✨
-        </Text>
-
-        {/* Timer visual circular */}
-        <View className="items-center mb-8">
-          <View className="w-56 h-56 rounded-full bg-violet-600 items-center justify-center shadow-xl" style={{ shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 16, elevation: 12 }}>
-            <Text className="text-white text-5xl font-bold">
-              {String(duracaoSelecionada).padStart(2, '0')}:00
-            </Text>
-            <Text className="text-violet-200 text-sm mt-1">minutos</Text>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="items-center mb-8 mt-2">
+          <View className="w-20 h-20 rounded-full bg-violet-600 items-center justify-center mb-3 shadow-lg"
+            style={{ shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 10 }}>
+            <Text className="text-4xl">⚡</Text>
           </View>
+          <Text variant="h2" className="text-violet-800">Botão Plim</Text>
+          <Text variant="small" color="secondary" className="text-center mt-1">
+            Seu hub de foco. Escolha o modo certo pra agora.
+          </Text>
         </View>
 
-        {/* Seletor de duração */}
-        <Text variant="small" color="secondary" className="mb-3 font-semibold">Duração</Text>
-        <View className="flex-row gap-2 mb-8">
-          {duracoes.map((d) => (
+        <View className="gap-4">
+          {opcoes.map((op) => (
             <Pressable
-              key={d.value}
-              onPress={() => !ativo && setDuracaoSelecionada(d.value)}
-              className={`flex-1 py-3 rounded-2xl items-center ${duracaoSelecionada === d.value ? 'bg-violet-600' : 'bg-white border border-slate-200'}`}
+              key={op.route}
+              onPress={() => router.push(op.route as any)}
+              className="active:opacity-70"
             >
-              <Text className={`font-semibold text-sm ${duracaoSelecionada === d.value ? 'text-white' : 'text-slate-600'}`}>
-                {d.label}
-              </Text>
+              <Card variant="elevated" padding="lg">
+                <View className="flex-row items-center gap-4">
+                  <View className={`w-16 h-16 rounded-3xl ${op.cor} items-center justify-center`}>
+                    <Text className="text-3xl">{op.icone}</Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text className={`font-bold text-lg ${op.corTexto}`}>{op.titulo}</Text>
+                    <Text variant="small" color="secondary" className="mt-1 leading-5">{op.desc}</Text>
+                  </View>
+                  <Text className="text-slate-300 text-xl">›</Text>
+                </View>
+              </Card>
             </Pressable>
           ))}
         </View>
 
-        {/* Botão principal */}
-        <Button
-          label={ativo ? 'Pausar sessão' : 'Começar agora'}
-          onPress={() => setAtivo(!ativo)}
-          variant={ativo ? 'secondary' : 'primary'}
-          size="lg"
-          className="mb-4"
-        />
-
-        {ativo && (
-          <Button
-            label="Encerrar e salvar"
-            onPress={() => setAtivo(false)}
-            variant="ghost"
-            size="md"
-          />
-        )}
-
-        {/* Cards de sons */}
         <Card variant="flat" padding="md" className="mt-6">
-          <Text variant="small" color="secondary" className="mb-3 font-semibold">Sons ambiente</Text>
-          <View className="flex-row gap-2">
-            {['🌧️ Chuva', '🌊 Ondas', '☕ Café', '🤫 Silêncio'].map((som) => (
-              <Pressable key={som} className="bg-white border border-slate-200 px-3 py-2 rounded-xl">
-                <Text variant="caption" color="secondary">{som}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <Text variant="small" color="secondary" className="text-center leading-5">
+            💡 <Text variant="small" className="font-semibold text-violet-700">Dica Plim:</Text>
+            {' '}Não precisa fazer tudo hoje.{'\n'}Escolha uma coisa. Comece agora.
+          </Text>
         </Card>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }

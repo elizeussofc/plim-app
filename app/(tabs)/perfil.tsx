@@ -1,29 +1,47 @@
 import { Badge, Button, Card, Text } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
-import { ScrollView, View } from 'react-native';
+import { useState } from 'react';
+import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const conquistas = [
-  { icone: '⚡', nome: 'Primeiro Passo', desc: 'Completou a primeira tarefa' },
-  { icone: '🔥', nome: '3 Dias Seguidos', desc: 'Streak de 3 dias', bloqueado: true },
-  { icone: '🏆', nome: 'Semana Perfeita', desc: '7 dias completos', bloqueado: true },
-];
+const avatarEmojis = ['⚡', '🧠', '🎯', '🦋', '🌟', '🔥', '🦊', '🐉', '🚀', '🌈', '💎', '🎸', '🏄', '🌿', '🦁', '🐺', '🎭', '🎨'];
 
 export default function PerfilScreen() {
   const session = useAuthStore((s) => s.session);
   const router = useRouter();
+  const { profile, updateProfile } = useUserStore();
 
-  const nome = session?.user?.user_metadata?.nome ?? 'Explorador';
-  const nivel = 1;
-  const xp = 0;
-  const moedas = 0;
-  const xpProximoNivel = 100;
+  const [modalAvatar, setModalAvatar] = useState(false);
+  const [modalPerfil, setModalPerfil] = useState(false);
+
+  const [editNome, setEditNome] = useState(profile.nome ?? '');
+  const [editApelido, setEditApelido] = useState(profile.apelido ?? '');
+  const [editBio, setEditBio] = useState(profile.bio ?? '');
+  const [editInstagram, setEditInstagram] = useState(profile.instagram ?? '');
+
+  const nivel = profile.nivel;
+  const xp = profile.xp_total;
+  const xpProxNivel = nivel * 100;
+  const xpProgresso = Math.min(xp / xpProxNivel, 1);
+
+  function salvarPerfil() {
+    updateProfile({
+      nome: editNome.trim() || null,
+      apelido: editApelido.trim() || null,
+      bio: editBio.trim() || null,
+      instagram: editInstagram.trim().replace('@', '') || null,
+    });
+    setModalPerfil(false);
+  }
 
   async function sair() {
     await supabase.auth.signOut();
   }
+
+  const nomeExibido = profile.apelido ?? profile.nome ?? 'Explorador';
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
@@ -32,12 +50,43 @@ export default function PerfilScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* Avatar */}
-        <View className="items-center mb-8">
-          <View className="w-24 h-24 rounded-full bg-violet-600 items-center justify-center mb-3 shadow-lg" style={{ shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}>
-            <Text className="text-5xl">⚡</Text>
-          </View>
-          <Text variant="h2" className="text-violet-800">{nome}</Text>
+        <View className="items-center mb-6">
+          <Pressable
+            onPress={() => setModalAvatar(true)}
+            className="active:opacity-70"
+          >
+            <View
+              className="w-24 h-24 rounded-full bg-violet-600 items-center justify-center mb-2 shadow-lg"
+              style={{ shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8 }}
+            >
+              <Text className="text-5xl">{profile.avatar_emoji}</Text>
+            </View>
+            <View className="bg-violet-100 px-3 py-1 rounded-full self-center">
+              <Text variant="caption" className="text-violet-600 font-semibold">✏️ Trocar avatar</Text>
+            </View>
+          </Pressable>
+
+          <Text variant="h2" className="text-violet-800 mt-3">{nomeExibido}</Text>
+          {profile.bio && (
+            <Text variant="small" color="secondary" className="text-center mt-1 px-4">{profile.bio}</Text>
+          )}
+          {profile.instagram && (
+            <Text variant="small" className="text-violet-500 mt-1">@{profile.instagram}</Text>
+          )}
           <Badge label={`Nível ${nivel}`} variant="primary" />
+
+          <Pressable
+            onPress={() => {
+              setEditNome(profile.nome ?? '');
+              setEditApelido(profile.apelido ?? '');
+              setEditBio(profile.bio ?? '');
+              setEditInstagram(profile.instagram ?? '');
+              setModalPerfil(true);
+            }}
+            className="mt-3 active:opacity-70"
+          >
+            <Text variant="small" className="text-violet-600 underline">Editar perfil</Text>
+          </Pressable>
         </View>
 
         {/* Stats */}
@@ -47,11 +96,11 @@ export default function PerfilScreen() {
             <Text variant="caption" color="secondary">XP total</Text>
           </Card>
           <Card variant="flat" padding="md" className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-orange-500">🪙 {moedas}</Text>
+            <Text className="text-2xl font-bold text-orange-500">🪙 {profile.moedas}</Text>
             <Text variant="caption" color="secondary">Moedas</Text>
           </Card>
           <Card variant="flat" padding="md" className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-emerald-500">0 🔥</Text>
+            <Text className="text-2xl font-bold text-emerald-500">{profile.streak} 🔥</Text>
             <Text variant="caption" color="secondary">Streak</Text>
           </Card>
         </View>
@@ -59,33 +108,41 @@ export default function PerfilScreen() {
         {/* Barra XP */}
         <Card variant="default" padding="md" className="mb-5">
           <View className="flex-row justify-between mb-2">
-            <Text variant="small" color="secondary">Próximo nível</Text>
-            <Text variant="small" className="text-violet-600 font-semibold">{xp} / {xpProximoNivel} XP</Text>
+            <Text variant="small" color="secondary">Próximo nível ({nivel + 1})</Text>
+            <Text variant="small" className="text-violet-600 font-semibold">{xp} / {xpProxNivel} XP</Text>
           </View>
           <View className="bg-slate-100 rounded-full h-3">
-            <View className="bg-violet-500 h-3 rounded-full w-0" />
+            <View
+              className="bg-violet-500 h-3 rounded-full"
+              style={{ width: `${Math.round(xpProgresso * 100)}%` as any }}
+            />
           </View>
         </Card>
 
         {/* Conquistas */}
         <Text variant="h3" className="mb-3">Conquistas</Text>
         <View className="gap-3 mb-6">
-          {conquistas.map((c) => (
-            <Card key={c.nome} variant="default" padding="md" className={c.bloqueado ? 'opacity-40' : ''}>
+          {profile.conquistas.map((c) => (
+            <Card key={c.id} variant="default" padding="md" className={c.desbloqueada ? '' : 'opacity-40'}>
               <View className="flex-row items-center gap-4">
-                <View className="w-12 h-12 bg-violet-100 rounded-2xl items-center justify-center">
-                  <Text className="text-2xl">{c.bloqueado ? '🔒' : c.icone}</Text>
+                <View className={`w-12 h-12 rounded-2xl items-center justify-center ${c.desbloqueada ? 'bg-violet-100' : 'bg-slate-100'}`}>
+                  <Text className="text-2xl">{c.desbloqueada ? c.icone : '🔒'}</Text>
                 </View>
-                <View>
+                <View className="flex-1">
                   <Text className="font-semibold text-slate-800">{c.nome}</Text>
                   <Text variant="small" color="secondary">{c.desc}</Text>
                 </View>
+                {c.desbloqueada && (
+                  <View className="bg-violet-100 px-2 py-1 rounded-full">
+                    <Text variant="caption" className="text-violet-600 font-semibold">✅</Text>
+                  </View>
+                )}
               </View>
             </Card>
           ))}
         </View>
 
-        {/* Plano Pro ou Login */}
+        {/* Plano / Auth */}
         {!session ? (
           <Card variant="primary" padding="lg" className="mb-4">
             <Text color="inverse" className="font-bold text-lg mb-1">Crie sua conta grátis ✨</Text>
@@ -111,6 +168,93 @@ export default function PerfilScreen() {
           </>
         )}
       </ScrollView>
+
+      {/* Modal Avatar */}
+      <Modal
+        visible={modalAvatar}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalAvatar(false)}
+      >
+        <Pressable className="flex-1 bg-black/30" onPress={() => setModalAvatar(false)} />
+        <View className="bg-white rounded-t-3xl px-6 pt-5 pb-10">
+          <View className="w-10 h-1 bg-slate-200 rounded-full self-center mb-5" />
+          <Text variant="h3" className="text-violet-800 mb-5">Escolha seu avatar</Text>
+          <View className="flex-row flex-wrap gap-3 justify-center">
+            {avatarEmojis.map((e) => (
+              <Pressable
+                key={e}
+                onPress={() => {
+                  updateProfile({ avatar_emoji: e });
+                  setModalAvatar(false);
+                }}
+                className={`w-14 h-14 rounded-2xl items-center justify-center active:opacity-70 ${profile.avatar_emoji === e ? 'bg-violet-600' : 'bg-slate-100'}`}
+              >
+                <Text className="text-3xl">{e}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal Editar Perfil */}
+      <Modal
+        visible={modalPerfil}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setModalPerfil(false)}
+      >
+        <Pressable className="flex-1 bg-black/30" onPress={() => setModalPerfil(false)} />
+        <View className="bg-white rounded-t-3xl px-6 pt-5 pb-10">
+          <View className="w-10 h-1 bg-slate-200 rounded-full self-center mb-5" />
+          <Text variant="h3" className="text-violet-800 mb-5">Editar Perfil</Text>
+
+          <Text variant="small" color="secondary" className="mb-1 font-semibold">Nome</Text>
+          <TextInput
+            placeholder="Seu nome completo"
+            placeholderTextColor="#94A3B8"
+            value={editNome}
+            onChangeText={setEditNome}
+            className="border border-slate-200 rounded-2xl px-4 py-3 text-slate-800 mb-3"
+          />
+
+          <Text variant="small" color="secondary" className="mb-1 font-semibold">Apelido</Text>
+          <TextInput
+            placeholder="Como quer ser chamado?"
+            placeholderTextColor="#94A3B8"
+            value={editApelido}
+            onChangeText={setEditApelido}
+            className="border border-slate-200 rounded-2xl px-4 py-3 text-slate-800 mb-3"
+          />
+
+          <Text variant="small" color="secondary" className="mb-1 font-semibold">Bio</Text>
+          <TextInput
+            placeholder="Uma frase sobre você 🌟"
+            placeholderTextColor="#94A3B8"
+            value={editBio}
+            onChangeText={setEditBio}
+            className="border border-slate-200 rounded-2xl px-4 py-3 text-slate-800 mb-3"
+            multiline
+          />
+
+          <Text variant="small" color="secondary" className="mb-1 font-semibold">Instagram</Text>
+          <TextInput
+            placeholder="@seu_instagram"
+            placeholderTextColor="#94A3B8"
+            value={editInstagram}
+            onChangeText={setEditInstagram}
+            className="border border-slate-200 rounded-2xl px-4 py-3 text-slate-800 mb-5"
+            autoCapitalize="none"
+          />
+
+          <Pressable
+            onPress={salvarPerfil}
+            className="bg-violet-600 rounded-2xl py-4 items-center"
+          >
+            <Text className="text-white font-bold">Salvar</Text>
+          </Pressable>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
