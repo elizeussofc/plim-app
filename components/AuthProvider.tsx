@@ -5,6 +5,8 @@ import { useEffect } from 'react';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setSession, setLoading } = useAuthStore();
+  const session = useAuthStore((s) => s.session);
+  const loading = useAuthStore((s) => s.loading);
   const router = useRouter();
   const segments = useSegments();
 
@@ -22,7 +24,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const { session, loading } = useAuthStore.getState();
     if (loading) return;
 
     const inAuth = segments[0] === '(auth)';
@@ -32,7 +33,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } else if (session && inAuth) {
       router.replace('/(tabs)');
     }
-  }, [useAuthStore((s) => s.session), useAuthStore((s) => s.loading)]);
+  }, [session, loading, segments]);
 
   return <>{children}</>;
 }
