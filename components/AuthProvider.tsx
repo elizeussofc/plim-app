@@ -1,14 +1,9 @@
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
-import { useRouter, useSegments } from 'expo-router';
 import { useEffect } from 'react';
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setSession, setLoading } = useAuthStore();
-  const session = useAuthStore((s) => s.session);
-  const loading = useAuthStore((s) => s.loading);
-  const router = useRouter();
-  const segments = useSegments();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -23,17 +18,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (loading) return;
-
-    const inAuth = segments[0] === '(auth)';
-
-    if (!session && !inAuth) {
-      router.replace('/(auth)/login');
-    } else if (session && inAuth) {
-      router.replace('/(tabs)');
-    }
-  }, [session, loading, segments]);
-
+  // Sem redirect — app é aberto por padrão. Login só pedido ao ativar Pro.
   return <>{children}</>;
 }
