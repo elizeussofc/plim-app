@@ -15,7 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.elizzeuscorp.plim"
+      "bundleIdentifier": "com.elizzeuscorp.plim",
+      "infoPlist": {
+        "NSCalendarsUsageDescription": "O Plim adiciona suas tarefas de rotina no seu calendário para você não esquecer.",
+        "NSRemindersUsageDescription": "O Plim cria lembretes para suas tarefas de rotina."
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,7 +28,13 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.elizzeuscorp.plim"
+      "package": "com.elizzeuscorp.plim",
+      "permissions": [
+        "android.permission.RECEIVE_BOOT_COMPLETED",
+        "android.permission.SCHEDULE_EXACT_ALARM",
+        "android.permission.READ_CALENDAR",
+        "android.permission.WRITE_CALENDAR"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -33,7 +43,21 @@
     },
     "plugins": [
       "expo-router",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#7C3AED",
+          "sounds": []
+        }
+      ],
+      [
+        "expo-calendar",
+        {
+          "calendarPermission": "O Plim precisa acessar seu calendário para agendar suas tarefas."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

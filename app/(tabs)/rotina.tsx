@@ -1,8 +1,11 @@
 import { Card, Text } from '@/components/ui';
+import { adicionarAoCalendario } from '@/lib/calendar';
+import { agendarLembreteDiario, cancelarLembrete } from '@/lib/notifications';
 import { useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useState } from 'react';
 import {
+  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -16,13 +19,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 const emojis = ['💧', '🥗', '🏃', '😴', '📚', '🎯', '💊', '🧘', '🚿', '☀️', '🌙', '✅'];
 
 const statusConfig = {
-  pendente: { cor: 'border-slate-300', bg: '', icone: '' },
-  feita: { cor: 'border-violet-500 bg-violet-500', bg: 'opacity-100', icone: '✓' },
-  pulada: { cor: 'border-slate-200 bg-slate-100', bg: 'opacity-40', icone: '–' },
+  pendente: { cor: 'border-slate-300', icone: '' },
+  feita:    { cor: 'border-violet-500 bg-violet-500', icone: '✓' },
+  pulada:   { cor: 'border-slate-200 bg-slate-100', icone: '–' },
 };
 
 export default function RotinaScreen() {
-  const { tarefas, alternarStatus, adicionarTarefa, removerTarefa } = useRotinaStore();
+  const { tarefas, alternarStatus, adicionarTarefa, removerTarefa, marcarLembrete, marcarCalendario } = useRotinaStore();
   const { addXp, addMoedas, unlockConquista } = useUserStore();
 
   const [modalAberto, setModalAberto] = useState(false);
@@ -30,17 +33,69 @@ export default function RotinaScreen() {
   const [novaCategoria, setNovaCategoria] = useState('');
   const [novoHorario, setNovoHorario] = useState('');
   const [emojiSelecionado, setEmojiSelecionado] = useState('✅');
+  const [carregando, setCarregando] = useState<Record<string, string | null>>({});
 
   const feitas = tarefas.filter((t) => t.status === 'feita').length;
   const progresso = tarefas.length > 0 ? feitas / tarefas.length : 0;
 
   function tocarTarefa(id: string, statusAtual: string) {
-    const vaiFicarFeita = statusAtual === 'pendente';
-    alternarStatus(id);
-    if (vaiFicarFeita) {
+    if (statusAtual === 'pendente') {
       addXp(10);
       addMoedas(5);
       if (feitas === 0) unlockConquista('primeiro_passo');
+    }
+    alternarStatus(id);
+  }
+
+  async function toggleLembrete(id: string, titulo: string, horario: string, jaAgendado: boolean) {
+    if (Platform.OS === 'web') {
+      Alert.alert('Não disponível na web', 'Os lembretes funcionam apenas no app mobile (Android/iOS).');
+      return;
+    }
+    if (horario === '--:--' || !horario.includes(':')) {
+      Alert.alert('Horário inválido', 'Defina um horário para a tarefa antes de agendar o lembrete.');
+      return;
+    }
+
+    setCarregando((s) => ({ ...s, [id]: 'lembrete' }));
+    try {
+      if (jaAgendado) {
+        await cancelarLembrete(id);
+        marcarLembrete(id, false);
+        Alert.alert('Lembrete removido', `O alarme de "${titulo}" foi cancelado.`);
+      } else {
+        const resultado = await agendarLembreteDiario(id, titulo, horario);
+        if (resultado) {
+          marcarLembrete(id, true);
+          Alert.alert('🔔 Lembrete agendado!', `Você será lembrado de "${titulo}" todos os dias às ${horario}.`);
+        } else {
+          Alert.alert('Permissão negada', 'Precisamos de permissão para enviar notificações.');
+        }
+      }
+    } finally {
+      setCarregando((s) => ({ ...s, [id]: null }));
+    }
+  }
+
+  async function toggleCalendario(id: string, titulo: string, categoria: string, horario: string, jaAdicionado: boolean) {
+    if (jaAdicionado) {
+      Alert.alert('Já adicionado', 'Esta tarefa já foi adicionada ao seu calendário.');
+      return;
+    }
+    if (horario === '--:--' || !horario.includes(':')) {
+      Alert.alert('Horário inválido', 'Defina um horário para a tarefa antes de adicionar ao calendário.');
+      return;
+    }
+
+    setCarregando((s) => ({ ...s, [id]: 'calendario' }));
+    try {
+      const ok = await adicionarAoCalendario(titulo, categoria, horario);
+      if (ok) {
+        marcarCalendario(id, true);
+        Alert.alert('📅 Adicionado!', `"${titulo}" foi criado no seu calendário com lembrete 10 min antes.`);
+      }
+    } finally {
+      setCarregando((s) => ({ ...s, [id]: null }));
     }
   }
 
@@ -99,32 +154,69 @@ export default function RotinaScreen() {
         <View className="gap-3">
           {tarefas.map((tarefa) => {
             const cfg = statusConfig[tarefa.status];
+            const loadingThis = carregando[tarefa.id];
             return (
-              <Pressable
-                key={tarefa.id}
-                onPress={() => tocarTarefa(tarefa.id, tarefa.status)}
-                onLongPress={() => removerTarefa(tarefa.id)}
-                className={`active:opacity-70 ${tarefa.status === 'pulada' ? 'opacity-50' : ''}`}
+              <Card key={tarefa.id} variant="default" padding="md"
+                className={tarefa.status === 'pulada' ? 'opacity-50' : ''}
               >
-                <Card variant="default" padding="md">
-                  <View className="flex-row items-center gap-4">
-                    <View className="w-12 h-12 bg-violet-100 rounded-2xl items-center justify-center">
-                      <Text className="text-2xl">{tarefa.icone}</Text>
-                    </View>
-                    <View className="flex-1">
-                      <Text className={`font-semibold ${tarefa.status === 'feita' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
-                        {tarefa.titulo}
-                      </Text>
-                      <Text variant="small" color="secondary">{tarefa.categoria} · {tarefa.horario}</Text>
-                    </View>
-                    <View className={`w-7 h-7 rounded-full border-2 items-center justify-center ${cfg.cor}`}>
-                      {tarefa.status !== 'pendente' && (
-                        <Text className="text-white text-xs font-bold">{cfg.icone}</Text>
-                      )}
-                    </View>
+                {/* Linha principal — toque para marcar */}
+                <Pressable
+                  onPress={() => tocarTarefa(tarefa.id, tarefa.status)}
+                  onLongPress={() => {
+                    Alert.alert(
+                      'Remover tarefa',
+                      `Remover "${tarefa.titulo}" da rotina?`,
+                      [
+                        { text: 'Cancelar', style: 'cancel' },
+                        { text: 'Remover', style: 'destructive', onPress: () => removerTarefa(tarefa.id) },
+                      ]
+                    );
+                  }}
+                  className="flex-row items-center gap-4 active:opacity-70"
+                >
+                  <View className="w-12 h-12 bg-violet-100 rounded-2xl items-center justify-center">
+                    <Text className="text-2xl">{tarefa.icone}</Text>
                   </View>
-                </Card>
-              </Pressable>
+                  <View className="flex-1">
+                    <Text className={`font-semibold ${tarefa.status === 'feita' ? 'line-through text-slate-400' : 'text-slate-800'}`}>
+                      {tarefa.titulo}
+                    </Text>
+                    <Text variant="small" color="secondary">{tarefa.categoria} · {tarefa.horario}</Text>
+                  </View>
+                  <View className={`w-7 h-7 rounded-full border-2 items-center justify-center ${cfg.cor}`}>
+                    {tarefa.status !== 'pendente' && (
+                      <Text className="text-white text-xs font-bold">{cfg.icone}</Text>
+                    )}
+                  </View>
+                </Pressable>
+
+                {/* Botões de lembrete e calendário */}
+                <View className="flex-row gap-2 mt-3 pt-3 border-t border-slate-100">
+                  <Pressable
+                    onPress={() => toggleLembrete(tarefa.id, tarefa.titulo, tarefa.horario, tarefa.lembreteAgendado)}
+                    disabled={loadingThis === 'lembrete'}
+                    className={`flex-1 flex-row items-center justify-center gap-1.5 py-2 rounded-xl active:opacity-70
+                      ${tarefa.lembreteAgendado ? 'bg-violet-100' : 'bg-slate-50 border border-slate-200'}`}
+                  >
+                    <Text className="text-sm">{tarefa.lembreteAgendado ? '🔔' : '🔕'}</Text>
+                    <Text variant="caption" className={tarefa.lembreteAgendado ? 'text-violet-700 font-semibold' : 'text-slate-500'}>
+                      {loadingThis === 'lembrete' ? 'Aguarde...' : tarefa.lembreteAgendado ? 'Lembrete ativo' : 'Lembrar'}
+                    </Text>
+                  </Pressable>
+
+                  <Pressable
+                    onPress={() => toggleCalendario(tarefa.id, tarefa.titulo, tarefa.categoria, tarefa.horario, tarefa.calendarioAdicionado)}
+                    disabled={loadingThis === 'calendario'}
+                    className={`flex-1 flex-row items-center justify-center gap-1.5 py-2 rounded-xl active:opacity-70
+                      ${tarefa.calendarioAdicionado ? 'bg-emerald-100' : 'bg-slate-50 border border-slate-200'}`}
+                  >
+                    <Text className="text-sm">📅</Text>
+                    <Text variant="caption" className={tarefa.calendarioAdicionado ? 'text-emerald-700 font-semibold' : 'text-slate-500'}>
+                      {loadingThis === 'calendario' ? 'Aguarde...' : tarefa.calendarioAdicionado ? 'No calendário' : 'Agendar'}
+                    </Text>
+                  </Pressable>
+                </View>
+              </Card>
             );
           })}
         </View>
@@ -154,10 +246,7 @@ export default function RotinaScreen() {
           className="flex-1"
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <Pressable
-            className="flex-1 bg-black/30"
-            onPress={() => setModalAberto(false)}
-          />
+          <Pressable className="flex-1 bg-black/30" onPress={() => setModalAberto(false)} />
           <View className="bg-white rounded-t-3xl px-6 pt-5 pb-10">
             <View className="w-10 h-1 bg-slate-200 rounded-full self-center mb-5" />
             <Text variant="h3" className="text-violet-800 mb-5">Nova Tarefa</Text>
@@ -208,6 +297,7 @@ export default function RotinaScreen() {
                   placeholderTextColor="#94A3B8"
                   value={novoHorario}
                   onChangeText={setNovoHorario}
+                  keyboardType="numbers-and-punctuation"
                   className="border border-slate-200 rounded-2xl px-4 py-3 text-slate-800"
                 />
               </View>
