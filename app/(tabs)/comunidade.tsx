@@ -1,5 +1,6 @@
 import { Badge, Card, Text } from '@/components/ui';
 import { useUserStore } from '@/stores/userStore';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -60,6 +61,7 @@ const tipos: { key: TipoPost; label: string }[] = [
 type Reacao = 'apoio' | 'forca' | 'parabens';
 
 export default function ComunidadeScreen() {
+  const router = useRouter();
   const profile = useUserStore((s) => s.profile);
   const unlockConquista = useUserStore((s) => s.unlockConquista);
   const addXp = useUserStore((s) => s.addXp);
@@ -117,12 +119,20 @@ export default function ComunidadeScreen() {
       >
         <View className="flex-row items-center justify-between mb-6">
           <Text variant="h2" className="text-violet-800">Comunidade</Text>
-          <Pressable
-            onPress={() => setModalAberto(true)}
-            className="bg-violet-600 px-4 py-2 rounded-full active:opacity-70"
-          >
-            <Text className="text-white font-semibold text-sm">+ Compartilhar</Text>
-          </Pressable>
+          <View className="flex-row gap-2">
+            <Pressable
+              onPress={() => router.push('/ranking')}
+              className="bg-yellow-400 px-3 py-2 rounded-full active:opacity-70"
+            >
+              <Text className="text-yellow-900 font-semibold text-sm">🏆 Ranking</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setModalAberto(true)}
+              className="bg-violet-600 px-3 py-2 rounded-full active:opacity-70"
+            >
+              <Text className="text-white font-semibold text-sm">+ Post</Text>
+            </Pressable>
+          </View>
         </View>
 
         <Card variant="flat" padding="md" className="mb-5">

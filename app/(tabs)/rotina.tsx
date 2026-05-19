@@ -1,9 +1,11 @@
 import { Card, Text } from '@/components/ui';
 import { adicionarAoCalendario } from '@/lib/calendar';
 import { agendarLembreteDiario, cancelarLembrete } from '@/lib/notifications';
+import { sincronizarPontuacao } from '@/lib/ranking';
+import { useAuthStore } from '@/stores/authStore';
 import { useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -26,7 +28,8 @@ const statusConfig = {
 
 export default function RotinaScreen() {
   const { tarefas, alternarStatus, adicionarTarefa, removerTarefa, marcarLembrete, marcarCalendario } = useRotinaStore();
-  const { addXp, addMoedas, unlockConquista } = useUserStore();
+  const { addXp, addMoedas, unlockConquista, profile } = useUserStore();
+  const session = useAuthStore((s) => s.session);
 
   const [modalAberto, setModalAberto] = useState(false);
   const [novoTitulo, setNovoTitulo] = useState('');
@@ -36,7 +39,25 @@ export default function RotinaScreen() {
   const [carregando, setCarregando] = useState<Record<string, string | null>>({});
 
   const feitas = tarefas.filter((t) => t.status === 'feita').length;
+  const puladas = tarefas.filter((t) => t.status === 'pulada').length;
+  const rotinacompleta = tarefas.length > 0 && feitas === tarefas.length;
   const progresso = tarefas.length > 0 ? feitas / tarefas.length : 0;
+
+  // Sincroniza pontuação no Supabase sempre que as tarefas mudam (só se logado)
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const pontos = Math.max(0, feitas * 10 - puladas * 5 + (rotinacompleta ? 30 : 0) + profile.streak * 5);
+    sincronizarPontuacao({
+      userId: session.user.id,
+      nomeExibido: profile.apelido ?? profile.nome ?? 'Guerreiro',
+      avatarEmoji: profile.avatar_emoji,
+      pontos,
+      nivel: profile.nivel,
+      streak: profile.streak,
+      tarefasFeitas: feitas,
+      tarefasPuladas: puladas,
+    });
+  }, [tarefas, session?.user?.id]);
 
   function tocarTarefa(id: string, statusAtual: string) {
     if (statusAtual === 'pendente') {
