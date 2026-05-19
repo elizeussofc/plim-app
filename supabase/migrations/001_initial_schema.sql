@@ -297,10 +297,18 @@ create policy "Todos lêem posts públicos"
   on public.posts_comunidade for select
   using (true);
 
-create policy "Usuário gerencia próprios posts"
-  on public.posts_comunidade for insert update delete
+create policy "Usuário insere próprios posts"
+  on public.posts_comunidade for insert
+  with check (auth.uid() = user_id);
+
+create policy "Usuário atualiza próprios posts"
+  on public.posts_comunidade for update
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
+
+create policy "Usuário deleta próprios posts"
+  on public.posts_comunidade for delete
+  using (auth.uid() = user_id);
 
 -- ============================================================
 -- REACOES_COMUNIDADE
@@ -318,10 +326,13 @@ create policy "Todos vêem reações"
   on public.reacoes_comunidade for select
   using (true);
 
-create policy "Usuário gerencia próprias reações"
-  on public.reacoes_comunidade for insert delete
-  using (auth.uid() = user_id)
+create policy "Usuário insere próprias reações"
+  on public.reacoes_comunidade for insert
   with check (auth.uid() = user_id);
+
+create policy "Usuário deleta próprias reações"
+  on public.reacoes_comunidade for delete
+  using (auth.uid() = user_id);
 
 -- ============================================================
 -- LEMBRETES_MEDICACAO
