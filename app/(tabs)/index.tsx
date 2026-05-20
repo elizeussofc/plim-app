@@ -1,7 +1,9 @@
 import { Badge, Card, Text } from '@/components/ui';
-import { humorConfig, useHumorStore } from '@/stores/humorStore';
+import AvatarPersonagem from '@/components/AvatarPersonagem';
+import TermometroRotina, { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
+import { useRotinaStore } from '@/stores/rotinaStore';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,21 +16,23 @@ const atalhos = [
 ];
 
 export default function InicioScreen() {
-  const router = useRouter();
-  const profile = useUserStore((s) => s.profile);
-  const registrarHumor = useHumorStore((s) => s.registrarHumor);
-  const humorHoje = useHumorStore((s) => s.humorHoje)();
+  const router   = useRouter();
+  const profile  = useUserStore((s) => s.profile);
+  const tarefas  = useRotinaStore((s) => s.tarefas);
   const desafios = useDesafiosStore((s) => s.desafios);
 
   const apelido = profile?.apelido ?? profile?.nome ?? 'Viajante';
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
 
-  const xpProxNivel = profile.nivel * 100;
-  const xpProgresso = Math.min(profile.xp_total / xpProxNivel, 1);
+  const xpProxNivel  = profile.nivel * 100;
+  const xpProgresso  = Math.min(profile.xp_total / xpProxNivel, 1);
 
-  const desafiosAtivos = desafios.filter((d) => !d.completo);
+  const desafiosAtivos    = desafios.filter((d) => !d.completo);
   const desafiosCompletos = desafios.filter((d) => d.completo).length;
+
+  const score    = calcularScoreRotina(tarefas, profile.streak, profile.xp_total);
+  const expressao = expressaoDoScore(score);
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
@@ -40,8 +44,30 @@ export default function InicioScreen() {
             <Text variant="small" color="secondary">{saudacao} ✨</Text>
             <Text variant="h2" className="text-violet-800">{apelido}!</Text>
           </View>
-          <Pressable onPress={() => router.push('/(tabs)/perfil')} className="bg-violet-600 w-12 h-12 rounded-full items-center justify-center active:opacity-70">
-            <Text className="text-2xl">{profile.avatar_emoji}</Text>
+
+          {/* Avatar personagem (mini — mostra só a cabeça) */}
+          <Pressable
+            onPress={() => router.push('/(tabs)/perfil')}
+            className="active:opacity-70"
+          >
+            <View
+              style={{
+                width: 56,
+                height: 56,
+                borderRadius: 28,
+                backgroundColor: '#EDE9FE',
+                overflow: 'hidden',
+                alignItems: 'center',
+              }}
+            >
+              <View style={{ marginTop: -6 }}>
+                <AvatarPersonagem
+                  config={profile.avatar_config}
+                  expressao={expressao}
+                  size={68}
+                />
+              </View>
+            </View>
           </Pressable>
         </View>
 
@@ -53,30 +79,8 @@ export default function InicioScreen() {
           </Text>
         </Card>
 
-        {/* Widget Humor do dia */}
-        <Card variant="default" padding="md" className="mb-5">
-          <Text variant="small" className="font-semibold text-slate-700 mb-3">
-            🌡️ Como você está hoje?
-          </Text>
-          <View className="flex-row justify-between">
-            {([1, 2, 3, 4, 5] as const).map((n) => {
-              const c = humorConfig[n];
-              const selecionado = humorHoje?.humor === n;
-              return (
-                <Pressable
-                  key={n}
-                  onPress={() => registrarHumor(n)}
-                  className={`flex-1 mx-0.5 py-2 rounded-2xl items-center active:opacity-70 ${selecionado ? 'bg-violet-100 border-2 border-violet-400' : 'bg-slate-50'}`}
-                >
-                  <Text className="text-2xl">{c.emoji}</Text>
-                  <Text style={{ fontSize: 9, color: selecionado ? '#7C3AED' : '#94A3B8', fontWeight: selecionado ? '700' : '400', marginTop: 2 }}>
-                    {c.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </Card>
+        {/* Termômetro da rotina */}
+        <TermometroRotina />
 
         {/* Stats + XP */}
         <View className="flex-row gap-3 mb-4">

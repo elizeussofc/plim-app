@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+export type { AvatarConfig } from '@/components/AvatarPersonagem';
 
 export interface Conquista {
   id: string;
@@ -31,6 +32,7 @@ export interface Profile {
   moedas: number;
   streak: number;
   avatar_emoji: string;
+  avatar_config: import('@/components/AvatarPersonagem').AvatarConfig;
   conquistas: Conquista[];
   preferencias: {
     modo_baixo_estimulo: boolean;
@@ -44,6 +46,7 @@ interface UserState {
   profile: Profile;
   setProfile: (profile: Partial<Profile>) => void;
   updateProfile: (partial: Partial<Profile>) => void;
+  updateAvatarConfig: (config: Partial<import('@/components/AvatarPersonagem').AvatarConfig>) => void;
   addXp: (quantidade: number) => void;
   addMoedas: (quantidade: number) => void;
   incrementStreak: () => void;
@@ -63,6 +66,13 @@ const profilePadrao: Profile = {
   moedas: 0,
   streak: 0,
   avatar_emoji: '⚡',
+  avatar_config: {
+    skinTom: 'medio' as const,
+    cabelo: 'curto' as const,
+    corCabelo: 'preto' as const,
+    roupa: 'padrao' as const,
+    acessorio: 'nenhum' as const,
+  },
   conquistas: conquistasIniciais,
   preferencias: {
     modo_baixo_estimulo: false,
@@ -88,6 +98,11 @@ export const useUserStore = create<UserState>((set) => ({
 
   updateProfile: (partial) =>
     set((s) => ({ profile: { ...s.profile, ...partial } })),
+
+  updateAvatarConfig: (config) =>
+    set((s) => ({
+      profile: { ...s.profile, avatar_config: { ...s.profile.avatar_config, ...config } },
+    })),
 
   addXp: (quantidade) =>
     set((s) => {
