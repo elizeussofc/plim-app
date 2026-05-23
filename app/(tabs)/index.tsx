@@ -4,7 +4,8 @@ import TermometroRotina, { calcularScoreRotina, expressaoDoScore } from '@/compo
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRotinaStore } from '@/stores/rotinaStore';
-import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
+import { loadOnboardingProfile, type Chronotype, type PlimUserProfile } from '@/stores/onboardingStore';
+import { getMensagemDoDia } from '@/lib/mensagensDoDia';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -17,6 +18,13 @@ const atalhos = [
   { icone: '🤖', label: 'Plim\nIA',         route: '/ia-tdah'        },
 ];
 
+const SUGESTAO_FOCO: Record<Chronotype, { texto: string; horario: string }> = {
+  morning:   { texto: 'Seu pico é pela manhã.',         horario: '8h'  },
+  afternoon: { texto: 'Seu pico é à tarde.',            horario: '14h' },
+  night:     { texto: 'Seu pico é à noite.',            horario: '20h' },
+  dawn:      { texto: 'Sua madrugada é produtiva.',     horario: '1h'  },
+};
+
 export default function InicioScreen() {
   const router   = useRouter();
   const profile  = useUserStore((s) => s.profile);
@@ -26,9 +34,18 @@ export default function InicioScreen() {
   const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
   useEffect(() => { loadOnboardingProfile().then(setPlimProfile); }, []);
 
-  const apelido = plimProfile?.profileType.name ?? profile?.apelido ?? profile?.nome ?? 'Viajante';
-  const hora = new Date().getHours();
-  const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+  // Ajuste 1 — saudação personalizada com nome E emoji do perfil
+  const apelido       = plimProfile?.profileType.name ?? profile?.apelido ?? profile?.nome ?? 'Viajante';
+  const perfilEmoji   = plimProfile?.profileType.emoji ?? '✨';
+  const hora          = new Date().getHours();
+  const saudacao      = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
+
+  // Ajuste 2 — mensagem do dia personalizada por perfil
+  const mensagemDoDia = getMensagemDoDia(plimProfile?.profileType.id ?? 'explorador');
+
+  // Ajuste 3 — sugestão de foco baseada no cronotipo
+  const cronotipo     = plimProfile?.answers.chronotype ?? null;
+  const sugestaoFoco  = cronotipo ? SUGESTAO_FOCO[cronotipo] : null;
 
   const xpProxNivel  = profile.nivel * 100;
   const xpProgresso  = Math.min(profile.xp_total / xpProxNivel, 1);
@@ -41,16 +58,17 @@ export default function InicioScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
 
-        {/* Cabeçalho */}
+        {/* Cabeçalho — Ajuste 1 */}
         <View className="flex-row items-center justify-between mb-6">
-          <View>
-            <Text variant="small" color="secondary">{saudacao} ✨</Text>
-            <Text variant="h2" className="text-violet-800">{apelido}!</Text>
+          <View style={{ flex: 1, marginRight: 12 }}>
+            <Text variant="small" color="secondary">{saudacao} {perfilEmoji}</Text>
+            <Text variant="h2" className="text-violet-800" numberOfLines={1} adjustsFontSizeToFit>
+              {apelido}!
+            </Text>
           </View>
 
-          {/* Avatar personagem (mini — mostra só a cabeça) */}
           <Pressable
             onPress={() => router.push('/(tabs)/perfil')}
             className="active:opacity-70"
@@ -76,16 +94,47 @@ export default function InicioScreen() {
           </Pressable>
         </View>
 
-        {/* Mensagem do dia */}
+        {/* Mensagem do dia — Ajuste 2 */}
         <Card variant="primary" padding="lg" className="mb-5">
           <Text variant="small" color="inverse" className="opacity-80 mb-1">💬 Mensagem do dia</Text>
           <Text color="inverse" className="text-base leading-6">
-            Cada pequeno passo conta. Você não precisa fazer tudo hoje — só o próximo passo.
+            {mensagemDoDia}
           </Text>
         </Card>
 
         {/* Termômetro da rotina */}
         <TermometroRotina />
+
+        {/* Sugestão de foco — Ajuste 3 */}
+        {sugestaoFoco && (
+          <Card variant="flat" padding="md" className="mb-4 border border-violet-100">
+            <View className="flex-row items-center justify-between">
+              <View style={{ flex: 1 }}>
+                <Text variant="small" className="text-violet-700 font-semibold mb-0.5">
+                  💡 {sugestaoFoco.texto}
+                </Text>
+                <Text variant="caption" color="secondary">
+                  Que tal agendar foco às {sugestaoFoco.horario}?
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => router.push('/sessao-foco')}
+                className="active:opacity-70"
+                style={{
+                  backgroundColor: '#7C3AED',
+                  borderRadius: 10,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  marginLeft: 12,
+                }}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
+                  Iniciar agora
+                </Text>
+              </Pressable>
+            </View>
+          </Card>
+        )}
 
         {/* Stats + XP */}
         <View className="flex-row gap-3 mb-4">
@@ -113,7 +162,7 @@ export default function InicioScreen() {
           </View>
         </Card>
 
-        {/* Desafios semanais — prévia */}
+        {/* Desafios semanais */}
         <View className="flex-row items-center justify-between mb-3">
           <Text variant="h3">Desafios da semana</Text>
           <Badge label={`${desafiosCompletos}/5`} variant={desafiosCompletos === 5 ? 'success' : 'primary'} />
