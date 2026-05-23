@@ -1,6 +1,6 @@
 import { Button, Card, Text } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
-import { Link } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState('');
+  const router = useRouter();
 
   async function entrar() {
     if (!email || !senha) {
@@ -19,8 +20,12 @@ export default function LoginScreen() {
     setLoading(true);
     setErro('');
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
-    if (error) setErro('E-mail ou senha incorretos. Tente de novo!');
-    setLoading(false);
+    if (error) {
+      setErro('E-mail ou senha incorretos. Tente de novo!');
+      setLoading(false);
+    } else {
+      router.replace('/(tabs)');
+    }
   }
 
   return (
