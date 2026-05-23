@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { createJSONStorage, persist } from 'zustand/middleware';
 export type { AvatarConfig } from '@/components/AvatarPersonagem';
 
 export interface Conquista {
@@ -92,60 +91,76 @@ function calcularNivel(xp: number): number {
   return Math.floor(xp / 250) + 1;
 }
 
-export const useUserStore = create<UserState>()(
-  persist(
-    (set) => ({
-      profile: profilePadrao,
+const STORAGE_KEY = 'plim-user-store';
 
-      setProfile: (profile) =>
-        set((s) => ({ profile: { ...s.profile, ...profile } })),
+export const useUserStore = create<UserState>((set) => ({
+  profile: profilePadrao,
 
-      updateProfile: (partial) =>
-        set((s) => ({ profile: { ...s.profile, ...partial } })),
+  setProfile: (profile) =>
+    set((s) => ({ profile: { ...s.profile, ...profile } })),
 
-      updateAvatarConfig: (config) =>
-        set((s) => ({
-          profile: { ...s.profile, avatar_config: { ...s.profile.avatar_config, ...config } },
-        })),
+  updateProfile: (partial) =>
+    set((s) => ({ profile: { ...s.profile, ...partial } })),
 
-      addXp: (quantidade) =>
-        set((s) => {
-          const novoXp = s.profile.xp_total + quantidade;
-          return { profile: { ...s.profile, xp_total: novoXp, nivel: calcularNivel(novoXp) } };
-        }),
+  updateAvatarConfig: (config) =>
+    set((s) => ({
+      profile: { ...s.profile, avatar_config: { ...s.profile.avatar_config, ...config } },
+    })),
 
-      addMoedas: (quantidade) =>
-        set((s) => ({ profile: { ...s.profile, moedas: s.profile.moedas + quantidade } })),
-
-      incrementStreak: () =>
-        set((s) => {
-          const novoStreak = s.profile.streak + 1;
-          const conquistas = s.profile.conquistas.map((c) => {
-            if (c.id === 'tres_dias' && novoStreak >= 3 && !c.desbloqueada)
-              return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
-            if (c.id === 'semana_perfeita' && novoStreak >= 7 && !c.desbloqueada)
-              return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
-            return c;
-          });
-          return { profile: { ...s.profile, streak: novoStreak, conquistas } };
-        }),
-
-      unlockConquista: (id) =>
-        set((s) => ({
-          profile: {
-            ...s.profile,
-            conquistas: s.profile.conquistas.map((c) =>
-              c.id === id && !c.desbloqueada
-                ? { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() }
-                : c
-            ),
-          },
-        })),
+  addXp: (quantidade) =>
+    set((s) => {
+      const novoXp = s.profile.xp_total + quantidade;
+      return { profile: { ...s.profile, xp_total: novoXp, nivel: calcularNivel(novoXp) } };
     }),
-    {
-      name: 'plim-user-store',
-      storage: createJSONStorage(() => AsyncStorage),
-      partialize: (s) => ({ profile: s.profile }),
+
+  addMoedas: (quantidade) =>
+    set((s) => ({ profile: { ...s.profile, moedas: s.profile.moedas + quantidade } })),
+
+  incrementStreak: () =>
+    set((s) => {
+      const novoStreak = s.profile.streak + 1;
+      const conquistas = s.profile.conquistas.map((c) => {
+        if (c.id === 'tres_dias' && novoStreak >= 3 && !c.desbloqueada)
+          return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
+        if (c.id === 'semana_perfeita' && novoStreak >= 7 && !c.desbloqueada)
+          return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
+        return c;
+      });
+      return { profile: { ...s.profile, streak: novoStreak, conquistas } };
+    }),
+
+  unlockConquista: (id) =>
+    set((s) => ({
+      profile: {
+        ...s.profile,
+        conquistas: s.profile.conquistas.map((c) =>
+          c.id === id && !c.desbloqueada
+            ? { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() }
+            : c
+        ),
+      },
+    })),
+}));
+
+// ── Hidratação manual (compatível com Expo web + native) ──────────────────────
+
+AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (saved?.profile) {
+      useUserStore.setState((s) => ({
+        profile: { ...s.profile, ...saved.profile },
+      }));
     }
-  )
-);
+  } catch {}
+}).catch(() => {});
+
+// Salva 400ms após a última mudança (debounce)
+let _saveTimer: ReturnType<typeof setTimeout> | null = null;
+useUserStore.subscribe((state) => {
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ profile: state.profile })).catch(() => {});
+  }, 400);
+});
