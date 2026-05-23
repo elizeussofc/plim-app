@@ -128,9 +128,9 @@ export default function ComunidadeScreen() {
           <View className="flex-row gap-2">
             <Pressable
               onPress={() => router.push('/ranking')}
-              className="bg-yellow-400 px-3 py-2 rounded-full active:opacity-70"
+              className="bg-violet-100 px-3 py-2 rounded-full active:opacity-70"
             >
-              <Text className="text-yellow-900 font-semibold text-sm">🏆 Ranking</Text>
+              <Text className="text-violet-700 font-semibold text-sm">🏆 Ranking</Text>
             </Pressable>
             <Pressable
               onPress={() => setModalAberto(true)}

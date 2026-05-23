@@ -169,7 +169,7 @@ export default function InicioScreen() {
           </Card>
         </View>
 
-        <Card variant="default" padding="md" className="mb-5">
+        <Card variant="default" padding="md" className="mb-6">
           <View className="flex-row justify-between mb-1.5">
             <Text variant="small" color="secondary">Nível {profile.nivel}</Text>
             <Text variant="small" className="text-violet-600 font-semibold">{profile.xp_total}/{xpProxNivel} XP</Text>
@@ -189,7 +189,7 @@ export default function InicioScreen() {
           <Badge label={`${desafiosCompletos}/5`} variant={desafiosCompletos === 5 ? 'success' : 'primary'} />
         </View>
         <View className="gap-2 mb-5">
-          {desafiosAtivos.slice(0, 3).map((d) => (
+          {desafiosAtivos.slice(0, 2).map((d) => (
             <Card key={d.id} variant="flat" padding="md">
               <View className="flex-row items-center gap-3">
                 <Text className="text-xl">{d.icone}</Text>

@@ -19,6 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '@/components/ui';
+import { useUserStore } from '@/stores/userStore';
 import {
   classifyProfile,
   saveOnboardingProfile,
@@ -666,6 +667,9 @@ export default function OnboardingScreen() {
   }
 
   async function handleEnterApp() {
+    if (profile) {
+      useUserStore.getState().updateProfile({ apelido: profile.name });
+    }
     await saveOnboardingProfile({
       challenges: answers.challenges,
       adhdStatus: answers.adhdStatus ?? 'no',
@@ -777,7 +781,7 @@ export default function OnboardingScreen() {
 
       {/* Navegação */}
       {!isLoader && (
-        <View style={{ paddingHorizontal: 24, paddingBottom: 20, paddingTop: 8 }}>
+        <View style={{ paddingHorizontal: 24, paddingBottom: 20, paddingTop: 8, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
           {isStep0 && (
             <Pressable
               onPress={handleNext}
