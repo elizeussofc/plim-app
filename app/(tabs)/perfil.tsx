@@ -137,7 +137,11 @@ export default function PerfilScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* ── Avatar + nome ── */}
         <View className="items-center mb-6">
@@ -221,12 +225,12 @@ export default function PerfilScreen() {
             <Text variant="small" color="secondary">Próximo nível ({nivel + 1})</Text>
             <Text variant="small" className="text-violet-600 font-semibold">{xp} / {xpProxNivel} XP</Text>
           </View>
-          <View className="bg-slate-100 rounded-full h-3">
-            <View
-              className="bg-violet-500 h-3 rounded-full"
-              style={{ width: `${Math.round(xpProgresso * 100)}%` as any }
-              }
-            />
+          <View className="bg-slate-100 rounded-full h-3" style={{ overflow: 'hidden' }}>
+            {xpProgresso > 0 ? (
+              <View className="bg-violet-500 h-3 rounded-full" style={{ width: `${Math.round(xpProgresso * 100)}%` as any }} />
+            ) : (
+              <View style={{ width: '100%', height: '100%', backgroundColor: '#C4B5FD', opacity: 0.35, borderRadius: 9999 }} />
+            )}
           </View>
         </Card>
 

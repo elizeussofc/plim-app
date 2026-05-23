@@ -60,40 +60,60 @@ function OptionCard({
       style={{
         flexDirection: 'row',
         alignItems: 'center',
-        padding: 14,
-        borderRadius: 14,
-        borderWidth: 2,
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: selected ? 2 : 1.5,
         borderColor: selected ? '#7C3AED' : '#E2E8F0',
-        backgroundColor: selected ? '#EDE9FE' : '#FFFFFF',
+        backgroundColor: selected ? '#EDE9FE' : '#FAFAFA',
         marginBottom: 10,
-        gap: 12,
+        gap: 14,
+        shadowColor: selected ? '#7C3AED' : '#000',
+        shadowOffset: { width: 0, height: selected ? 3 : 1 },
+        shadowOpacity: selected ? 0.15 : 0.04,
+        shadowRadius: selected ? 8 : 3,
+        elevation: selected ? 4 : 1,
       }}
     >
-      <Text style={{ fontSize: 22 }}>{emoji}</Text>
+      {/* Emoji com fundo suave */}
+      <View
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          backgroundColor: selected ? '#DDD6FE' : '#F1F5F9',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 22 }}>{emoji}</Text>
+      </View>
       <Text
         style={{
           flex: 1,
-          color: selected ? '#6D28D9' : '#334155',
-          fontWeight: selected ? '600' : '400',
+          color: selected ? '#5B21B6' : '#334155',
+          fontWeight: selected ? '700' : '400',
           fontSize: 15,
+          lineHeight: 20,
         }}
       >
         {label}
       </Text>
-      {selected && (
-        <View
-          style={{
-            width: 22,
-            height: 22,
-            borderRadius: 11,
-            backgroundColor: '#7C3AED',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ color: '#fff', fontSize: 11, fontWeight: 'bold' }}>✓</Text>
-        </View>
-      )}
+      <View
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: 12,
+          backgroundColor: selected ? '#7C3AED' : '#E2E8F0',
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: selected ? 0 : 1.5,
+          borderColor: '#CBD5E1',
+        }}
+      >
+        {selected && (
+          <Text style={{ color: '#fff', fontSize: 12, fontWeight: 'bold' }}>✓</Text>
+        )}
+      </View>
     </Pressable>
   );
 }

@@ -58,7 +58,11 @@ export default function InicioScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        showsVerticalScrollIndicator={false}
+      >
 
         {/* Cabeçalho — Ajuste 1 */}
         <View className="flex-row items-center justify-between mb-6">
@@ -95,12 +99,22 @@ export default function InicioScreen() {
         </View>
 
         {/* Mensagem do dia — Ajuste 2 */}
-        <Card variant="primary" padding="lg" className="mb-5">
-          <Text variant="small" color="inverse" className="opacity-80 mb-1">💬 Mensagem do dia</Text>
-          <Text color="inverse" className="text-base leading-6">
-            {mensagemDoDia}
+        <View style={{ backgroundColor: '#7C3AED', borderRadius: 16, padding: 18, marginBottom: 20, overflow: 'hidden' }}>
+          {/* Barra laranja de destaque */}
+          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: '#F97316', borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }} />
+          {/* Emoji watermark */}
+          <Text style={{ position: 'absolute', right: -8, bottom: -20, fontSize: 88, opacity: 0.12 }}>
+            {perfilEmoji}
           </Text>
-        </Card>
+          <View style={{ paddingLeft: 10 }}>
+            <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
+              💬 MENSAGEM DO DIA
+            </Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 15, lineHeight: 24, fontStyle: 'italic' }}>
+              {mensagemDoDia}
+            </Text>
+          </View>
+        </View>
 
         {/* Termômetro da rotina */}
         <TermometroRotina />
@@ -141,14 +155,17 @@ export default function InicioScreen() {
           <Card variant="flat" padding="md" className="flex-1 items-center">
             <Text className="text-2xl font-bold text-violet-600">{profile.xp_total}</Text>
             <Text variant="caption" color="secondary">XP</Text>
+            {profile.xp_total === 0 && <Text style={{ fontSize: 9, color: '#A78BFA', marginTop: 2 }}>+10/tarefa</Text>}
           </Card>
           <Card variant="flat" padding="md" className="flex-1 items-center">
             <Text className="text-2xl font-bold text-orange-500">{profile.streak}</Text>
             <Text variant="caption" color="secondary">Streak 🔥</Text>
+            {profile.streak === 0 && <Text style={{ fontSize: 9, color: '#FCA5A5', marginTop: 2 }}>começa hoje</Text>}
           </Card>
           <Card variant="flat" padding="md" className="flex-1 items-center">
             <Text className="text-2xl font-bold text-emerald-500">{profile.moedas}</Text>
             <Text variant="caption" color="secondary">🪙 Moedas</Text>
+            {profile.moedas === 0 && <Text style={{ fontSize: 9, color: '#6EE7B7', marginTop: 2 }}>+5/tarefa</Text>}
           </Card>
         </View>
 
@@ -157,8 +174,12 @@ export default function InicioScreen() {
             <Text variant="small" color="secondary">Nível {profile.nivel}</Text>
             <Text variant="small" className="text-violet-600 font-semibold">{profile.xp_total}/{xpProxNivel} XP</Text>
           </View>
-          <View className="bg-slate-100 rounded-full h-2">
-            <View className="bg-violet-500 h-2 rounded-full" style={{ width: `${Math.round(xpProgresso * 100)}%` as any }} />
+          <View className="bg-slate-100 rounded-full h-2" style={{ overflow: 'hidden' }}>
+            {xpProgresso > 0 ? (
+              <View className="bg-violet-500 h-2 rounded-full" style={{ width: `${Math.round(xpProgresso * 100)}%` as any }} />
+            ) : (
+              <View style={{ width: '100%', height: '100%', backgroundColor: '#C4B5FD', opacity: 0.35, borderRadius: 9999 }} />
+            )}
           </View>
         </Card>
 

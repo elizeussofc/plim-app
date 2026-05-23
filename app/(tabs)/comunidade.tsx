@@ -119,6 +119,7 @@ export default function ComunidadeScreen() {
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
       <ScrollView
+        style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
         contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
