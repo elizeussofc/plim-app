@@ -1,4 +1,6 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 export type { AvatarConfig } from '@/components/AvatarPersonagem';
 
 export interface Conquista {
@@ -90,51 +92,60 @@ function calcularNivel(xp: number): number {
   return Math.floor(xp / 250) + 1;
 }
 
-export const useUserStore = create<UserState>((set) => ({
-  profile: profilePadrao,
+export const useUserStore = create<UserState>()(
+  persist(
+    (set) => ({
+      profile: profilePadrao,
 
-  setProfile: (profile) =>
-    set((s) => ({ profile: { ...s.profile, ...profile } })),
+      setProfile: (profile) =>
+        set((s) => ({ profile: { ...s.profile, ...profile } })),
 
-  updateProfile: (partial) =>
-    set((s) => ({ profile: { ...s.profile, ...partial } })),
+      updateProfile: (partial) =>
+        set((s) => ({ profile: { ...s.profile, ...partial } })),
 
-  updateAvatarConfig: (config) =>
-    set((s) => ({
-      profile: { ...s.profile, avatar_config: { ...s.profile.avatar_config, ...config } },
-    })),
+      updateAvatarConfig: (config) =>
+        set((s) => ({
+          profile: { ...s.profile, avatar_config: { ...s.profile.avatar_config, ...config } },
+        })),
 
-  addXp: (quantidade) =>
-    set((s) => {
-      const novoXp = s.profile.xp_total + quantidade;
-      return { profile: { ...s.profile, xp_total: novoXp, nivel: calcularNivel(novoXp) } };
+      addXp: (quantidade) =>
+        set((s) => {
+          const novoXp = s.profile.xp_total + quantidade;
+          return { profile: { ...s.profile, xp_total: novoXp, nivel: calcularNivel(novoXp) } };
+        }),
+
+      addMoedas: (quantidade) =>
+        set((s) => ({ profile: { ...s.profile, moedas: s.profile.moedas + quantidade } })),
+
+      incrementStreak: () =>
+        set((s) => {
+          const novoStreak = s.profile.streak + 1;
+          const conquistas = s.profile.conquistas.map((c) => {
+            if (c.id === 'tres_dias' && novoStreak >= 3 && !c.desbloqueada)
+              return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
+            if (c.id === 'semana_perfeita' && novoStreak >= 7 && !c.desbloqueada)
+              return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
+            return c;
+          });
+          return { profile: { ...s.profile, streak: novoStreak, conquistas } };
+        }),
+
+      unlockConquista: (id) =>
+        set((s) => ({
+          profile: {
+            ...s.profile,
+            conquistas: s.profile.conquistas.map((c) =>
+              c.id === id && !c.desbloqueada
+                ? { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() }
+                : c
+            ),
+          },
+        })),
     }),
-
-  addMoedas: (quantidade) =>
-    set((s) => ({ profile: { ...s.profile, moedas: s.profile.moedas + quantidade } })),
-
-  incrementStreak: () =>
-    set((s) => {
-      const novoStreak = s.profile.streak + 1;
-      const conquistas = s.profile.conquistas.map((c) => {
-        if (c.id === 'tres_dias' && novoStreak >= 3 && !c.desbloqueada)
-          return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
-        if (c.id === 'semana_perfeita' && novoStreak >= 7 && !c.desbloqueada)
-          return { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() };
-        return c;
-      });
-      return { profile: { ...s.profile, streak: novoStreak, conquistas } };
-    }),
-
-  unlockConquista: (id) =>
-    set((s) => ({
-      profile: {
-        ...s.profile,
-        conquistas: s.profile.conquistas.map((c) =>
-          c.id === id && !c.desbloqueada
-            ? { ...c, desbloqueada: true, desbloqueadaEm: new Date().toISOString() }
-            : c
-        ),
-      },
-    })),
-}));
+    {
+      name: 'plim-user-store',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (s) => ({ profile: s.profile }),
+    }
+  )
+);

@@ -18,7 +18,7 @@ const NIVEIS: Nivel[] = [
   {
     label: 'Rotina parada',
     cor: '#EF4444', fundo: '#FEE2E2',
-    emoji: '😔', expressao: 'triste',
+    emoji: '😐', expressao: 'neutro',
     dica: 'Comece com uma tarefa pequena — qualquer passo já conta!',
   },
   {
@@ -85,6 +85,7 @@ export default function TermometroRotina() {
 
   const totalTarefas = tarefas.length;
   const feitas = tarefas.filter((t) => t.status === 'feita').length;
+  const isNewUser = score === 0 && totalTarefas === 0 && profile.xp_total === 0;
 
   return (
     <Card variant="default" padding="md" className="mb-5">
@@ -120,14 +121,14 @@ export default function TermometroRotina() {
       <View className="flex-row items-center justify-between mb-1">
         <View
           style={{
-            backgroundColor: nivel.fundo,
+            backgroundColor: isNewUser ? '#EDE9FE' : nivel.fundo,
             paddingHorizontal: 10,
             paddingVertical: 4,
             borderRadius: 12,
           }}
         >
-          <Text style={{ fontSize: 12, color: nivel.cor, fontWeight: '700' }}>
-            {nivel.emoji} {nivel.label}
+          <Text style={{ fontSize: 12, color: isNewUser ? '#7C3AED' : nivel.cor, fontWeight: '700' }}>
+            {isNewUser ? '🚀 Dia novo!' : `${nivel.emoji} ${nivel.label}`}
           </Text>
         </View>
         <View className="items-end">

@@ -12,8 +12,9 @@ import { useAuthStore } from '@/stores/authStore';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
+import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -94,9 +95,12 @@ export default function PerfilScreen() {
   const dias35  = gerarUltimos35Dias();
   const semanas = Array.from({ length: 5 }, (_, i) => dias35.slice(i * 7, i * 7 + 7));
 
+  const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
   const [modalAvatar, setModalAvatar] = useState(false);
   const [modalPerfil, setModalPerfil] = useState(false);
   const [hintAberto,  setHintAberto]  = useState<string | null>(null);
+
+  useEffect(() => { loadOnboardingProfile().then(setPlimProfile); }, []);
 
   const [editNome,      setEditNome]      = useState(profile.nome      ?? '');
   const [editApelido,   setEditApelido]   = useState(profile.apelido   ?? '');
@@ -129,7 +133,7 @@ export default function PerfilScreen() {
     return profile.conquistas.find((c) => c.id === id)?.desbloqueada ?? false;
   }
 
-  const nomeExibido = profile.apelido ?? profile.nome ?? 'Explorador';
+  const nomeExibido = profile.apelido ?? profile.nome ?? plimProfile?.profileType.name ?? 'Explorador';
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
@@ -167,6 +171,12 @@ export default function PerfilScreen() {
           </Pressable>
 
           <Text variant="h2" className="text-violet-800 mt-3">{nomeExibido}</Text>
+          {plimProfile && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EDE9FE', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 20, marginTop: 4 }}>
+              <Text style={{ fontSize: 13 }}>{plimProfile.profileType.emoji} </Text>
+              <Text style={{ fontSize: 12, color: '#7C3AED', fontWeight: '600' }}>{plimProfile.profileType.name}</Text>
+            </View>
+          )}
           {profile.bio && (
             <Text variant="small" color="secondary" className="text-center mt-1 px-4">{profile.bio}</Text>
           )}
