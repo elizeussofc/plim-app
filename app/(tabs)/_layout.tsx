@@ -1,5 +1,13 @@
-import { Tabs } from 'expo-router';
-import { Platform, Text as RNText, View } from 'react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { Platform, Pressable, Text as RNText, View } from 'react-native';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
 import Svg, { Circle, Path } from 'react-native-svg';
 
 // Ícones SVG inline para não depender de biblioteca externa no MVP
@@ -62,8 +70,63 @@ function IconPerfil({ color, focused }: { color: string; focused: boolean }) {
   );
 }
 
+function FABDespejo() {
+  const router = useRouter();
+  const pulse = useSharedValue(1);
+
+  useEffect(() => {
+    pulse.value = withRepeat(
+      withSequence(
+        withTiming(1.1, { duration: 1200 }),
+        withTiming(1,   { duration: 1200 }),
+      ),
+      -1,
+    );
+  }, []);
+
+  const pulseStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: pulse.value }],
+  }));
+
+  const tabBarHeight = Platform.OS === 'ios' ? 88 : 68;
+
+  return (
+    <Animated.View
+      style={[
+        {
+          position: 'absolute',
+          right: 16,
+          bottom: tabBarHeight + 12,
+          zIndex: 999,
+        },
+        pulseStyle,
+      ]}
+    >
+      <Pressable
+        onPress={() => router.push('/despejo-mental')}
+        style={{
+          width: 50,
+          height: 50,
+          borderRadius: 25,
+          backgroundColor: '#7C3AED',
+          alignItems: 'center',
+          justifyContent: 'center',
+          shadowColor: '#7C3AED',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.45,
+          shadowRadius: 8,
+          elevation: 10,
+        }}
+      >
+        <RNText style={{ fontSize: 22 }}>🧠</RNText>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 export default function TabsLayout() {
   return (
+    <View style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -130,5 +193,7 @@ export default function TabsLayout() {
         }}
       />
     </Tabs>
+    <FABDespejo />
+    </View>
   );
 }
