@@ -13,6 +13,7 @@ import { useDesafiosStore } from '@/stores/desafiosStore';
 import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
+import { usePaywallStore } from '@/stores/paywallStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
@@ -94,6 +95,9 @@ export default function PerfilScreen() {
 
   const dias35  = gerarUltimos35Dias();
   const semanas = Array.from({ length: 5 }, (_, i) => dias35.slice(i * 7, i * 7 + 7));
+
+  const isPro = profile.plano === 'pro';
+  const abrirPaywall = usePaywallStore((s) => s.abrir);
 
   const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
   const [modalAvatar, setModalAvatar] = useState(false);
@@ -378,21 +382,38 @@ export default function PerfilScreen() {
         </View>
 
         {/* Auth */}
+        {isPro ? (
+          <Card variant="primary" padding="lg" className="mb-4">
+            <Text color="inverse" className="font-bold text-lg mb-1">👑 Plim Pro ativo</Text>
+            <Text color="inverse" className="opacity-80 text-sm">Você tem acesso a todas as features premium. Obrigado pelo apoio!</Text>
+          </Card>
+        ) : (
+          <Card padding="lg" className="mb-4" style={{ backgroundColor: '#1E1B4B' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <Text style={{ fontSize: 22 }}>👑</Text>
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 17 }}>Plim Pro</Text>
+            </View>
+            <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13, lineHeight: 19, marginBottom: 16 }}>
+              IA Coach · Foco ilimitado · Avatar premium · Backup na nuvem e muito mais.
+            </Text>
+            <Button
+              label="🚀 Ver planos Pro"
+              variant="secondary"
+              size="md"
+              className="bg-white"
+              onPress={() => abrirPaywall('Plim Pro')}
+            />
+          </Card>
+        )}
+
         {!session ? (
           <Card variant="primary" padding="lg" className="mb-4">
             <Text color="inverse" className="font-bold text-lg mb-1">Crie sua conta grátis ✨</Text>
-            <Text color="inverse" className="opacity-80 text-sm mb-4">Salve seu progresso e desbloqueie o Plim Pro</Text>
+            <Text color="inverse" className="opacity-80 text-sm mb-4">Salve seu progresso na nuvem</Text>
             <Button label="Criar conta / Entrar" variant="secondary" size="md" className="bg-white" onPress={() => router.push('/(auth)/login')} />
           </Card>
         ) : (
-          <>
-            <Card variant="primary" padding="lg" className="mb-4">
-              <Text color="inverse" className="font-bold text-lg mb-1">Plano Grátis</Text>
-              <Text color="inverse" className="opacity-80 text-sm mb-4">Desbloqueie tudo com o Plim Pro ✨</Text>
-              <Button label="Ver planos Pro" variant="secondary" size="md" className="bg-white" />
-            </Card>
-            <Button label="Sair da conta" variant="ghost" onPress={sair} size="md" />
-          </>
+          <Button label="Sair da conta" variant="ghost" onPress={sair} size="md" />
         )}
       </ScrollView>
 
@@ -508,24 +529,35 @@ export default function PerfilScreen() {
             <SecaoLabel titulo="Acessório" />
             <View className="flex-row gap-2 mb-2">
               {ACESSORIO_OPCOES.map((op) => {
-                const bloqueado = !!op.conquista && !conquistaDesbloqueada(op.conquista);
+                const precisaConquista = !!op.conquista && !conquistaDesbloqueada(op.conquista);
+                const precisaPro = op.id === 'medalha' && !isPro;
+                const bloqueado = precisaConquista || precisaPro;
                 return (
                   <Pressable
                     key={op.id}
-                    onPress={() => { if (!bloqueado) updateAvatarConfig({ acessorio: op.id }); }}
+                    onPress={() => {
+                      if (precisaPro) { abrirPaywall('Medalha premium'); return; }
+                      if (!bloqueado) updateAvatarConfig({ acessorio: op.id });
+                    }}
                     style={{
                       flex: 1,
                       paddingVertical: 10,
                       borderRadius: 12,
                       alignItems: 'center',
-                      opacity: bloqueado ? 0.45 : 1,
+                      opacity: bloqueado ? 0.5 : 1,
                       backgroundColor: profile.avatar_config.acessorio === op.id ? '#EDE9FE' : '#F8FAFC',
                       borderWidth: 1.5,
                       borderColor: profile.avatar_config.acessorio === op.id ? '#7C3AED' : '#E2E8F0',
+                      position: 'relative',
                     }}
                   >
                     <Text style={{ fontSize: 18 }}>{bloqueado ? '🔒' : op.emoji}</Text>
                     <Text style={{ fontSize: 9, color: '#64748B', marginTop: 3 }}>{op.label}</Text>
+                    {precisaPro && (
+                      <View style={{ position: 'absolute', top: -6, right: -4, backgroundColor: '#F97316', borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1 }}>
+                        <Text style={{ fontSize: 7, color: '#fff', fontWeight: '800' }}>PRO</Text>
+                      </View>
+                    )}
                   </Pressable>
                 );
               })}

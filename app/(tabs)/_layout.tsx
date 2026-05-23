@@ -1,3 +1,4 @@
+import PaywallModal from '@/components/PaywallModal';
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { Platform, Pressable, Text as RNText, View } from 'react-native';
@@ -194,6 +195,7 @@ export default function TabsLayout() {
       />
     </Tabs>
     <FABDespejo />
+    <PaywallModal />
     </View>
   );
 }
