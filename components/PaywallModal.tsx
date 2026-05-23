@@ -1,13 +1,10 @@
 import { usePaywallStore } from '@/stores/paywallStore';
-import { useUserStore } from '@/stores/userStore';
-import { useEffect } from 'react';
-import { Alert, Modal, Pressable, ScrollView, View } from 'react-native';
-import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-} from 'react-native-reanimated';
+import { useAuthStore } from '@/stores/authStore';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Text } from '@/components/ui';
+import { iniciarAssinatura, restaurarCompra, type PlanoId } from '@/lib/payments';
 
 const BENEFICIOS = [
   { icone: '🤖', titulo: 'Plim IA Coach', desc: 'Análise semanal do seu padrão e sugestões personalizadas' },
@@ -39,7 +36,8 @@ const PLANOS = [
 
 export default function PaywallModal() {
   const { visivel, origem, fechar } = usePaywallStore();
-  const updateProfile = useUserStore((s) => s.updateProfile);
+  const { session } = useAuthStore();
+  const [loading, setLoading] = useState(false);
 
   const translateY = useSharedValue(600);
 
@@ -55,22 +53,32 @@ export default function PaywallModal() {
     transform: [{ translateY: translateY.value }],
   }));
 
-  function handleAssinar(planoId: string) {
-    Alert.alert(
-      '🚀 Em breve!',
-      `As assinaturas chegam na próxima versão do Plim.\n\nPor enquanto, vamos liberar o Pro para você experimentar!`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Ativar Pro grátis ✨',
-          onPress: () => {
-            updateProfile({ plano: 'pro' });
-            fechar();
-            Alert.alert('👑 Bem-vindo ao Plim Pro!', 'Todas as features premium estão desbloqueadas.');
-          },
-        },
-      ]
-    );
+  async function handleAssinar(planoId: PlanoId) {
+    if (!session?.user?.id) {
+      Alert.alert('Conta necessária', 'Faça login para assinar o Plim Pro.');
+      return;
+    }
+    setLoading(true);
+    const sucesso = await iniciarAssinatura(planoId, session.user.id);
+    setLoading(false);
+    if (sucesso) {
+      fechar();
+      Alert.alert('👑 Bem-vindo ao Plim Pro!', 'Todas as features premium estão desbloqueadas.');
+    } else {
+      Alert.alert('Ops', 'Não foi possível concluir a assinatura. Tente novamente.');
+    }
+  }
+
+  async function handleRestaurar() {
+    setLoading(true);
+    const sucesso = await restaurarCompra();
+    setLoading(false);
+    if (sucesso) {
+      fechar();
+      Alert.alert('✅ Compra restaurada!', 'Seu plano Pro foi reativado.');
+    } else {
+      Alert.alert('Nenhuma compra encontrada', 'Não encontramos assinaturas ativas nesta conta.');
+    }
   }
 
   if (!visivel) return null;
@@ -212,7 +220,7 @@ export default function PaywallModal() {
             {PLANOS.map((plano) => (
               <Pressable
                 key={plano.id}
-                onPress={() => handleAssinar(plano.id)}
+                onPress={() => handleAssinar(plano.id as PlanoId)}
                 style={{
                   flex: 1,
                   borderRadius: 16,
@@ -256,8 +264,9 @@ export default function PaywallModal() {
           <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
             <Pressable
               onPress={() => handleAssinar('anual')}
+              disabled={loading}
               style={{
-                backgroundColor: '#7C3AED',
+                backgroundColor: loading ? '#A78BFA' : '#7C3AED',
                 borderRadius: 18,
                 paddingVertical: 17,
                 alignItems: 'center',
@@ -268,9 +277,13 @@ export default function PaywallModal() {
                 elevation: 8,
               }}
             >
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>
-                🚀 Experimentar 7 dias grátis
-              </Text>
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>
+                  🚀 Experimentar 7 dias grátis
+                </Text>
+              )}
             </Pressable>
             <Text style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', marginTop: 8 }}>
               Sem compromisso · Cancele quando quiser
@@ -279,7 +292,8 @@ export default function PaywallModal() {
 
           {/* Restaurar compra */}
           <Pressable
-            onPress={() => Alert.alert('Restaurar', 'Função disponível após integração com a loja.')}
+            onPress={handleRestaurar}
+            disabled={loading}
             style={{ paddingTop: 16, alignItems: 'center' }}
           >
             <Text style={{ fontSize: 12, color: '#94A3B8', textDecorationLine: 'underline' }}>

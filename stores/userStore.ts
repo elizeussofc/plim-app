@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { avatarConfigPadrao, type AvatarConfig } from '@/components/AvatarPersonagem';
+import { supabase } from '@/lib/supabase';
 export type { AvatarConfig };
 
 export interface Conquista {
@@ -53,6 +54,8 @@ interface UserState {
   addMoedas: (quantidade: number) => void;
   incrementStreak: () => void;
   unlockConquista: (id: string) => void;
+  loadFromSupabase: (userId: string) => Promise<void>;
+  resetProfile: () => void;
 }
 
 const profilePadrao: Profile = {
@@ -135,6 +138,37 @@ export const useUserStore = create<UserState>((set) => ({
         ),
       },
     })),
+
+  loadFromSupabase: async (userId) => {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    if (error || !data) return;
+    set((s) => ({
+      profile: {
+        ...s.profile,
+        id: userId,
+        nome: data.nome ?? s.profile.nome,
+        apelido: data.apelido ?? s.profile.apelido,
+        bio: data.bio ?? s.profile.bio,
+        instagram: data.instagram ?? s.profile.instagram,
+        email: data.email ?? s.profile.email,
+        plano: data.plano ?? s.profile.plano,
+        xp_total: data.xp_total ?? s.profile.xp_total,
+        nivel: data.nivel ?? s.profile.nivel,
+        moedas: data.moedas ?? s.profile.moedas,
+        streak: data.streak ?? s.profile.streak,
+        avatar_emoji: data.avatar_emoji ?? s.profile.avatar_emoji,
+        avatar_config: data.avatar_config ?? s.profile.avatar_config,
+        conquistas: data.conquistas?.length ? data.conquistas : s.profile.conquistas,
+        preferencias: data.preferencias ?? s.profile.preferencias,
+      },
+    }));
+  },
+
+  resetProfile: () => set({ profile: { ...profilePadrao } }),
 }));
 
 // ── Hidratação manual (compatível com Expo web + native) ──────────────────────
@@ -158,11 +192,31 @@ AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
   } catch {}
 }).catch(() => {});
 
-// Salva 400ms após a última mudança (debounce)
+// Salva 400ms após a última mudança (debounce) — local + Supabase
 let _saveTimer: ReturnType<typeof setTimeout> | null = null;
 useUserStore.subscribe((state) => {
   if (_saveTimer) clearTimeout(_saveTimer);
   _saveTimer = setTimeout(() => {
-    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ profile: state.profile })).catch(() => {});
+    const { profile } = state;
+    AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ profile })).catch(() => {});
+
+    if (profile.id === 'local') return;
+    supabase.from('profiles').upsert({
+      id: profile.id,
+      nome: profile.nome,
+      apelido: profile.apelido,
+      bio: profile.bio,
+      instagram: profile.instagram,
+      email: profile.email,
+      plano: profile.plano,
+      xp_total: profile.xp_total,
+      nivel: profile.nivel,
+      moedas: profile.moedas,
+      streak: profile.streak,
+      avatar_emoji: profile.avatar_emoji,
+      avatar_config: profile.avatar_config,
+      conquistas: profile.conquistas,
+      preferencias: profile.preferencias,
+    }).then(() => {});
   }, 400);
 });
