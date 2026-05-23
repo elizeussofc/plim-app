@@ -1,7 +1,15 @@
 import { usePaywallStore } from '@/stores/paywallStore';
 import { useAuthStore } from '@/stores/authStore';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, View } from 'react-native';
+import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
+
+function mostrarAlerta(titulo: string, msg: string) {
+  if (Platform.OS === 'web') {
+    window.alert(`${titulo}\n${msg}`);
+  } else {
+    Alert.alert(titulo, msg);
+  }
+}
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { Text } from '@/components/ui';
 import { iniciarAssinatura, restaurarCompra, type PlanoId } from '@/lib/payments';
@@ -55,7 +63,7 @@ export default function PaywallModal() {
 
   async function handleAssinar(planoId: PlanoId) {
     if (!session?.user?.id) {
-      Alert.alert('Conta necessária', 'Faça login para assinar o Plim Pro.');
+      mostrarAlerta('Conta necessária', 'Faça login para assinar o Plim Pro.');
       return;
     }
     setLoading(true);
@@ -63,9 +71,9 @@ export default function PaywallModal() {
     setLoading(false);
     if (sucesso) {
       fechar();
-      Alert.alert('👑 Bem-vindo ao Plim Pro!', 'Todas as features premium estão desbloqueadas.');
+      mostrarAlerta('👑 Bem-vindo ao Plim Pro!', 'Todas as features premium estão desbloqueadas.');
     } else {
-      Alert.alert('Ops', 'Não foi possível concluir a assinatura. Tente novamente.');
+      mostrarAlerta('Ops', 'Não foi possível concluir a assinatura. Tente novamente.');
     }
   }
 
@@ -75,9 +83,9 @@ export default function PaywallModal() {
     setLoading(false);
     if (sucesso) {
       fechar();
-      Alert.alert('✅ Compra restaurada!', 'Seu plano Pro foi reativado.');
+      mostrarAlerta('✅ Compra restaurada!', 'Seu plano Pro foi reativado.');
     } else {
-      Alert.alert('Nenhuma compra encontrada', 'Não encontramos assinaturas ativas nesta conta.');
+      mostrarAlerta('Nenhuma compra encontrada', 'Não encontramos assinaturas ativas nesta conta.');
     }
   }
 
@@ -93,7 +101,7 @@ export default function PaywallModal() {
     >
       {/* Backdrop */}
       <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)' }}
+        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 1 }}
         onPress={fechar}
       />
 
@@ -113,6 +121,7 @@ export default function PaywallModal() {
             borderTopRightRadius: 28,
             maxHeight: '90%',
             overflow: 'hidden',
+            zIndex: 2,
           },
           sheetStyle,
         ]}
