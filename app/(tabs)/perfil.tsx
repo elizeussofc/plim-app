@@ -1,11 +1,5 @@
 import { Badge, Button, Card, Text } from '@/components/ui';
-import AvatarPersonagem, {
-  type Acessorio,
-  type CorCabelo,
-  type EstiloCabelo,
-  type Roupa,
-  type SkinTom,
-} from '@/components/AvatarPersonagem';
+import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
@@ -45,42 +39,82 @@ function gerarUltimos35Dias(): string[] {
   return dias;
 }
 
-// ── opções de customização ──────────────────────────────────────────────────
+// ── Opções de customização DiceBear ────────────────────────────────────────
 
-const SKIN_OPCOES: { id: SkinTom; cor: string; label: string }[] = [
-  { id: 'claro',   cor: '#FDDBB4', label: 'Claro'    },
-  { id: 'medio',   cor: '#E8A87C', label: 'Médio'    },
-  { id: 'canela',  cor: '#C68642', label: 'Canela'   },
-  { id: 'escuro',  cor: '#8D5524', label: 'Escuro'   },
+const SKIN_COLORS = [
+  { hex: 'ffd3b5', label: 'Rosa claro' },
+  { hex: 'f5c5a3', label: 'Claro' },
+  { hex: 'e8a87c', label: 'Médio' },
+  { hex: 'd4956a', label: 'Moreno' },
+  { hex: 'c68642', label: 'Canela' },
+  { hex: '8d5524', label: 'Escuro' },
 ];
 
-const CABELO_OPCOES: { id: EstiloCabelo; emoji: string; label: string }[] = [
-  { id: 'curto',    emoji: '💇', label: 'Curto'    },
-  { id: 'longo',    emoji: '👱', label: 'Longo'    },
-  { id: 'cacheado', emoji: '🌀', label: 'Cacheado' },
-  { id: 'careca',   emoji: '🧑‍🦲', label: 'Careca'  },
+const HAIR_COLORS = [
+  { hex: '1a1a2e', label: 'Preto' },
+  { hex: '4a2c0f', label: 'Castanho' },
+  { hex: 'cc4125', label: 'Ruivo' },
+  { hex: 'f4c430', label: 'Loiro' },
+  { hex: 'f5f5f5', label: 'Branco' },
+  { hex: '7c3aed', label: 'Roxo' },
+  { hex: '1d4ed8', label: 'Azul' },
+  { hex: '10b981', label: 'Verde' },
 ];
 
-const COR_CABELO_OPCOES: { id: CorCabelo; cor: string; label: string }[] = [
-  { id: 'preto',    cor: '#1A1A2E', label: 'Preto'    },
-  { id: 'castanho', cor: '#7B3F00', label: 'Castanho' },
-  { id: 'loiro',    cor: '#F4C430', label: 'Loiro'    },
-  { id: 'ruivo',    cor: '#CC4125', label: 'Ruivo'    },
-  { id: 'roxo',     cor: '#7C3AED', label: 'Roxo'     },
+const HAIR_MASCULINO = [
+  { id: 'short01', label: 'Liso' },
+  { id: 'short02', label: 'Ondulado' },
+  { id: 'short03', label: 'Desalinch.' },
+  { id: 'short04', label: 'Pompadour' },
+  { id: 'short05', label: 'Clássico' },
+  { id: 'short06', label: 'Vintage' },
+  { id: 'short07', label: 'Rapado' },
+  { id: 'short08', label: 'Moderno' },
+  { id: 'short09', label: 'Crespo' },
+  { id: 'short10', label: 'Cacheado' },
+  { id: 'short11', label: 'Lateral' },
+  { id: 'short12', label: 'Rebelde' },
 ];
 
-const ROUPA_OPCOES: { id: Roupa; emoji: string; label: string; cor: string }[] = [
-  { id: 'padrao', emoji: '👕', label: 'Padrão',    cor: '#7C3AED' },
-  { id: 'sport',  emoji: '🏃', label: 'Sport',     cor: '#10B981' },
-  { id: 'casual', emoji: '🧢', label: 'Casual',    cor: '#F97316' },
-  { id: 'pro',    emoji: '💼', label: 'Profissional', cor: '#1E293B' },
+const HAIR_FEMININO = [
+  { id: 'long01', label: 'Liso' },
+  { id: 'long02', label: 'Ondas' },
+  { id: 'long03', label: 'Cacheado' },
+  { id: 'long04', label: 'Trança' },
+  { id: 'long05', label: 'Clássico' },
+  { id: 'long06', label: 'Coque' },
+  { id: 'long07', label: 'Franja' },
+  { id: 'long08', label: 'Rabo' },
+  { id: 'long09', label: 'Curto' },
+  { id: 'long10', label: 'Pixie' },
+  { id: 'long11', label: 'Bob' },
+  { id: 'long12', label: 'Volume' },
 ];
 
-const ACESSORIO_OPCOES: { id: Acessorio; emoji: string; label: string; conquista?: string }[] = [
-  { id: 'nenhum',  emoji: '—',  label: 'Nenhum'   },
-  { id: 'oculos',  emoji: '👓', label: 'Óculos'   },
-  { id: 'chapeu',  emoji: '🎩', label: 'Chapéu',  conquista: 'tres_dias' },
-  { id: 'medalha', emoji: '🥇', label: 'Medalha', conquista: 'semana_perfeita' },
+const EYEBROW_OPCOES = [
+  { id: 'variant01', label: 'Natural' },
+  { id: 'variant03', label: 'Arqueada' },
+  { id: 'variant06', label: 'Fina' },
+  { id: 'variant10', label: 'Grossa' },
+];
+
+const GLASSES_OPCOES = [
+  { id: '',          label: 'Nenhum' },
+  { id: 'variant01', label: 'Round' },
+  { id: 'variant02', label: 'Retro' },
+  { id: 'variant03', label: 'Cat eye' },
+  { id: 'variant04', label: 'Aviador' },
+  { id: 'variant05', label: 'Sport' },
+];
+
+const BG_COLORS = [
+  { hex: 'ede9fe', label: 'Lavanda' },
+  { hex: 'dbeafe', label: 'Azul' },
+  { hex: 'd1fae5', label: 'Verde' },
+  { hex: 'fef3c7', label: 'Amarelo' },
+  { hex: 'fce7f3', label: 'Rosa' },
+  { hex: 'f0fdf4', label: 'Menta' },
+  { hex: '1e1b4b', label: 'Dark' },
 ];
 
 // ── componente principal ───────────────────────────────────────────────────
@@ -116,8 +150,30 @@ export default function PerfilScreen() {
   const xpProxNivel = nivel * 100;
   const xpProgresso = Math.min(xp / xpProxNivel, 1);
 
-  const score    = calcularScoreRotina(tarefas, profile.streak, xp);
+  const score     = calcularScoreRotina(tarefas, profile.streak, xp);
   const expressao = expressaoDoScore(score);
+
+  const nomeExibido = profile.apelido ?? profile.nome ?? plimProfile?.profileType.name ?? 'Explorador';
+
+  const hairOptions = profile.avatar_config.genero === 'feminino' ? HAIR_FEMININO : HAIR_MASCULINO;
+
+  function toggleFeature(feature: string) {
+    const current = profile.avatar_config.features ?? [];
+    const updated = current.includes(feature)
+      ? current.filter((f) => f !== feature)
+      : [...current, feature];
+    updateAvatarConfig({ features: updated });
+  }
+
+  function setGenero(genero: 'masculino' | 'feminino') {
+    const currentHair = profile.avatar_config.hairStyle;
+    const maleIds   = HAIR_MASCULINO.map((h) => h.id);
+    const femaleIds = HAIR_FEMININO.map((h) => h.id);
+    let hairStyle = currentHair;
+    if (genero === 'masculino' && !maleIds.includes(currentHair))   hairStyle = 'short05';
+    if (genero === 'feminino'  && !femaleIds.includes(currentHair)) hairStyle = 'long05';
+    updateAvatarConfig({ genero, hairStyle });
+  }
 
   function salvarPerfil() {
     updateProfile({
@@ -132,12 +188,6 @@ export default function PerfilScreen() {
   async function sair() {
     await supabase.auth.signOut();
   }
-
-  function conquistaDesbloqueada(id: string) {
-    return profile.conquistas.find((c) => c.id === id)?.desbloqueada ?? false;
-  }
-
-  const nomeExibido = profile.apelido ?? profile.nome ?? plimProfile?.profileType.name ?? 'Explorador';
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
@@ -155,9 +205,7 @@ export default function PerfilScreen() {
                 width: 140,
                 height: 140,
                 borderRadius: 70,
-                backgroundColor: '#EDE9FE',
                 overflow: 'hidden',
-                alignItems: 'center',
                 shadowColor: '#7C3AED',
                 shadowOffset: { width: 0, height: 4 },
                 shadowOpacity: 0.25,
@@ -165,13 +213,7 @@ export default function PerfilScreen() {
                 elevation: 8,
               }}
             >
-              <View style={{ marginTop: -8 }}>
-                <AvatarPersonagem
-                  config={profile.avatar_config}
-                  expressao={expressao}
-                  size={160}
-                />
-              </View>
+              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={140} />
             </View>
             <View className="bg-violet-100 px-3 py-1 rounded-full self-center mt-2">
               <Text variant="caption" className="text-violet-600 font-semibold">✏️ Personalizar</Text>
@@ -381,7 +423,7 @@ export default function PerfilScreen() {
           </Pressable>
         </View>
 
-        {/* Auth */}
+        {/* Plim Pro / Auth */}
         {isPro ? (
           <Card variant="primary" padding="lg" className="mb-4">
             <Text color="inverse" className="font-bold text-lg mb-1">👑 Plim Pro ativo</Text>
@@ -420,151 +462,255 @@ export default function PerfilScreen() {
       {/* ── Modal: Personalizar Avatar ── */}
       <Modal visible={modalAvatar} animationType="slide" transparent onRequestClose={() => setModalAvatar(false)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setModalAvatar(false)} />
-        <View style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '85%' }}>
-          <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+        <View style={{ backgroundColor: 'white', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%' }}>
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
             {/* Handle */}
             <View style={{ width: 40, height: 4, backgroundColor: '#E2E8F0', borderRadius: 2, alignSelf: 'center', marginTop: 12, marginBottom: 16 }} />
 
             {/* Preview ao vivo */}
             <View style={{ alignItems: 'center', marginBottom: 20 }}>
               <Text variant="h3" className="text-violet-800 mb-3">Personalizar personagem</Text>
-              <View style={{ width: 130, height: 130, borderRadius: 65, backgroundColor: '#EDE9FE', overflow: 'hidden', alignItems: 'center' }}>
-                <View style={{ marginTop: -8 }}>
-                  <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={150} />
-                </View>
+              <View style={{ width: 130, height: 130, borderRadius: 65, overflow: 'hidden' }}>
+                <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={130} />
               </View>
             </View>
 
-            {/* Tom de pele */}
-            <SecaoLabel titulo="Tom de pele" />
-            <View className="flex-row gap-3 mb-5">
-              {SKIN_OPCOES.map((op) => (
-                <Pressable
-                  key={op.id}
-                  onPress={() => updateAvatarConfig({ skinTom: op.id })}
-                  style={{
-                    flex: 1,
-                    aspectRatio: 1,
-                    borderRadius: 12,
-                    backgroundColor: op.cor,
-                    borderWidth: profile.avatar_config.skinTom === op.id ? 3 : 1.5,
-                    borderColor: profile.avatar_config.skinTom === op.id ? '#7C3AED' : 'transparent',
-                  }}
-                />
-              ))}
-            </View>
-
-            {/* Cabelo */}
-            <SecaoLabel titulo="Estilo de cabelo" />
-            <View className="flex-row gap-2 mb-5">
-              {CABELO_OPCOES.map((op) => (
-                <Pressable
-                  key={op.id}
-                  onPress={() => updateAvatarConfig({ cabelo: op.id })}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 10,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    backgroundColor: profile.avatar_config.cabelo === op.id ? '#EDE9FE' : '#F8FAFC',
-                    borderWidth: 1.5,
-                    borderColor: profile.avatar_config.cabelo === op.id ? '#7C3AED' : '#E2E8F0',
-                  }}
-                >
-                  <Text style={{ fontSize: 18 }}>{op.emoji}</Text>
-                  <Text style={{ fontSize: 9, color: '#64748B', marginTop: 3 }}>{op.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {/* Cor do cabelo */}
-            <SecaoLabel titulo="Cor do cabelo" />
-            <View className="flex-row gap-2 mb-5">
-              {COR_CABELO_OPCOES.map((op) => (
-                <Pressable
-                  key={op.id}
-                  onPress={() => updateAvatarConfig({ corCabelo: op.id })}
-                  style={{
-                    flex: 1,
-                    height: 36,
-                    borderRadius: 10,
-                    backgroundColor: op.cor,
-                    borderWidth: profile.avatar_config.corCabelo === op.id ? 3 : 1.5,
-                    borderColor: profile.avatar_config.corCabelo === op.id ? '#7C3AED' : 'transparent',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  {profile.avatar_config.corCabelo === op.id && (
-                    <Text style={{ color: 'white', fontSize: 14, fontWeight: '800' }}>✓</Text>
-                  )}
-                </Pressable>
-              ))}
-            </View>
-
-            {/* Roupa */}
-            <SecaoLabel titulo="Roupa" />
-            <View className="flex-row gap-2 mb-5">
-              {ROUPA_OPCOES.map((op) => (
-                <Pressable
-                  key={op.id}
-                  onPress={() => updateAvatarConfig({ roupa: op.id })}
-                  style={{
-                    flex: 1,
-                    paddingVertical: 10,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    backgroundColor: profile.avatar_config.roupa === op.id ? '#EDE9FE' : '#F8FAFC',
-                    borderWidth: 1.5,
-                    borderColor: profile.avatar_config.roupa === op.id ? '#7C3AED' : '#E2E8F0',
-                  }}
-                >
-                  <Text style={{ fontSize: 18 }}>{op.emoji}</Text>
-                  <Text style={{ fontSize: 9, color: '#64748B', marginTop: 3 }}>{op.label}</Text>
-                </Pressable>
-              ))}
-            </View>
-
-            {/* Acessórios */}
-            <SecaoLabel titulo="Acessório" />
-            <View className="flex-row gap-2 mb-2">
-              {ACESSORIO_OPCOES.map((op) => {
-                const precisaConquista = !!op.conquista && !conquistaDesbloqueada(op.conquista);
-                const precisaPro = op.id === 'medalha' && !isPro;
-                const bloqueado = precisaConquista || precisaPro;
+            {/* Gênero */}
+            <SecaoLabel titulo="Gênero" />
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
+              {(['masculino', 'feminino'] as const).map((g) => {
+                const ativo = profile.avatar_config.genero === g;
                 return (
                   <Pressable
-                    key={op.id}
-                    onPress={() => {
-                      if (precisaPro) { abrirPaywall('Medalha premium'); return; }
-                      if (!bloqueado) updateAvatarConfig({ acessorio: op.id });
-                    }}
+                    key={g}
+                    onPress={() => setGenero(g)}
                     style={{
                       flex: 1,
-                      paddingVertical: 10,
-                      borderRadius: 12,
+                      paddingVertical: 12,
+                      borderRadius: 14,
                       alignItems: 'center',
-                      opacity: bloqueado ? 0.5 : 1,
-                      backgroundColor: profile.avatar_config.acessorio === op.id ? '#EDE9FE' : '#F8FAFC',
-                      borderWidth: 1.5,
-                      borderColor: profile.avatar_config.acessorio === op.id ? '#7C3AED' : '#E2E8F0',
-                      position: 'relative',
+                      backgroundColor: ativo ? '#7C3AED' : '#F8FAFC',
+                      borderWidth: 2,
+                      borderColor: ativo ? '#7C3AED' : '#E2E8F0',
                     }}
                   >
-                    <Text style={{ fontSize: 18 }}>{bloqueado ? '🔒' : op.emoji}</Text>
-                    <Text style={{ fontSize: 9, color: '#64748B', marginTop: 3 }}>{op.label}</Text>
-                    {precisaPro && (
-                      <View style={{ position: 'absolute', top: -6, right: -4, backgroundColor: '#F97316', borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1 }}>
-                        <Text style={{ fontSize: 7, color: '#fff', fontWeight: '800' }}>PRO</Text>
-                      </View>
-                    )}
+                    <Text style={{ fontSize: 20, marginBottom: 4 }}>{g === 'masculino' ? '👦' : '👧'}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: ativo ? '#fff' : '#64748B' }}>
+                      {g === 'masculino' ? 'Masculino' : 'Feminino'}
+                    </Text>
                   </Pressable>
                 );
               })}
             </View>
-            <Text style={{ fontSize: 10, color: '#94A3B8', marginBottom: 20 }}>
-              🔒 Chapéu: streak de 3 dias · Medalha: semana perfeita
-            </Text>
+
+            {/* Tom de pele */}
+            <SecaoLabel titulo="Tom de pele" />
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
+              {SKIN_COLORS.map((op) => {
+                const ativo = profile.avatar_config.skinColor === op.hex;
+                return (
+                  <Pressable
+                    key={op.hex}
+                    onPress={() => updateAvatarConfig({ skinColor: op.hex })}
+                    style={{
+                      flex: 1,
+                      aspectRatio: 1,
+                      borderRadius: 12,
+                      backgroundColor: `#${op.hex}`,
+                      borderWidth: ativo ? 3 : 1.5,
+                      borderColor: ativo ? '#7C3AED' : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {ativo && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800', textShadowColor: 'rgba(0,0,0,0.4)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }}>✓</Text>}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Cabelo */}
+            <SecaoLabel titulo={`Cabelo ${profile.avatar_config.genero === 'feminino' ? '(feminino)' : '(masculino)'}`} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+              {hairOptions.map((op) => {
+                const ativo = profile.avatar_config.hairStyle === op.id;
+                return (
+                  <Pressable
+                    key={op.id}
+                    onPress={() => updateAvatarConfig({ hairStyle: op.id })}
+                    style={{
+                      width: '30%',
+                      paddingVertical: 10,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                      backgroundColor: ativo ? '#EDE9FE' : '#F8FAFC',
+                      borderWidth: 1.5,
+                      borderColor: ativo ? '#7C3AED' : '#E2E8F0',
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, color: ativo ? '#7C3AED' : '#64748B', fontWeight: ativo ? '700' : '400' }}>
+                      {op.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Cor do cabelo */}
+            <SecaoLabel titulo="Cor do cabelo" />
+            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 20 }}>
+              {HAIR_COLORS.map((op) => {
+                const ativo = profile.avatar_config.hairColor === op.hex;
+                return (
+                  <Pressable
+                    key={op.hex}
+                    onPress={() => updateAvatarConfig({ hairColor: op.hex })}
+                    style={{
+                      flex: 1,
+                      height: 32,
+                      borderRadius: 8,
+                      backgroundColor: `#${op.hex}`,
+                      borderWidth: ativo ? 3 : 1.5,
+                      borderColor: ativo ? '#7C3AED' : 'rgba(0,0,0,0.1)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {ativo && <Text style={{ color: '#7C3AED', fontSize: 11, fontWeight: '800', textShadowColor: 'rgba(255,255,255,0.8)', textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 3 }}>✓</Text>}
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Sobrancelhas */}
+            <SecaoLabel titulo="Sobrancelhas" />
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
+              {EYEBROW_OPCOES.map((op) => {
+                const ativo = profile.avatar_config.eyebrowsStyle === op.id;
+                return (
+                  <Pressable
+                    key={op.id}
+                    onPress={() => updateAvatarConfig({ eyebrowsStyle: op.id })}
+                    style={{
+                      flex: 1,
+                      paddingVertical: 10,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                      backgroundColor: ativo ? '#EDE9FE' : '#F8FAFC',
+                      borderWidth: 1.5,
+                      borderColor: ativo ? '#7C3AED' : '#E2E8F0',
+                    }}
+                  >
+                    <Text style={{ fontSize: 10, color: ativo ? '#7C3AED' : '#64748B', fontWeight: ativo ? '700' : '400' }}>
+                      {op.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Características */}
+            <SecaoLabel titulo="Características" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              {[
+                { id: 'freckles',  label: 'Sardas' },
+                { id: 'blush',     label: 'Blush' },
+                { id: 'birthmark', label: 'Sinal' },
+                ...(profile.avatar_config.genero === 'masculino'
+                  ? [{ id: 'mustache', label: 'Bigode' }]
+                  : []),
+              ].map((feat) => {
+                const ativo = (profile.avatar_config.features ?? []).includes(feat.id);
+                return (
+                  <Pressable
+                    key={feat.id}
+                    onPress={() => toggleFeature(feat.id)}
+                    style={{
+                      paddingHorizontal: 16,
+                      paddingVertical: 9,
+                      borderRadius: 20,
+                      backgroundColor: ativo ? '#7C3AED' : '#F8FAFC',
+                      borderWidth: 1.5,
+                      borderColor: ativo ? '#7C3AED' : '#E2E8F0',
+                    }}
+                  >
+                    <Text style={{ color: ativo ? '#fff' : '#64748B', fontSize: 13, fontWeight: ativo ? '700' : '400' }}>
+                      {feat.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+              {profile.avatar_config.genero === 'feminino' && (
+                <Pressable
+                  onPress={() => updateAvatarConfig({ earrings: !profile.avatar_config.earrings })}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 9,
+                    borderRadius: 20,
+                    backgroundColor: profile.avatar_config.earrings ? '#7C3AED' : '#F8FAFC',
+                    borderWidth: 1.5,
+                    borderColor: profile.avatar_config.earrings ? '#7C3AED' : '#E2E8F0',
+                  }}
+                >
+                  <Text style={{ color: profile.avatar_config.earrings ? '#fff' : '#64748B', fontSize: 13, fontWeight: profile.avatar_config.earrings ? '700' : '400' }}>
+                    Brincos
+                  </Text>
+                </Pressable>
+              )}
+            </View>
+
+            {/* Óculos */}
+            <SecaoLabel titulo="Óculos" />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+              {GLASSES_OPCOES.map((op) => {
+                const ativo = profile.avatar_config.glassesStyle === op.id;
+                return (
+                  <Pressable
+                    key={op.id}
+                    onPress={() => updateAvatarConfig({ glassesStyle: op.id })}
+                    style={{
+                      paddingHorizontal: 14,
+                      paddingVertical: 9,
+                      borderRadius: 10,
+                      alignItems: 'center',
+                      backgroundColor: ativo ? '#EDE9FE' : '#F8FAFC',
+                      borderWidth: 1.5,
+                      borderColor: ativo ? '#7C3AED' : '#E2E8F0',
+                    }}
+                  >
+                    <Text style={{ fontSize: 11, color: ativo ? '#7C3AED' : '#64748B', fontWeight: ativo ? '700' : '400' }}>
+                      {op.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            {/* Cor de fundo */}
+            <SecaoLabel titulo="Cor de fundo" />
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+              {BG_COLORS.map((op) => {
+                const ativo = profile.avatar_config.backgroundColor === op.hex;
+                return (
+                  <Pressable
+                    key={op.hex}
+                    onPress={() => updateAvatarConfig({ backgroundColor: op.hex })}
+                    style={{
+                      flex: 1,
+                      aspectRatio: 1,
+                      borderRadius: 10,
+                      backgroundColor: `#${op.hex}`,
+                      borderWidth: ativo ? 3 : 1.5,
+                      borderColor: ativo ? '#7C3AED' : 'rgba(0,0,0,0.08)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {ativo && <Text style={{ color: '#7C3AED', fontSize: 12, fontWeight: '800' }}>✓</Text>}
+                  </Pressable>
+                );
+              })}
+            </View>
 
             <Pressable
               onPress={() => setModalAvatar(false)}

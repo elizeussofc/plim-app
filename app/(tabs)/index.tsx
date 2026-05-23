@@ -77,23 +77,8 @@ export default function InicioScreen() {
             onPress={() => router.push('/(tabs)/perfil')}
             className="active:opacity-70"
           >
-            <View
-              style={{
-                width: 56,
-                height: 56,
-                borderRadius: 28,
-                backgroundColor: '#EDE9FE',
-                overflow: 'hidden',
-                alignItems: 'center',
-              }}
-            >
-              <View style={{ marginTop: -6 }}>
-                <AvatarPersonagem
-                  config={profile.avatar_config}
-                  expressao={expressao}
-                  size={68}
-                />
-              </View>
+            <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden' }}>
+              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={56} />
             </View>
           </Pressable>
         </View>

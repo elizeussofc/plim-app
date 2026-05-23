@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-export type { AvatarConfig } from '@/components/AvatarPersonagem';
+import { avatarConfigPadrao, type AvatarConfig } from '@/components/AvatarPersonagem';
+export type { AvatarConfig };
 
 export interface Conquista {
   id: string;
@@ -67,13 +68,7 @@ const profilePadrao: Profile = {
   moedas: 0,
   streak: 0,
   avatar_emoji: '⚡',
-  avatar_config: {
-    skinTom: 'medio' as const,
-    cabelo: 'curto' as const,
-    corCabelo: 'preto' as const,
-    roupa: 'padrao' as const,
-    acessorio: 'nenhum' as const,
-  },
+  avatar_config: { ...avatarConfigPadrao },
   conquistas: conquistasIniciais,
   preferencias: {
     modo_baixo_estimulo: false,
@@ -149,8 +144,15 @@ AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
   try {
     const saved = JSON.parse(raw);
     if (saved?.profile) {
+      const loaded = { ...saved.profile };
+      // Migra avatar_config antigo (skinTom-based) para o novo formato DiceBear
+      if (loaded.avatar_config && 'skinTom' in loaded.avatar_config) {
+        loaded.avatar_config = { ...avatarConfigPadrao };
+      } else if (loaded.avatar_config && !Array.isArray(loaded.avatar_config.features)) {
+        loaded.avatar_config.features = [];
+      }
       useUserStore.setState((s) => ({
-        profile: { ...s.profile, ...saved.profile },
+        profile: { ...s.profile, ...loaded },
       }));
     }
   } catch {}

@@ -11,6 +11,8 @@
     "postinstall": "patch-package"
   },
   "dependencies": {
+    "@dicebear/collection": "^9.4.2",
+    "@dicebear/core": "^9.4.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@supabase/supabase-js": "^2.106.0",
     "@tanstack/react-query": "^5.100.11",
