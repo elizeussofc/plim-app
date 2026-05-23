@@ -12,7 +12,7 @@ const queryClient = new QueryClient({
 });
 
 const RC_KEY_IOS = 'test_YWBUdIQtLKNfmunQBMZGDrSaRnc';
-const RC_KEY_ANDROID = 'test_YWBUdIQtLKNfmunQBMZGDrSaRnc';
+const RC_KEY_ANDROID = 'goog_EfwRlQSSEexvVTJEXMHoDWqwDQH';
 
 function RevenueCatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
