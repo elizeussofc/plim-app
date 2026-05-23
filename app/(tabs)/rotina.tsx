@@ -249,9 +249,12 @@ export default function RotinaScreen() {
 
         {tarefas.length === 0 && (
           <Card variant="flat" padding="md" className="mt-5 items-center">
-            <Text className="text-3xl mb-2">✨</Text>
+            <Text className="text-3xl mb-2">🚀</Text>
+            <Text className="text-center font-semibold text-violet-700 mb-1">
+              Vamos começar?
+            </Text>
             <Text color="secondary" className="text-center text-sm">
-              Sua rotina está vazia.{'\n'}Adicione sua primeira tarefa!
+              Adicione sua primeira tarefa abaixo!
             </Text>
           </Card>
         )}
