@@ -4,7 +4,9 @@ import TermometroRotina, { calcularScoreRotina, expressaoDoScore } from '@/compo
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRotinaStore } from '@/stores/rotinaStore';
+import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
 import { useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,7 +23,10 @@ export default function InicioScreen() {
   const tarefas  = useRotinaStore((s) => s.tarefas);
   const desafios = useDesafiosStore((s) => s.desafios);
 
-  const apelido = profile?.apelido ?? profile?.nome ?? 'Viajante';
+  const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
+  useEffect(() => { loadOnboardingProfile().then(setPlimProfile); }, []);
+
+  const apelido = plimProfile?.profileType.name ?? profile?.apelido ?? profile?.nome ?? 'Viajante';
   const hora = new Date().getHours();
   const saudacao = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
 
