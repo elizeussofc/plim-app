@@ -17,6 +17,15 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+const CONQUISTA_HINTS: Record<string, string> = {
+  primeiro_passo:  'Complete 1 tarefa na sua Rotina para desbloquear.',
+  despejou:        'Use o Despejo Mental pelo menos uma vez.',
+  foco_total:      'Complete uma Sessão de Foco (Pomodoro).',
+  tres_dias:       'Mantenha um streak de 3 dias seguidos.',
+  comunidade:      'Compartilhe algo na Comunidade do Plim.',
+  semana_perfeita: 'Mantenha um streak de 7 dias consecutivos.',
+};
+
 const corDia: Record<StatusDia, string> = {
   vazia:    '#E2E8F0',
   parcial:  '#C4B5FD',
@@ -87,6 +96,7 @@ export default function PerfilScreen() {
 
   const [modalAvatar, setModalAvatar] = useState(false);
   const [modalPerfil, setModalPerfil] = useState(false);
+  const [hintAberto,  setHintAberto]  = useState<string | null>(null);
 
   const [editNome,      setEditNome]      = useState(profile.nome      ?? '');
   const [editApelido,   setEditApelido]   = useState(profile.apelido   ?? '');
@@ -272,24 +282,63 @@ export default function PerfilScreen() {
         {/* Conquistas */}
         <Text variant="h3" className="mb-3">Conquistas</Text>
         <View className="gap-3 mb-6">
-          {profile.conquistas.map((c) => (
-            <Card key={c.id} variant="default" padding="md" className={c.desbloqueada ? '' : 'opacity-40'}>
-              <View className="flex-row items-center gap-4">
-                <View className={`w-12 h-12 rounded-2xl items-center justify-center ${c.desbloqueada ? 'bg-violet-100' : 'bg-slate-100'}`}>
-                  <Text className="text-2xl">{c.desbloqueada ? c.icone : '🔒'}</Text>
-                </View>
-                <View className="flex-1">
-                  <Text className="font-semibold text-slate-800">{c.nome}</Text>
-                  <Text variant="small" color="secondary">{c.desc}</Text>
-                </View>
-                {c.desbloqueada && (
-                  <View className="bg-violet-100 px-2 py-1 rounded-full">
-                    <Text variant="caption" className="text-violet-600 font-semibold">✅</Text>
+          {profile.conquistas.map((c) => {
+            const progressoStreak =
+              c.id === 'tres_dias'       ? Math.min(profile.streak / 3, 1) :
+              c.id === 'semana_perfeita' ? Math.min(profile.streak / 7, 1) : 0;
+            const temBarra = !c.desbloqueada && progressoStreak > 0;
+            const hintVisivel = hintAberto === c.id;
+
+            return (
+              <Pressable
+                key={c.id}
+                onPress={() => !c.desbloqueada && setHintAberto(hintVisivel ? null : c.id)}
+                disabled={c.desbloqueada}
+              >
+                <Card variant="default" padding="md" className={c.desbloqueada ? '' : 'opacity-60'}>
+                  <View className="flex-row items-center gap-4">
+                    <View className={`w-12 h-12 rounded-2xl items-center justify-center ${c.desbloqueada ? 'bg-violet-100' : 'bg-slate-100'}`}>
+                      <Text className="text-2xl">{c.desbloqueada ? c.icone : '🔒'}</Text>
+                    </View>
+                    <View className="flex-1">
+                      <Text className="font-semibold text-slate-800">{c.nome}</Text>
+                      <Text variant="small" color="secondary">{c.desc}</Text>
+                      {temBarra && (
+                        <View className="mt-2">
+                          <View className="bg-slate-200 rounded-full h-1.5">
+                            <View
+                              className="bg-violet-400 h-1.5 rounded-full"
+                              style={{ width: `${Math.round(progressoStreak * 100)}%` as any }}
+                            />
+                          </View>
+                          <Text variant="caption" color="muted" className="mt-0.5">
+                            {c.id === 'tres_dias'
+                              ? `${profile.streak}/3 dias`
+                              : `${profile.streak}/7 dias`}
+                          </Text>
+                        </View>
+                      )}
+                      {hintVisivel && (
+                        <View className="mt-2 bg-violet-50 rounded-xl px-3 py-2">
+                          <Text variant="caption" className="text-violet-700">
+                            💡 {CONQUISTA_HINTS[c.id] ?? 'Continue usando o app para desbloquear.'}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    {c.desbloqueada && (
+                      <View className="bg-violet-100 px-2 py-1 rounded-full">
+                        <Text variant="caption" className="text-violet-600 font-semibold">✅</Text>
+                      </View>
+                    )}
+                    {!c.desbloqueada && (
+                      <Text variant="caption" color="muted">toque</Text>
+                    )}
                   </View>
-                )}
-              </View>
-            </Card>
-          ))}
+                </Card>
+              </Pressable>
+            );
+          })}
         </View>
 
         {/* Atalhos */}
