@@ -38,11 +38,48 @@ const tipos: { key: TipoPost; label: string }[] = [
   { key: 'texto',     label: '💬 Texto'      },
 ];
 
-const reacoes: { key: Reacao; emoji: string }[] = [
-  { key: 'apoio',    emoji: '🫂' },
-  { key: 'forca',    emoji: '💪' },
-  { key: 'parabens', emoji: '🎉' },
+const reacoes: { key: Reacao; emoji: string; label: string }[] = [
+  { key: 'apoio',    emoji: '🫂', label: 'Apoio'     },
+  { key: 'forca',    emoji: '💪', label: 'Força'     },
+  { key: 'parabens', emoji: '🎉', label: 'Parabéns'  },
 ];
+
+// Componente separado para evitar violação de hooks dentro de .map()
+function ReacaoBtn({ emoji, label, count, ativo, onPress }: {
+  emoji: string; label: string; count: number; ativo: boolean; onPress: () => void;
+}) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  function press() {
+    scale.value = withSpring(1.3, { damping: 10 }, () => { scale.value = withSpring(1); });
+    onPress();
+  }
+
+  return (
+    <Animated.View style={animStyle}>
+      <Pressable
+        onPress={press}
+        accessibilityLabel={`${label}: ${count}`}
+        accessibilityRole="button"
+        accessibilityState={{ selected: ativo }}
+        android_ripple={{ color: C.primaryLight + '33', borderless: true }}
+        style={{
+          flexDirection: 'row', alignItems: 'center', gap: 5,
+          paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+          minHeight: 44,
+          backgroundColor: ativo ? C.primary + '33' : C.surfaceHigh,
+          borderWidth: 1, borderColor: ativo ? C.primaryLight + '55' : C.border,
+        }}
+      >
+        <Text style={{ fontSize: 14 }}>{emoji}</Text>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: ativo ? C.primaryLight : C.textSub }}>
+          {count}
+        </Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
 
 function PostCard({ post, onReagir, delay }: { post: Post; onReagir: (id: string, r: Reacao) => void; delay: number }) {
   const cor = tipoCor[post.tipo];
@@ -68,30 +105,16 @@ function PostCard({ post, onReagir, delay }: { post: Post; onReagir: (id: string
       <Text style={{ fontSize: 14, color: C.text, lineHeight: 22, marginBottom: 14 }}>{post.conteudo}</Text>
 
       <View style={{ flexDirection: 'row', gap: 8, borderTopWidth: 1, borderTopColor: C.border, paddingTop: 12 }}>
-        {reacoes.map(({ key, emoji }) => {
-          const ativo = post.minhasReacoes[key];
-          const scale = useSharedValue(1);
-          const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-          function press() {
-            scale.value = withSpring(1.3, { damping: 10 }, () => { scale.value = withSpring(1); });
-            onReagir(post.id, key);
-          }
-          return (
-            <Animated.View key={key} style={animStyle}>
-              <Pressable onPress={press} style={{
-                flexDirection: 'row', alignItems: 'center', gap: 5,
-                paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20,
-                backgroundColor: ativo ? C.primary + '33' : C.surfaceHigh,
-                borderWidth: 1, borderColor: ativo ? C.primaryLight + '55' : C.border,
-              }}>
-                <Text style={{ fontSize: 14 }}>{emoji}</Text>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: ativo ? C.primaryLight : C.textSub }}>
-                  {post.reacoes[key]}
-                </Text>
-              </Pressable>
-            </Animated.View>
-          );
-        })}
+        {reacoes.map(({ key, emoji, label }) => (
+          <ReacaoBtn
+            key={key}
+            emoji={emoji}
+            label={label}
+            count={post.reacoes[key]}
+            ativo={post.minhasReacoes[key]}
+            onPress={() => onReagir(post.id, key)}
+          />
+        ))}
       </View>
     </Animated.View>
   );
@@ -138,10 +161,22 @@ export default function ComunidadeScreen() {
         <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
           <Text style={{ fontSize: 26, fontWeight: '800', color: C.text, letterSpacing: -0.5 }}>comunidade</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable onPress={() => router.push('/ranking')} style={{ backgroundColor: C.surfaceHigh, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.border }}>
+            <Pressable
+              onPress={() => router.push('/ranking')}
+              accessibilityLabel="Ver ranking"
+              accessibilityRole="button"
+              android_ripple={{ color: C.gold + '44', borderless: false }}
+              style={{ backgroundColor: C.surfaceHigh, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.border, minHeight: 44, justifyContent: 'center' }}
+            >
               <Text style={{ color: C.gold, fontWeight: '700', fontSize: 13 }}>🏆 ranking</Text>
             </Pressable>
-            <Pressable onPress={() => setModalAberto(true)} style={{ backgroundColor: C.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 }}>
+            <Pressable
+              onPress={() => setModalAberto(true)}
+              accessibilityLabel="Criar novo post"
+              accessibilityRole="button"
+              android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
+              style={{ backgroundColor: C.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6, minHeight: 44, justifyContent: 'center' }}
+            >
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>+ post</Text>
             </Pressable>
           </View>
@@ -153,6 +188,14 @@ export default function ComunidadeScreen() {
           </Text>
         </Animated.View>
 
+        {posts.length === 0 && (
+          <Animated.View entering={FadeInDown.delay(140).springify()} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>
+            <Text style={{ fontSize: 36, marginBottom: 12 }}>💬</Text>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: C.primaryLight, marginBottom: 6 }}>Ainda silencioso por aqui</Text>
+            <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center' }}>Seja o primeiro a compartilhar algo com a comunidade.</Text>
+          </Animated.View>
+        )}
+
         {posts.map((post, i) => (
           <PostCard key={post.id} post={post} onReagir={reagir} delay={140 + i * 80} />
         ))}
@@ -160,7 +203,7 @@ export default function ComunidadeScreen() {
 
       <Modal visible={modalAberto} animationType="slide" transparent onRequestClose={() => setModalAberto(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setModalAberto(false)} />
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setModalAberto(false)} accessibilityLabel="Fechar modal" />
           <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40, borderTopWidth: 1, borderColor: C.border }}>
             <View style={{ width: 40, height: 4, backgroundColor: C.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
             <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>compartilhar</Text>
@@ -168,7 +211,14 @@ export default function ComunidadeScreen() {
             <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>tipo</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
               {tipos.map((t) => (
-                <Pressable key={t.key} onPress={() => setNovoTipo(t.key)} style={{ flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: novoTipo === t.key ? C.primary : C.surfaceHigh, borderWidth: 1, borderColor: novoTipo === t.key ? C.primaryLight + '55' : C.border }}>
+                <Pressable
+                  key={t.key}
+                  onPress={() => setNovoTipo(t.key)}
+                  accessibilityLabel={`Tipo: ${t.label}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: novoTipo === t.key }}
+                  style={{ flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: novoTipo === t.key ? C.primary : C.surfaceHigh, borderWidth: 1, borderColor: novoTipo === t.key ? C.primaryLight + '55' : C.border }}
+                >
                   <Text style={{ fontSize: 12, fontWeight: '700', color: novoTipo === t.key ? '#fff' : C.textSub }}>{t.label}</Text>
                 </Pressable>
               ))}
@@ -178,9 +228,17 @@ export default function ComunidadeScreen() {
             <TextInput
               multiline numberOfLines={4} placeholder="Conte como está indo... a comunidade te apoia 🤝"
               placeholderTextColor={C.textMuted} value={novoTexto} onChangeText={setNovoTexto} autoFocus
+              accessibilityLabel="Mensagem para a comunidade"
               style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 14, textAlignVertical: 'top', minHeight: 100, marginBottom: 20 }}
             />
-            <Pressable onPress={compartilhar} style={{ backgroundColor: novoTexto.trim() ? C.primary : C.primary + '55', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 }}>
+            <Pressable
+              onPress={compartilhar}
+              accessibilityLabel="Publicar post"
+              accessibilityRole="button"
+              disabled={!novoTexto.trim()}
+              android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
+              style={{ backgroundColor: novoTexto.trim() ? C.primary : C.primary + '55', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 }}
+            >
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Publicar</Text>
             </Pressable>
           </View>

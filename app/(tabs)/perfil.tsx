@@ -122,7 +122,7 @@ export default function PerfilScreen() {
 
         {/* Avatar */}
         <Animated.View entering={FadeInUp.delay(0).springify()} style={{ alignItems: 'center', marginBottom: 28 }}>
-          <Pressable onPress={() => setModalAvatar(true)} style={{ marginBottom: 12 }}>
+          <Pressable onPress={() => setModalAvatar(true)} accessibilityLabel="Personalizar avatar" accessibilityRole="button" style={{ marginBottom: 12 }}>
             <View style={{ width: 130, height: 130, borderRadius: 65, overflow: 'hidden', borderWidth: 3, borderColor: C.primaryLight + '55', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 20, elevation: 12 }}>
               <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={130} />
             </View>
@@ -145,7 +145,13 @@ export default function PerfilScreen() {
             <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>nível {nivel}</Text>
           </View>
 
-          <Pressable onPress={() => { setEditNome(profile.nome ?? ''); setEditApelido(profile.apelido ?? ''); setEditBio(profile.bio ?? ''); setEditInstagram(profile.instagram ?? ''); setModalPerfil(true); }} style={{ marginTop: 10 }}>
+          <Pressable
+            onPress={() => { setEditNome(profile.nome ?? ''); setEditApelido(profile.apelido ?? ''); setEditBio(profile.bio ?? ''); setEditInstagram(profile.instagram ?? ''); setModalPerfil(true); }}
+            accessibilityLabel="Editar perfil"
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
+            style={{ marginTop: 10 }}
+          >
             <Text style={{ fontSize: 12, color: C.textSub, textDecorationLine: 'underline' }}>editar perfil</Text>
           </Pressable>
         </Animated.View>
@@ -277,7 +283,7 @@ export default function PerfilScreen() {
             <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>Você tem acesso a todas as features premium. Obrigado!</Text>
           </View>
         ) : (
-          <Pressable onPress={() => abrirPaywall('Plim Pro')} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1.5, borderColor: C.primaryLight + '44' }}>
+          <Pressable onPress={() => abrirPaywall('Plim Pro')} accessibilityLabel="Ver planos Plim Pro" accessibilityRole="button" android_ripple={{ color: C.primaryLight + '22', borderless: false }} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1.5, borderColor: C.primaryLight + '44' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <Text style={{ fontSize: 22 }}>👑</Text>
               <Text style={{ color: C.primaryLight, fontWeight: '800', fontSize: 17 }}>Plim Pro</Text>
@@ -290,7 +296,7 @@ export default function PerfilScreen() {
         )}
 
         {!session ? (
-          <Pressable onPress={() => router.push('/(auth)/login')} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.border }}>
+          <Pressable onPress={() => router.push('/(auth)/login')} accessibilityLabel="Criar conta ou entrar" accessibilityRole="button" android_ripple={{ color: C.primaryLight + '22', borderless: false }} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.border }}>
             <Text style={{ color: C.text, fontWeight: '800', fontSize: 15, marginBottom: 4 }}>Crie sua conta grátis ✨</Text>
             <Text style={{ color: C.textSub, fontSize: 13, marginBottom: 14 }}>Salve seu progresso na nuvem</Text>
             <View style={{ backgroundColor: C.primaryLight, borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}>
@@ -298,7 +304,13 @@ export default function PerfilScreen() {
             </View>
           </Pressable>
         ) : (
-          <Pressable onPress={sair} style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border, marginBottom: 10 }}>
+          <Pressable
+            onPress={sair}
+            accessibilityLabel="Sair da conta"
+            accessibilityRole="button"
+            android_ripple={{ color: C.danger + '22', borderless: false }}
+            style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border, marginBottom: 10, minHeight: 48 }}
+          >
             <Text style={{ color: C.danger, fontWeight: '600', fontSize: 14 }}>Sair da conta</Text>
           </Pressable>
         )}

@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   FadeInDown, FadeInUp,
-  useAnimatedStyle, useSharedValue, withSpring, withTiming,
+  useAnimatedStyle, useSharedValue, withTiming,
 } from 'react-native-reanimated';
 
 const emojis = ['💧','🥗','🏃','😴','📚','🎯','💊','🧘','🚿','☀️','🌙','✅'];
@@ -101,7 +101,10 @@ export default function RotinaScreen() {
           <Text style={{ fontSize: 26, fontWeight: '800', color: C.text, letterSpacing: -0.5 }}>minha rotina</Text>
           <Pressable
             onPress={() => setModalAberto(true)}
-            style={{ backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6 }}
+            accessibilityLabel="Adicionar nova tarefa"
+            accessibilityRole="button"
+            android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
+            style={{ backgroundColor: C.primary, paddingHorizontal: 16, paddingVertical: 9, borderRadius: 20, shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6, minHeight: 44, justifyContent: 'center' }}
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>+ nova</Text>
           </Pressable>
@@ -144,6 +147,10 @@ export default function RotinaScreen() {
                       { text: 'Cancelar', style: 'cancel' },
                       { text: 'Remover', style: 'destructive', onPress: () => removerTarefa(tarefa.id) },
                     ])}
+                    accessibilityLabel={`${tarefa.titulo}. Status: ${feita ? 'concluída' : pulada ? 'pulada' : 'pendente'}. Toque para marcar, segure para remover.`}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: feita }}
+                    android_ripple={{ color: C.primaryLight + '22', borderless: false }}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 }}
                   >
                     <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: feita ? C.primary + '22' : C.surfaceHigh, alignItems: 'center', justifyContent: 'center' }}>
@@ -153,15 +160,18 @@ export default function RotinaScreen() {
                       <Text style={{ fontWeight: '700', fontSize: 14, color: feita ? C.textSub : C.text, textDecorationLine: feita ? 'line-through' : 'none' }}>{tarefa.titulo}</Text>
                       <Text style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{tarefa.categoria} · {tarefa.horario}</Text>
                     </View>
-                    <View style={{
-                      width: 28, height: 28, borderRadius: 14,
-                      backgroundColor: feita ? C.primaryLight : 'transparent',
-                      borderWidth: feita ? 0 : 2,
-                      borderColor: C.border,
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      {feita && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>✓</Text>}
-                      {pulada && <Text style={{ color: C.textMuted, fontSize: 13 }}>–</Text>}
+                    <View
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      style={{
+                        width: 32, height: 32, borderRadius: 16,
+                        backgroundColor: feita ? C.primaryLight : 'transparent',
+                        borderWidth: feita ? 0 : 2,
+                        borderColor: C.border,
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      {feita && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>✓</Text>}
+                      {pulada && <Text style={{ color: C.textMuted, fontSize: 14 }}>–</Text>}
                     </View>
                   </Pressable>
 
@@ -169,9 +179,13 @@ export default function RotinaScreen() {
                     <Pressable
                       onPress={() => toggleLembrete(tarefa.id, tarefa.titulo, tarefa.horario, tarefa.lembreteAgendado)}
                       disabled={load === 'lembrete'}
+                      accessibilityLabel={tarefa.lembreteAgendado ? `Cancelar lembrete de ${tarefa.titulo}` : `Agendar lembrete para ${tarefa.titulo}`}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: load === 'lembrete' }}
+                      android_ripple={{ color: C.primaryLight + '22', borderless: false }}
                       style={{
                         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        paddingVertical: 8, borderRadius: 12,
+                        paddingVertical: 10, borderRadius: 12, minHeight: 44,
                         backgroundColor: tarefa.lembreteAgendado ? C.primary + '22' : C.surfaceHigh,
                         borderWidth: 1, borderColor: tarefa.lembreteAgendado ? C.primaryLight + '44' : C.border,
                       }}
@@ -184,9 +198,13 @@ export default function RotinaScreen() {
                     <Pressable
                       onPress={() => toggleCalendario(tarefa.id, tarefa.titulo, tarefa.categoria, tarefa.horario, tarefa.calendarioAdicionado)}
                       disabled={load === 'calendario'}
+                      accessibilityLabel={tarefa.calendarioAdicionado ? `${tarefa.titulo} já adicionado ao calendário` : `Adicionar ${tarefa.titulo} ao calendário`}
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: load === 'calendario' }}
+                      android_ripple={{ color: C.success + '22', borderless: false }}
                       style={{
                         flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        paddingVertical: 8, borderRadius: 12,
+                        paddingVertical: 10, borderRadius: 12, minHeight: 44,
                         backgroundColor: tarefa.calendarioAdicionado ? C.success + '22' : C.surfaceHigh,
                         borderWidth: 1, borderColor: tarefa.calendarioAdicionado ? C.success + '44' : C.border,
                       }}

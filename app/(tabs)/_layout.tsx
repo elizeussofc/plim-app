@@ -2,7 +2,7 @@ import PaywallModal from '@/components/PaywallModal';
 import { C } from '@/lib/theme';
 import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
-import { Platform, Pressable, Text as RNText, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -107,6 +107,9 @@ function FABDespejo() {
     >
       <Pressable
         onPress={onPress}
+        accessibilityLabel="Despejo Mental — jogar pensamentos para fora"
+        accessibilityRole="button"
+        android_ripple={{ color: 'rgba(255,255,255,0.25)', borderless: true }}
         style={{
           width: 52,
           height: 52,
@@ -123,7 +126,11 @@ function FABDespejo() {
           borderColor: 'rgba(167,139,250,0.4)',
         }}
       >
-        <RNText style={{ fontSize: 22 }}>🧠</RNText>
+        <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+          <Path d="M9.5 2A6.5 6.5 0 0 1 16 8.5c0 1.7-.65 3.25-1.72 4.4L9.5 18.5 4.72 12.9A6.5 6.5 0 0 1 9.5 2Z" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
+          <Path d="M9.5 2C9.5 2 7 5 7 8.5s2.5 5 2.5 5" stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} strokeLinecap="round" />
+          <Path d="M14 19h6M17 16v6" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
+        </Svg>
       </Pressable>
     </Animated.View>
   );
@@ -176,6 +183,7 @@ export default function TabsLayout() {
           name="foco"
           options={{
             title: 'Plim',
+            tabBarAccessibilityLabel: 'Botão Plim — hub de foco',
             tabBarIcon: () => (
               <View
                 style={{
@@ -195,7 +203,9 @@ export default function TabsLayout() {
                   borderColor: 'rgba(167,139,250,0.35)',
                 }}
               >
-                <RNText style={{ fontSize: 24 }}>⚡</RNText>
+                <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
+                  <Path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z" fill="#fff" stroke="rgba(255,255,255,0.3)" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
               </View>
             ),
             tabBarLabel: () => null,

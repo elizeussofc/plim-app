@@ -64,15 +64,21 @@ function AtalhoCard({ icone, label, sub, route, color, delay }: typeof atalhos[0
 
   return (
     <Animated.View entering={FadeInDown.delay(delay).springify()} style={animStyle}>
-      <Pressable onPress={onPress} style={{
-        backgroundColor: C.surfaceHigh,
-        borderRadius: 18,
-        padding: 16,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: C.border,
-        width: '100%',
-      }}>
+      <Pressable
+        onPress={onPress}
+        accessibilityLabel={`${label} ${sub}`}
+        accessibilityRole="button"
+        android_ripple={{ color: color + '33', borderless: false }}
+        style={{
+          backgroundColor: C.surfaceHigh,
+          borderRadius: 18,
+          padding: 16,
+          alignItems: 'center',
+          borderWidth: 1,
+          borderColor: C.border,
+          width: '100%',
+        }}
+      >
         <View style={{
           width: 46,
           height: 46,
@@ -194,7 +200,12 @@ export default function InicioScreen() {
               {apelido}!
             </Text>
           </View>
-          <Pressable onPress={() => router.push('/(tabs)/perfil')} style={{ opacity: 1 }}>
+          <Pressable
+          onPress={() => router.push('/(tabs)/perfil')}
+          accessibilityLabel="Ver meu perfil"
+          accessibilityRole="button"
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
             <View style={{ width: 52, height: 52, borderRadius: 26, overflow: 'hidden', borderWidth: 2, borderColor: C.primaryLight + '55' }}>
               <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={52} />
             </View>
@@ -271,7 +282,10 @@ export default function InicioScreen() {
             </View>
             <Pressable
               onPress={() => router.push('/sessao-foco')}
-              style={{ backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9, marginLeft: 12 }}
+              accessibilityLabel="Iniciar sessão de foco"
+              accessibilityRole="button"
+              android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
+              style={{ backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9, marginLeft: 12, minHeight: 44, justifyContent: 'center' }}
             >
               <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>Iniciar</Text>
             </Pressable>
