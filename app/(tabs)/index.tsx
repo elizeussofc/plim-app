@@ -1,219 +1,331 @@
-import { Badge, Card, Text } from '@/components/ui';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
 import TermometroRotina, { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
+import { C } from '@/lib/theme';
 import { useDesafiosStore } from '@/stores/desafiosStore';
-import { useUserStore } from '@/stores/userStore';
 import { useRotinaStore } from '@/stores/rotinaStore';
 import { loadOnboardingProfile, type Chronotype, type PlimUserProfile } from '@/stores/onboardingStore';
 import { getMensagemDoDia } from '@/lib/mensagensDoDia';
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 const atalhos = [
-  { icone: '🧠', label: 'Despejo\nMental',  route: '/despejo-mental' },
-  { icone: '🎯', label: 'Sessão\nde Foco',  route: '/sessao-foco'    },
-  { icone: '😌', label: 'Modo\nCalma',      route: '/modo-calma'     },
-  { icone: '🤖', label: 'Plim\nIA',         route: '/ia-tdah'        },
+  { icone: '🧠', label: 'Despejo', sub: 'mental',  route: '/despejo-mental', color: '#7C3AED' },
+  { icone: '🎯', label: 'Sessão',  sub: 'de foco', route: '/sessao-foco',    color: '#F97316' },
+  { icone: '😌', label: 'Modo',    sub: 'calma',   route: '/modo-calma',     color: '#10B981' },
+  { icone: '🤖', label: 'Plim',    sub: 'IA',      route: '/ia-tdah',        color: '#FBBF24' },
 ];
 
 const SUGESTAO_FOCO: Record<Chronotype, { texto: string; horario: string }> = {
-  morning:   { texto: 'Seu pico é pela manhã.',         horario: '8h'  },
-  afternoon: { texto: 'Seu pico é à tarde.',            horario: '14h' },
-  night:     { texto: 'Seu pico é à noite.',            horario: '20h' },
-  dawn:      { texto: 'Sua madrugada é produtiva.',     horario: '1h'  },
+  morning:   { texto: 'Seu pico é pela manhã',    horario: '8h'  },
+  afternoon: { texto: 'Seu pico é à tarde',       horario: '14h' },
+  night:     { texto: 'Seu pico é à noite',       horario: '20h' },
+  dawn:      { texto: 'Madrugada produtiva',      horario: '1h'  },
 };
 
+function StatCard({ value, label, color, delay }: { value: string | number; label: string; color: string; delay: number }) {
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={{ flex: 1 }}>
+      <View style={{
+        backgroundColor: C.surfaceHigh,
+        borderRadius: 16,
+        padding: 14,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: C.border,
+      }}>
+        <Text style={{ fontSize: 24, fontWeight: '800', color, letterSpacing: -0.5 }}>{value}</Text>
+        <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2, fontWeight: '500' }}>{label}</Text>
+      </View>
+    </Animated.View>
+  );
+}
+
+function AtalhoCard({ icone, label, sub, route, color, delay }: typeof atalhos[0] & { delay: number }) {
+  const router = useRouter();
+  const scale = useSharedValue(1);
+
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  function onPress() {
+    scale.value = withSpring(0.92, { damping: 15 }, () => { scale.value = withSpring(1); });
+    router.push(route as any);
+  }
+
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={animStyle}>
+      <Pressable onPress={onPress} style={{
+        backgroundColor: C.surfaceHigh,
+        borderRadius: 18,
+        padding: 16,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: C.border,
+        width: '100%',
+      }}>
+        <View style={{
+          width: 46,
+          height: 46,
+          borderRadius: 14,
+          backgroundColor: color + '22',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 8,
+          borderWidth: 1,
+          borderColor: color + '44',
+        }}>
+          <Text style={{ fontSize: 22 }}>{icone}</Text>
+        </View>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: C.text }}>{label}</Text>
+        <Text style={{ fontSize: 10, color: C.textSub }}>{sub}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function DesafioCard({ desafio, delay }: { desafio: any; delay: number }) {
+  const progPct = Math.round((desafio.progresso / desafio.meta) * 100);
+  const barWidth = useSharedValue(0);
+
+  useEffect(() => {
+    barWidth.value = withTiming(progPct, { duration: 900 });
+  }, []);
+
+  const barStyle = useAnimatedStyle(() => ({
+    width: `${barWidth.value}%` as any,
+  }));
+
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()}>
+      <View style={{
+        backgroundColor: C.surfaceHigh,
+        borderRadius: 16,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: C.border,
+        marginBottom: 10,
+      }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+          <View style={{
+            width: 40,
+            height: 40,
+            borderRadius: 12,
+            backgroundColor: C.primary + '22',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <Text style={{ fontSize: 18 }}>{desafio.icone}</Text>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: C.text }}>{desafio.titulo}</Text>
+            <Text style={{ fontSize: 10, color: C.textSub, marginTop: 1 }}>{desafio.progresso}/{desafio.meta} concluídos</Text>
+          </View>
+          <View style={{
+            backgroundColor: C.primary + '22',
+            borderRadius: 8,
+            paddingHorizontal: 8,
+            paddingVertical: 4,
+          }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: C.primaryLight }}>+{desafio.xp} XP</Text>
+          </View>
+        </View>
+        <View style={{ backgroundColor: C.border, borderRadius: 4, height: 4, overflow: 'hidden' }}>
+          <Animated.View style={[{ height: 4, borderRadius: 4, backgroundColor: C.primaryLight }, barStyle]} />
+        </View>
+      </View>
+    </Animated.View>
+  );
+}
+
 export default function InicioScreen() {
-  const router   = useRouter();
-  const profile  = useUserStore((s) => s.profile);
-  const tarefas  = useRotinaStore((s) => s.tarefas);
+  const router  = useRouter();
+  const profile = useUserStore((s) => s.profile);
+  const tarefas = useRotinaStore((s) => s.tarefas);
   const desafios = useDesafiosStore((s) => s.desafios);
 
   const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
   useEffect(() => { loadOnboardingProfile().then(setPlimProfile); }, []);
 
-  // Ajuste 1 — saudação personalizada com nome E emoji do perfil
-  const apelido       = plimProfile?.profileType.name ?? profile?.apelido ?? profile?.nome ?? 'Viajante';
-  const perfilEmoji   = plimProfile?.profileType.emoji ?? '✨';
-  const hora          = new Date().getHours();
-  const saudacao      = hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
-
-  // Ajuste 2 — mensagem do dia personalizada por perfil
+  const apelido     = plimProfile?.profileType.name ?? profile?.apelido ?? profile?.nome ?? 'Viajante';
+  const perfilEmoji = plimProfile?.profileType.emoji ?? '✨';
+  const hora        = new Date().getHours();
+  const saudacao    = hora < 12 ? 'bom dia' : hora < 18 ? 'boa tarde' : 'boa noite';
   const mensagemDoDia = getMensagemDoDia(plimProfile?.profileType.id ?? 'explorador');
+  const cronotipo   = plimProfile?.answers.chronotype ?? null;
+  const sugestaoFoco = cronotipo ? SUGESTAO_FOCO[cronotipo] : null;
 
-  // Ajuste 3 — sugestão de foco baseada no cronotipo
-  const cronotipo     = plimProfile?.answers.chronotype ?? null;
-  const sugestaoFoco  = cronotipo ? SUGESTAO_FOCO[cronotipo] : null;
-
-  const xpProxNivel  = profile.nivel * 100;
-  const xpProgresso  = Math.min(profile.xp_total / xpProxNivel, 1);
+  const xpProxNivel = profile.nivel * 100;
+  const xpPct       = Math.min(profile.xp_total / xpProxNivel, 1);
 
   const desafiosAtivos    = desafios.filter((d) => !d.completo);
   const desafiosCompletos = desafios.filter((d) => d.completo).length;
 
-  const score    = calcularScoreRotina(tarefas, profile.streak, profile.xp_total);
+  const score     = calcularScoreRotina(tarefas, profile.streak, profile.xp_total);
   const expressao = expressaoDoScore(score);
 
+  const xpBarWidth = useSharedValue(0);
+  useEffect(() => {
+    xpBarWidth.value = withTiming(xpPct * 100, { duration: 1000 });
+  }, [xpPct]);
+  const xpBarStyle = useAnimatedStyle(() => ({ width: `${xpBarWidth.value}%` as any }));
+
   return (
-    <SafeAreaView className="flex-1 bg-violet-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView
         style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 120 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 130 }}
         showsVerticalScrollIndicator={false}
       >
-
-        {/* Cabeçalho — Ajuste 1 */}
-        <View className="flex-row items-center justify-between mb-6">
+        {/* Header */}
+        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <View style={{ flex: 1, marginRight: 12 }}>
-            <Text variant="small" color="secondary">{saudacao} {perfilEmoji}</Text>
-            <Text variant="h2" className="text-violet-800" numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={{ fontSize: 13, color: C.textSub, fontWeight: '500' }}>{saudacao} {perfilEmoji}</Text>
+            <Text style={{ fontSize: 26, fontWeight: '800', color: C.text, letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>
               {apelido}!
             </Text>
           </View>
-
-          <Pressable
-            onPress={() => router.push('/(tabs)/perfil')}
-            className="active:opacity-70"
-          >
-            <View style={{ width: 56, height: 56, borderRadius: 28, overflow: 'hidden' }}>
-              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={56} />
+          <Pressable onPress={() => router.push('/(tabs)/perfil')} style={{ opacity: 1 }}>
+            <View style={{ width: 52, height: 52, borderRadius: 26, overflow: 'hidden', borderWidth: 2, borderColor: C.primaryLight + '55' }}>
+              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={52} />
             </View>
           </Pressable>
-        </View>
+        </Animated.View>
 
-        {/* Mensagem do dia — Ajuste 2 */}
-        <View style={{ backgroundColor: '#7C3AED', borderRadius: 16, padding: 18, marginBottom: 20, overflow: 'hidden' }}>
-          {/* Barra laranja de destaque */}
-          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 5, backgroundColor: '#F97316', borderTopLeftRadius: 16, borderBottomLeftRadius: 16 }} />
-          {/* Emoji watermark */}
-          <Text style={{ position: 'absolute', right: -8, bottom: -20, fontSize: 88, opacity: 0.12 }}>
-            {perfilEmoji}
-          </Text>
+        {/* Mensagem do dia */}
+        <Animated.View entering={FadeInDown.delay(80).springify()} style={{
+          backgroundColor: C.primary,
+          borderRadius: 20,
+          padding: 18,
+          marginBottom: 20,
+          overflow: 'hidden',
+          borderWidth: 1,
+          borderColor: 'rgba(167,139,250,0.3)',
+        }}>
+          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: C.accent, borderTopLeftRadius: 20, borderBottomLeftRadius: 20 }} />
+          <Text style={{ position: 'absolute', right: -10, bottom: -18, fontSize: 80, opacity: 0.1 }}>{perfilEmoji}</Text>
           <View style={{ paddingLeft: 10 }}>
-            <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 10, fontWeight: '700', letterSpacing: 1, marginBottom: 8 }}>
+            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginBottom: 6 }}>
               💬 MENSAGEM DO DIA
             </Text>
-            <Text style={{ color: '#FFFFFF', fontSize: 15, lineHeight: 24, fontStyle: 'italic' }}>
+            <Text style={{ color: C.text, fontSize: 14, lineHeight: 22, fontStyle: 'italic', fontWeight: '500' }}>
               {mensagemDoDia}
             </Text>
           </View>
+        </Animated.View>
+
+        {/* Stats */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+          <StatCard value={profile.xp_total} label="XP total"     color={C.primaryLight} delay={120} />
+          <StatCard value={profile.streak}   label="streak 🔥"    color={C.accent}       delay={160} />
+          <StatCard value={profile.moedas}   label="moedas 🪙"    color={C.gold}         delay={200} />
         </View>
 
-        {/* Termômetro da rotina */}
-        <TermometroRotina />
+        {/* XP Bar */}
+        <Animated.View entering={FadeInDown.delay(220).springify()} style={{
+          backgroundColor: C.surfaceHigh,
+          borderRadius: 16,
+          padding: 14,
+          marginBottom: 20,
+          borderWidth: 1,
+          borderColor: C.border,
+        }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+            <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '600' }}>nível {profile.nivel}</Text>
+            <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{profile.xp_total}/{xpProxNivel} XP</Text>
+          </View>
+          <View style={{ backgroundColor: C.border, borderRadius: 6, height: 6, overflow: 'hidden' }}>
+            <Animated.View style={[{ height: 6, borderRadius: 6, backgroundColor: C.primaryLight, shadowColor: C.primary, shadowOpacity: 0.7, shadowRadius: 4, elevation: 4 }, xpBarStyle]} />
+          </View>
+        </Animated.View>
 
-        {/* Sugestão de foco — Ajuste 3 */}
+        {/* Termômetro */}
+        <Animated.View entering={FadeInDown.delay(260).springify()} style={{ marginBottom: 20 }}>
+          <TermometroRotina />
+        </Animated.View>
+
+        {/* Sugestão cronotipo */}
         {sugestaoFoco && (
-          <Card variant="flat" padding="md" className="mb-4 border border-violet-100">
-            <View className="flex-row items-center justify-between">
-              <View style={{ flex: 1 }}>
-                <Text variant="small" className="text-violet-700 font-semibold mb-0.5">
-                  💡 {sugestaoFoco.texto}
-                </Text>
-                <Text variant="caption" color="secondary">
-                  Que tal agendar foco às {sugestaoFoco.horario}?
-                </Text>
-              </View>
-              <Pressable
-                onPress={() => router.push('/sessao-foco')}
-                className="active:opacity-70"
-                style={{
-                  backgroundColor: '#7C3AED',
-                  borderRadius: 10,
-                  paddingHorizontal: 12,
-                  paddingVertical: 8,
-                  marginLeft: 12,
-                }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>
-                  Iniciar agora
-                </Text>
-              </Pressable>
+          <Animated.View entering={FadeInDown.delay(280).springify()} style={{
+            backgroundColor: C.surfaceHigh,
+            borderRadius: 16,
+            padding: 16,
+            marginBottom: 20,
+            borderWidth: 1,
+            borderColor: C.accent + '33',
+            flexDirection: 'row',
+            alignItems: 'center',
+          }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: C.accent }}>💡 {sugestaoFoco.texto}</Text>
+              <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>Que tal agendar foco às {sugestaoFoco.horario}?</Text>
             </View>
-          </Card>
+            <Pressable
+              onPress={() => router.push('/sessao-foco')}
+              style={{ backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9, marginLeft: 12 }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>Iniciar</Text>
+            </Pressable>
+          </Animated.View>
         )}
 
-        {/* Stats + XP */}
-        <View className="flex-row gap-3 mb-4">
-          <Card variant="flat" padding="md" className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-violet-600">{profile.xp_total}</Text>
-            <Text variant="caption" color="secondary">XP</Text>
-            {profile.xp_total === 0 && <Text style={{ fontSize: 9, color: '#A78BFA', marginTop: 2 }}>+10/tarefa</Text>}
-          </Card>
-          <Card variant="flat" padding="md" className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-orange-500">{profile.streak}</Text>
-            <Text variant="caption" color="secondary">Streak 🔥</Text>
-            {profile.streak === 0 && <Text style={{ fontSize: 9, color: '#FCA5A5', marginTop: 2 }}>começa hoje</Text>}
-          </Card>
-          <Card variant="flat" padding="md" className="flex-1 items-center">
-            <Text className="text-2xl font-bold text-emerald-500">{profile.moedas}</Text>
-            <Text variant="caption" color="secondary">🪙 Moedas</Text>
-            {profile.moedas === 0 && <Text style={{ fontSize: 9, color: '#6EE7B7', marginTop: 2 }}>+5/tarefa</Text>}
-          </Card>
-        </View>
-
-        <Card variant="default" padding="md" className="mb-6">
-          <View className="flex-row justify-between mb-1.5">
-            <Text variant="small" color="secondary">Nível {profile.nivel}</Text>
-            <Text variant="small" className="text-violet-600 font-semibold">{profile.xp_total}/{xpProxNivel} XP</Text>
-          </View>
-          <View className="bg-slate-100 rounded-full h-2" style={{ overflow: 'hidden' }}>
-            {xpProgresso > 0 ? (
-              <View className="bg-violet-500 h-2 rounded-full" style={{ width: `${Math.round(xpProgresso * 100)}%` as any }} />
-            ) : (
-              <View style={{ width: '100%', height: '100%', backgroundColor: '#C4B5FD', opacity: 0.35, borderRadius: 9999 }} />
-            )}
-          </View>
-        </Card>
-
-        {/* Desafios semanais */}
-        <View className="flex-row items-center justify-between mb-3">
-          <Text variant="h3">Desafios da semana</Text>
-          <Badge label={`${desafiosCompletos}/5`} variant={desafiosCompletos === 5 ? 'success' : 'primary'} />
-        </View>
-        <View className="gap-2 mb-5">
-          {desafiosAtivos.slice(0, 2).map((d) => (
-            <Card key={d.id} variant="flat" padding="md">
-              <View className="flex-row items-center gap-3">
-                <Text className="text-xl">{d.icone}</Text>
-                <View className="flex-1">
-                  <Text className="font-semibold text-slate-800 text-sm">{d.titulo}</Text>
-                  <View className="flex-row items-center gap-2 mt-1">
-                    <View className="flex-1 bg-slate-200 rounded-full h-1.5">
-                      <View
-                        className="bg-violet-500 h-1.5 rounded-full"
-                        style={{ width: `${Math.round((d.progresso / d.meta) * 100)}%` as any }}
-                      />
-                    </View>
-                    <Text style={{ fontSize: 10, color: '#94A3B8' }}>{d.progresso}/{d.meta}</Text>
-                  </View>
-                </View>
-                <Text variant="caption" className="text-violet-600 font-semibold">+{d.xp} XP</Text>
-              </View>
-            </Card>
-          ))}
-          {desafiosAtivos.length === 0 && (
-            <Card variant="flat" padding="md" className="items-center">
-              <Text className="text-2xl mb-1">🏆</Text>
-              <Text variant="small" className="text-violet-600 font-semibold">Todos os desafios completos!</Text>
-            </Card>
-          )}
-        </View>
-
         {/* Atalhos rápidos */}
-        <Text variant="h3" className="mb-3">Atalhos rápidos</Text>
-        <View className="flex-row flex-wrap gap-3">
-          {atalhos.map((a) => (
-            <Pressable key={a.route} onPress={() => router.push(a.route as any)} className="active:opacity-70" style={{ width: '22%' }}>
-              <Card variant="default" padding="md" className="items-center">
-                <Text className="text-2xl mb-1">{a.icone}</Text>
-                <Text style={{ fontSize: 10, color: '#94A3B8', textAlign: 'center' }}>{a.label}</Text>
-              </Card>
-            </Pressable>
+        <Animated.View entering={FadeInDown.delay(300).springify()} style={{ marginBottom: 6 }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, marginBottom: 14, textTransform: 'uppercase' }}>
+            atalhos rápidos
+          </Text>
+        </Animated.View>
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
+          {atalhos.map((a, i) => (
+            <View key={a.route} style={{ flex: 1 }}>
+              <AtalhoCard {...a} delay={320 + i * 40} />
+            </View>
           ))}
         </View>
+
+        {/* Desafios da semana */}
+        <Animated.View entering={FadeInDown.delay(440).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+            desafios da semana
+          </Text>
+          <View style={{
+            backgroundColor: desafiosCompletos === 5 ? C.success + '22' : C.primary + '22',
+            borderRadius: 20,
+            paddingHorizontal: 10,
+            paddingVertical: 4,
+          }}>
+            <Text style={{ fontSize: 11, fontWeight: '800', color: desafiosCompletos === 5 ? C.success : C.primaryLight }}>
+              {desafiosCompletos}/5
+            </Text>
+          </View>
+        </Animated.View>
+
+        {desafiosAtivos.slice(0, 2).map((d, i) => (
+          <DesafioCard key={d.id} desafio={d} delay={480 + i * 60} />
+        ))}
+
+        {desafiosAtivos.length === 0 && (
+          <Animated.View entering={FadeInDown.delay(480).springify()} style={{
+            backgroundColor: C.surfaceHigh,
+            borderRadius: 16,
+            padding: 20,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: C.success + '33',
+          }}>
+            <Text style={{ fontSize: 28, marginBottom: 6 }}>🏆</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: C.success }}>Todos os desafios completos!</Text>
+          </Animated.View>
+        )}
 
       </ScrollView>
     </SafeAreaView>

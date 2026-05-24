@@ -1,22 +1,20 @@
-import { Button, Card, Text } from '@/components/ui';
 import { supabase } from '@/lib/supabase';
+import { C } from '@/lib/theme';
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 
 export default function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [senha, setSenha] = useState('');
+  const [email, setEmail]   = useState('');
+  const [senha, setSenha]   = useState('');
   const [loading, setLoading] = useState(false);
-  const [erro, setErro] = useState('');
+  const [erro, setErro]     = useState('');
   const router = useRouter();
 
   async function entrar() {
-    if (!email || !senha) {
-      setErro('Preencha e-mail e senha.');
-      return;
-    }
+    if (!email || !senha) { setErro('Preencha e-mail e senha.'); return; }
     setLoading(true);
     setErro('');
     const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
@@ -29,65 +27,119 @@ export default function LoginScreen() {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-violet-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        className="flex-1 justify-center px-6"
+        style={{ flex: 1, justifyContent: 'center', paddingHorizontal: 24 }}
       >
-        {/* Logo / título */}
-        <View className="items-center mb-10">
-          <Text className="text-6xl mb-2">⚡</Text>
-          <Text variant="h1" className="text-violet-700 text-4xl">Plim</Text>
-          <Text variant="small" color="secondary" className="mt-1">Foco sem culpa. Progresso todo dia.</Text>
-        </View>
+        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ alignItems: 'center', marginBottom: 40 }}>
+          <View style={{
+            width: 72,
+            height: 72,
+            borderRadius: 22,
+            backgroundColor: C.primary + '22',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginBottom: 16,
+            borderWidth: 1.5,
+            borderColor: C.primaryLight + '44',
+          }}>
+            <Text style={{ fontSize: 36 }}>⚡</Text>
+          </View>
+          <Text style={{ fontSize: 32, fontWeight: '800', color: C.text, letterSpacing: -1 }}>Plim</Text>
+          <Text style={{ fontSize: 13, color: C.textSub, marginTop: 4 }}>Foco sem culpa. Progresso todo dia.</Text>
+        </Animated.View>
 
-        <Card variant="elevated" padding="lg">
-          <Text variant="h3" className="mb-6">Entrar</Text>
+        <Animated.View entering={FadeInDown.delay(120).springify()} style={{
+          backgroundColor: C.surface,
+          borderRadius: 24,
+          padding: 24,
+          borderWidth: 1,
+          borderColor: C.border,
+        }}>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>entrar</Text>
 
-          <View className="gap-4">
+          <View style={{ gap: 14 }}>
             <View>
-              <Text variant="small" color="secondary" className="mb-1 font-medium">E-mail</Text>
+              <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '600', marginBottom: 6, letterSpacing: 0.5 }}>E-MAIL</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 placeholder="seu@email.com"
-                placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-slate-800"
+                placeholderTextColor={C.textMuted}
+                style={{
+                  backgroundColor: C.surfaceHigh,
+                  borderWidth: 1,
+                  borderColor: C.border,
+                  borderRadius: 14,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  color: C.text,
+                  fontSize: 15,
+                }}
               />
             </View>
 
             <View>
-              <Text variant="small" color="secondary" className="mb-1 font-medium">Senha</Text>
+              <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '600', marginBottom: 6, letterSpacing: 0.5 }}>SENHA</Text>
               <TextInput
                 value={senha}
                 onChangeText={setSenha}
                 secureTextEntry
                 placeholder="••••••••"
-                placeholderTextColor="#94A3B8"
-                className="bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 text-slate-800"
+                placeholderTextColor={C.textMuted}
+                style={{
+                  backgroundColor: C.surfaceHigh,
+                  borderWidth: 1,
+                  borderColor: C.border,
+                  borderRadius: 14,
+                  paddingHorizontal: 16,
+                  paddingVertical: 14,
+                  color: C.text,
+                  fontSize: 15,
+                }}
               />
             </View>
 
             {erro ? (
-              <View className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3">
-                <Text className="text-amber-700 text-sm">{erro}</Text>
+              <View style={{ backgroundColor: '#EF444422', borderWidth: 1, borderColor: '#EF444444', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10 }}>
+                <Text style={{ color: '#FCA5A5', fontSize: 13 }}>{erro}</Text>
               </View>
             ) : null}
 
-            <Button label="Entrar" onPress={entrar} loading={loading} size="lg" className="mt-2" />
+            <Pressable
+              onPress={entrar}
+              disabled={loading}
+              style={{
+                backgroundColor: loading ? C.primary + '88' : C.primary,
+                borderRadius: 16,
+                paddingVertical: 16,
+                alignItems: 'center',
+                marginTop: 4,
+                shadowColor: C.primary,
+                shadowOffset: { width: 0, height: 6 },
+                shadowOpacity: 0.4,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800' }}>
+                {loading ? 'Entrando...' : 'Entrar'}
+              </Text>
+            </Pressable>
           </View>
-        </Card>
+        </Animated.View>
 
-        <View className="flex-row justify-center mt-6 gap-1">
-          <Text variant="small" color="secondary">Não tem conta?</Text>
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 24, gap: 6 }}>
+          <Text style={{ color: C.textSub, fontSize: 13 }}>Não tem conta?</Text>
           <Link href="/(auth)/cadastro" asChild>
             <Pressable>
-              <Text variant="small" className="text-violet-600 font-semibold">Criar conta grátis</Text>
+              <Text style={{ color: C.primaryLight, fontSize: 13, fontWeight: '700' }}>Criar conta grátis</Text>
             </Pressable>
           </Link>
-        </View>
+        </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

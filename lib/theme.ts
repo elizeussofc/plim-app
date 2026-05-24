@@ -1,0 +1,18 @@
+export const C = {
+  bg:           '#0B0B18',
+  surface:      '#14142A',
+  surfaceHigh:  '#1C1C35',
+  border:       'rgba(255,255,255,0.07)',
+  borderBright: 'rgba(255,255,255,0.14)',
+  primary:      '#7C3AED',
+  primaryGlow:  'rgba(124,58,237,0.35)',
+  primaryLight: '#A78BFA',
+  accent:       '#F97316',
+  accentGlow:   'rgba(249,115,22,0.35)',
+  text:         '#FFFFFF',
+  textSub:      'rgba(255,255,255,0.55)',
+  textMuted:    'rgba(255,255,255,0.28)',
+  success:      '#10B981',
+  gold:         '#FBBF24',
+  danger:       '#EF4444',
+} as const;
