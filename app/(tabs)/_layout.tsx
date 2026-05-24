@@ -23,7 +23,7 @@ function IconInicio({ color, focused }: { color: string; focused: boolean }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         fill={focused ? color : 'none'}
-        fillOpacity={focused ? 0.2 : 0}
+        fillOpacity={focused ? 0.18 : 0}
       />
     </Svg>
   );
@@ -78,8 +78,8 @@ function FABDespejo() {
   useEffect(() => {
     scale.value = withRepeat(
       withSequence(
-        withTiming(1.08, { duration: 1400 }),
-        withTiming(1,    { duration: 1400 }),
+        withTiming(1.07, { duration: 1600 }),
+        withTiming(1,    { duration: 1600 }),
       ),
       -1,
     );
@@ -119,16 +119,16 @@ function FABDespejo() {
           justifyContent: 'center',
           shadowColor: C.primary,
           shadowOffset: { width: 0, height: 6 },
-          shadowOpacity: 0.55,
-          shadowRadius: 12,
-          elevation: 12,
+          shadowOpacity: 0.6,
+          shadowRadius: 14,
+          elevation: 14,
           borderWidth: 1.5,
-          borderColor: 'rgba(167,139,250,0.4)',
+          borderColor: C.borderPrimary,
         }}
       >
         <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
           <Path d="M9.5 2A6.5 6.5 0 0 1 16 8.5c0 1.7-.65 3.25-1.72 4.4L9.5 18.5 4.72 12.9A6.5 6.5 0 0 1 9.5 2Z" stroke="#fff" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-          <Path d="M9.5 2C9.5 2 7 5 7 8.5s2.5 5 2.5 5" stroke="rgba(255,255,255,0.4)" strokeWidth={1.5} strokeLinecap="round" />
+          <Path d="M9.5 2C9.5 2 7 5 7 8.5s2.5 5 2.5 5" stroke="rgba(255,255,255,0.35)" strokeWidth={1.5} strokeLinecap="round" />
           <Path d="M14 19h6M17 16v6" stroke="#fff" strokeWidth={2} strokeLinecap="round" />
         </Svg>
       </Pressable>
@@ -144,15 +144,15 @@ export default function TabsLayout() {
           headerShown: false,
           tabBarStyle: {
             backgroundColor: C.surface,
-            borderTopColor: C.border,
+            borderTopColor: C.borderPrimary,
             borderTopWidth: 1,
             height: Platform.OS === 'ios' ? 88 : 68,
             paddingBottom: Platform.OS === 'ios' ? 28 : 8,
             paddingTop: 8,
-            shadowColor: '#000',
+            shadowColor: C.primary,
             shadowOffset: { width: 0, height: -4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
+            shadowOpacity: 0.15,
+            shadowRadius: 16,
             elevation: 16,
           },
           tabBarActiveTintColor: C.primaryLight,
@@ -161,7 +161,7 @@ export default function TabsLayout() {
             fontSize: 10,
             fontWeight: '600',
             marginTop: 2,
-            letterSpacing: 0.3,
+            letterSpacing: 0.2,
           },
         }}
       >
@@ -196,15 +196,15 @@ export default function TabsLayout() {
                   marginTop: -20,
                   shadowColor: C.primary,
                   shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.5,
-                  shadowRadius: 10,
-                  elevation: 10,
+                  shadowOpacity: 0.65,
+                  shadowRadius: 12,
+                  elevation: 12,
                   borderWidth: 2,
-                  borderColor: 'rgba(167,139,250,0.35)',
+                  borderColor: C.borderPrimary,
                 }}
               >
                 <Svg width={26} height={26} viewBox="0 0 24 24" fill="none">
-                  <Path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z" fill="#fff" stroke="rgba(255,255,255,0.3)" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M13 2L4.5 13.5H12L11 22L19.5 10.5H12L13 2Z" fill="#fff" stroke="rgba(255,255,255,0.25)" strokeWidth={1} strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </View>
             ),

@@ -20,10 +20,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const atalhos = [
-  { icone: '🧠', label: 'Despejo', sub: 'mental',  route: '/despejo-mental', color: '#7C3AED' },
-  { icone: '🎯', label: 'Sessão',  sub: 'de foco', route: '/sessao-foco',    color: '#F97316' },
-  { icone: '😌', label: 'Modo',    sub: 'calma',   route: '/modo-calma',     color: '#10B981' },
-  { icone: '🤖', label: 'Plim',    sub: 'IA',      route: '/ia-tdah',        color: '#FBBF24' },
+  { icone: '🧠', label: 'Despejo',  sub: 'mental',   route: '/despejo-mental', color: '#9B59F5' },
+  { icone: '🎯', label: 'Sessão',   sub: 'de foco',  route: '/sessao-foco',    color: '#F59E0B' },
+  { icone: '😌', label: 'Modo',     sub: 'calma',    route: '/modo-calma',     color: '#10B981' },
+  { icone: '🤖', label: 'Plim',     sub: 'IA',       route: '/ia-tdah',        color: '#3B82F6' },
 ];
 
 const SUGESTAO_FOCO: Record<Chronotype, { texto: string; horario: string }> = {
@@ -33,19 +33,30 @@ const SUGESTAO_FOCO: Record<Chronotype, { texto: string; horario: string }> = {
   dawn:      { texto: 'Madrugada produtiva',      horario: '1h'  },
 };
 
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+      <View style={{ width: 3, height: 14, backgroundColor: C.primaryLight, borderRadius: 2 }} />
+      <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 function StatCard({ value, label, color, delay }: { value: string | number; label: string; color: string; delay: number }) {
   return (
     <Animated.View entering={FadeInDown.delay(delay).springify()} style={{ flex: 1 }}>
       <View style={{
-        backgroundColor: C.surfaceHigh,
+        backgroundColor: C.glass,
         borderRadius: 16,
-        padding: 14,
+        padding: 16,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: C.border,
+        borderColor: C.borderPrimary,
       }}>
-        <Text style={{ fontSize: 24, fontWeight: '800', color, letterSpacing: -0.5 }}>{value}</Text>
-        <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2, fontWeight: '500' }}>{label}</Text>
+        <Text style={{ fontSize: 26, fontWeight: '800', color, letterSpacing: -0.5 }}>{value}</Text>
+        <Text style={{ fontSize: 11, color: C.textSub, marginTop: 3, fontWeight: '500' }}>{label}</Text>
       </View>
     </Animated.View>
   );
@@ -54,7 +65,6 @@ function StatCard({ value, label, color, delay }: { value: string | number; labe
 function AtalhoCard({ icone, label, sub, route, color, delay }: typeof atalhos[0] & { delay: number }) {
   const router = useRouter();
   const scale = useSharedValue(1);
-
   const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
   function onPress() {
@@ -63,37 +73,36 @@ function AtalhoCard({ icone, label, sub, route, color, delay }: typeof atalhos[0
   }
 
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={animStyle}>
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[animStyle, { flex: 1 }]}>
       <Pressable
         onPress={onPress}
         accessibilityLabel={`${label} ${sub}`}
         accessibilityRole="button"
         android_ripple={{ color: color + '33', borderless: false }}
         style={{
-          backgroundColor: C.surfaceHigh,
-          borderRadius: 18,
+          backgroundColor: C.surface,
+          borderRadius: 16,
           padding: 16,
           alignItems: 'center',
           borderWidth: 1,
           borderColor: C.border,
-          width: '100%',
         }}
       >
         <View style={{
-          width: 46,
-          height: 46,
+          width: 48,
+          height: 48,
           borderRadius: 14,
-          backgroundColor: color + '22',
+          backgroundColor: color + '20',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: 8,
+          marginBottom: 10,
           borderWidth: 1,
-          borderColor: color + '44',
+          borderColor: color + '50',
         }}>
           <Text style={{ fontSize: 22 }}>{icone}</Text>
         </View>
         <Text style={{ fontSize: 12, fontWeight: '700', color: C.text }}>{label}</Text>
-        <Text style={{ fontSize: 10, color: C.textSub }}>{sub}</Text>
+        <Text style={{ fontSize: 10, color: C.textSub, marginTop: 1 }}>{sub}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -114,39 +123,43 @@ function DesafioCard({ desafio, delay }: { desafio: any; delay: number }) {
   return (
     <Animated.View entering={FadeInDown.delay(delay).springify()}>
       <View style={{
-        backgroundColor: C.surfaceHigh,
+        backgroundColor: C.surface,
         borderRadius: 16,
         padding: 16,
         borderWidth: 1,
         borderColor: C.border,
         marginBottom: 10,
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
           <View style={{
             width: 40,
             height: 40,
             borderRadius: 12,
-            backgroundColor: C.primary + '22',
+            backgroundColor: C.glassStrong,
             alignItems: 'center',
             justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: C.borderPrimary,
           }}>
             <Text style={{ fontSize: 18 }}>{desafio.icone}</Text>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: C.text }}>{desafio.titulo}</Text>
-            <Text style={{ fontSize: 10, color: C.textSub, marginTop: 1 }}>{desafio.progresso}/{desafio.meta} concluídos</Text>
+            <Text style={{ fontSize: 10, color: C.textSub, marginTop: 2 }}>{desafio.progresso}/{desafio.meta} concluídos</Text>
           </View>
           <View style={{
-            backgroundColor: C.primary + '22',
-            borderRadius: 8,
-            paddingHorizontal: 8,
+            backgroundColor: C.glassStrong,
+            borderRadius: 20,
+            paddingHorizontal: 10,
             paddingVertical: 4,
+            borderWidth: 1,
+            borderColor: C.borderPrimary,
           }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: C.primaryLight }}>+{desafio.xp} XP</Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight }}>+{desafio.xp} XP</Text>
           </View>
         </View>
-        <View style={{ backgroundColor: C.border, borderRadius: 4, height: 4, overflow: 'hidden' }}>
-          <Animated.View style={[{ height: 4, borderRadius: 4, backgroundColor: C.primaryLight }, barStyle]} />
+        <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 5, overflow: 'hidden' }}>
+          <Animated.View style={[{ height: 5, borderRadius: 4, backgroundColor: C.primaryLight, shadowColor: C.primary, shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }, barStyle]} />
         </View>
       </View>
     </Animated.View>
@@ -196,39 +209,50 @@ export default function InicioScreen() {
         <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
           <View style={{ flex: 1, marginRight: 12 }}>
             <Text style={{ fontSize: 13, color: C.textSub, fontWeight: '500' }}>{saudacao} {perfilEmoji}</Text>
-            <Text style={{ fontSize: 26, fontWeight: '800', color: C.text, letterSpacing: -0.5 }} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={{ fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 }} numberOfLines={1} adjustsFontSizeToFit>
               {apelido}!
             </Text>
           </View>
           <Pressable
-          onPress={() => router.push('/(tabs)/perfil')}
-          accessibilityLabel="Ver meu perfil"
-          accessibilityRole="button"
-          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        >
-            <View style={{ width: 52, height: 52, borderRadius: 26, overflow: 'hidden', borderWidth: 2, borderColor: C.primaryLight + '55' }}>
-              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={52} />
+            onPress={() => router.push('/(tabs)/perfil')}
+            accessibilityLabel="Ver meu perfil"
+            accessibilityRole="button"
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <View style={{
+              width: 54,
+              height: 54,
+              borderRadius: 27,
+              overflow: 'hidden',
+              borderWidth: 2,
+              borderColor: C.borderPrimary,
+              shadowColor: C.primary,
+              shadowOpacity: 0.4,
+              shadowRadius: 10,
+              elevation: 6,
+            }}>
+              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={54} />
             </View>
           </Pressable>
         </Animated.View>
 
-        {/* Mensagem do dia */}
+        {/* Mensagem do dia — glass card */}
         <Animated.View entering={FadeInDown.delay(80).springify()} style={{
-          backgroundColor: C.primary,
-          borderRadius: 20,
+          backgroundColor: C.glass,
+          borderRadius: 18,
           padding: 18,
           marginBottom: 20,
-          overflow: 'hidden',
           borderWidth: 1,
-          borderColor: 'rgba(167,139,250,0.3)',
+          borderColor: C.borderPrimary,
+          overflow: 'hidden',
         }}>
-          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, backgroundColor: C.accent, borderTopLeftRadius: 20, borderBottomLeftRadius: 20 }} />
-          <Text style={{ position: 'absolute', right: -10, bottom: -18, fontSize: 80, opacity: 0.1 }}>{perfilEmoji}</Text>
-          <View style={{ paddingLeft: 10 }}>
-            <Text style={{ color: 'rgba(255,255,255,0.5)', fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginBottom: 6 }}>
-              💬 MENSAGEM DO DIA
+          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: C.primaryLight, borderTopLeftRadius: 18, borderBottomLeftRadius: 18 }} />
+          <Text style={{ position: 'absolute', right: -8, bottom: -16, fontSize: 72, opacity: 0.08 }}>{perfilEmoji}</Text>
+          <View style={{ paddingLeft: 12 }}>
+            <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 7, textTransform: 'uppercase' }}>
+              💬 mensagem do dia
             </Text>
-            <Text style={{ color: C.text, fontSize: 14, lineHeight: 22, fontStyle: 'italic', fontWeight: '500' }}>
+            <Text style={{ color: C.text, fontSize: 14, lineHeight: 22, fontStyle: 'italic', fontWeight: '400' }}>
               {mensagemDoDia}
             </Text>
           </View>
@@ -236,14 +260,14 @@ export default function InicioScreen() {
 
         {/* Stats */}
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-          <StatCard value={profile.xp_total} label="XP total"     color={C.primaryLight} delay={120} />
-          <StatCard value={profile.streak}   label="streak 🔥"    color={C.accent}       delay={160} />
-          <StatCard value={profile.moedas}   label="moedas 🪙"    color={C.gold}         delay={200} />
+          <StatCard value={profile.xp_total} label="XP total"  color={C.primaryLight} delay={120} />
+          <StatCard value={profile.streak}   label="streak 🔥" color={C.accent}       delay={160} />
+          <StatCard value={profile.moedas}   label="moedas 🪙" color={C.gold}         delay={200} />
         </View>
 
         {/* XP Bar */}
         <Animated.View entering={FadeInDown.delay(220).springify()} style={{
-          backgroundColor: C.surfaceHigh,
+          backgroundColor: C.surface,
           borderRadius: 16,
           padding: 14,
           marginBottom: 20,
@@ -251,11 +275,19 @@ export default function InicioScreen() {
           borderColor: C.border,
         }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '600' }}>nível {profile.nivel}</Text>
+            <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '500' }}>nível {profile.nivel}</Text>
             <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{profile.xp_total}/{xpProxNivel} XP</Text>
           </View>
-          <View style={{ backgroundColor: C.border, borderRadius: 6, height: 6, overflow: 'hidden' }}>
-            <Animated.View style={[{ height: 6, borderRadius: 6, backgroundColor: C.primaryLight, shadowColor: C.primary, shadowOpacity: 0.7, shadowRadius: 4, elevation: 4 }, xpBarStyle]} />
+          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 6, height: 6, overflow: 'hidden' }}>
+            <Animated.View style={[{
+              height: 6,
+              borderRadius: 6,
+              backgroundColor: C.primaryLight,
+              shadowColor: C.primary,
+              shadowOpacity: 0.8,
+              shadowRadius: 6,
+              elevation: 4,
+            }, xpBarStyle]} />
           </View>
         </Animated.View>
 
@@ -267,12 +299,12 @@ export default function InicioScreen() {
         {/* Sugestão cronotipo */}
         {sugestaoFoco && (
           <Animated.View entering={FadeInDown.delay(280).springify()} style={{
-            backgroundColor: C.surfaceHigh,
+            backgroundColor: C.surface,
             borderRadius: 16,
             padding: 16,
-            marginBottom: 20,
+            marginBottom: 24,
             borderWidth: 1,
-            borderColor: C.accent + '33',
+            borderColor: C.accent + '30',
             flexDirection: 'row',
             alignItems: 'center',
           }}>
@@ -285,39 +317,43 @@ export default function InicioScreen() {
               accessibilityLabel="Iniciar sessão de foco"
               accessibilityRole="button"
               android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-              style={{ backgroundColor: C.accent, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 9, marginLeft: 12, minHeight: 44, justifyContent: 'center' }}
+              style={{
+                backgroundColor: C.accent,
+                borderRadius: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 9,
+                marginLeft: 12,
+                minHeight: 44,
+                justifyContent: 'center',
+              }}
             >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>Iniciar</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>Iniciar</Text>
             </Pressable>
           </Animated.View>
         )}
 
         {/* Atalhos rápidos */}
-        <Animated.View entering={FadeInDown.delay(300).springify()} style={{ marginBottom: 6 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, marginBottom: 14, textTransform: 'uppercase' }}>
-            atalhos rápidos
-          </Text>
+        <Animated.View entering={FadeInDown.delay(300).springify()} style={{ marginBottom: 14 }}>
+          <SectionLabel label="atalhos rápidos" />
         </Animated.View>
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
           {atalhos.map((a, i) => (
-            <View key={a.route} style={{ flex: 1 }}>
-              <AtalhoCard {...a} delay={320 + i * 40} />
-            </View>
+            <AtalhoCard key={a.route} {...a} delay={320 + i * 40} />
           ))}
         </View>
 
         {/* Desafios da semana */}
         <Animated.View entering={FadeInDown.delay(440).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-            desafios da semana
-          </Text>
+          <SectionLabel label="desafios da semana" />
           <View style={{
-            backgroundColor: desafiosCompletos === 5 ? C.success + '22' : C.primary + '22',
+            backgroundColor: desafiosCompletos === 5 ? C.success + '20' : C.glassStrong,
             borderRadius: 20,
             paddingHorizontal: 10,
             paddingVertical: 4,
+            borderWidth: 1,
+            borderColor: desafiosCompletos === 5 ? C.success + '44' : C.borderPrimary,
           }}>
-            <Text style={{ fontSize: 11, fontWeight: '800', color: desafiosCompletos === 5 ? C.success : C.primaryLight }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: desafiosCompletos === 5 ? C.success : C.primaryLight }}>
               {desafiosCompletos}/5
             </Text>
           </View>
@@ -329,7 +365,7 @@ export default function InicioScreen() {
 
         {desafiosAtivos.length === 0 && (
           <Animated.View entering={FadeInDown.delay(480).springify()} style={{
-            backgroundColor: C.surfaceHigh,
+            backgroundColor: C.surface,
             borderRadius: 16,
             padding: 20,
             alignItems: 'center',

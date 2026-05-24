@@ -47,13 +47,30 @@ const EYEBROW_OPCOES = [{ id: 'variant01', label: 'Natural' },{ id: 'variant03',
 const GLASSES_OPCOES = [{ id: '', label: 'Nenhum' },{ id: 'variant01', label: 'Round' },{ id: 'variant02', label: 'Retro' },{ id: 'variant03', label: 'Cat eye' },{ id: 'variant04', label: 'Aviador' },{ id: 'variant05', label: 'Sport' }];
 const BG_COLORS = [{ hex: 'ede9fe', label: 'Lavanda' },{ hex: 'dbeafe', label: 'Azul' },{ hex: 'd1fae5', label: 'Verde' },{ hex: 'fef3c7', label: 'Amarelo' },{ hex: 'fce7f3', label: 'Rosa' },{ hex: '0B0B18', label: 'Dark' }];
 
-function SecaoLabel({ titulo }: { titulo: string }) {
-  return <Text style={{ fontSize: 12, fontWeight: '700', color: C.textMuted, marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>{titulo}</Text>;
+function SectionLabel({ label }: { label: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+      <View style={{ width: 3, height: 14, backgroundColor: C.primaryLight, borderRadius: 2 }} />
+      <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight, letterSpacing: 1.5, textTransform: 'uppercase' }}>
+        {label}
+      </Text>
+    </View>
+  );
 }
 
 function ChipSelect({ ativo, onPress, label }: { ativo: boolean; onPress: () => void; label: string }) {
   return (
-    <Pressable onPress={onPress} style={{ paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, backgroundColor: ativo ? C.primary : C.surfaceHigh, borderWidth: 1, borderColor: ativo ? C.primaryLight + '55' : C.border }}>
+    <Pressable
+      onPress={onPress}
+      style={{
+        paddingHorizontal: 14,
+        paddingVertical: 9,
+        borderRadius: 20,
+        backgroundColor: ativo ? C.primary : C.surfaceHigh,
+        borderWidth: 1,
+        borderColor: ativo ? C.borderPrimary : C.border,
+      }}
+    >
       <Text style={{ fontSize: 12, fontWeight: '700', color: ativo ? '#fff' : C.textSub }}>{label}</Text>
     </Pressable>
   );
@@ -122,26 +139,56 @@ export default function PerfilScreen() {
 
         {/* Avatar */}
         <Animated.View entering={FadeInUp.delay(0).springify()} style={{ alignItems: 'center', marginBottom: 28 }}>
-          <Pressable onPress={() => setModalAvatar(true)} accessibilityLabel="Personalizar avatar" accessibilityRole="button" style={{ marginBottom: 12 }}>
-            <View style={{ width: 130, height: 130, borderRadius: 65, overflow: 'hidden', borderWidth: 3, borderColor: C.primaryLight + '55', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 20, elevation: 12 }}>
+          <Pressable onPress={() => setModalAvatar(true)} accessibilityLabel="Personalizar avatar" accessibilityRole="button" style={{ marginBottom: 14 }}>
+            <View style={{
+              width: 130,
+              height: 130,
+              borderRadius: 65,
+              overflow: 'hidden',
+              borderWidth: 2.5,
+              borderColor: C.borderPrimary,
+              shadowColor: C.primary,
+              shadowOpacity: 0.5,
+              shadowRadius: 24,
+              elevation: 14,
+            }}>
               <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={130} />
             </View>
-            <View style={{ backgroundColor: C.primary + '22', paddingHorizontal: 12, paddingVertical: 5, borderRadius: 20, alignSelf: 'center', marginTop: 10, borderWidth: 1, borderColor: C.primaryLight + '33' }}>
+            <View style={{
+              backgroundColor: C.glassStrong,
+              paddingHorizontal: 14,
+              paddingVertical: 6,
+              borderRadius: 20,
+              alignSelf: 'center',
+              marginTop: 10,
+              borderWidth: 1,
+              borderColor: C.borderPrimary,
+            }}>
               <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>✏️ personalizar</Text>
             </View>
           </Pressable>
 
-          <Text style={{ fontSize: 22, fontWeight: '800', color: C.text }}>{nomeExibido}</Text>
+          <Text style={{ fontSize: 22, fontWeight: '800', color: C.text, letterSpacing: -0.3 }}>{nomeExibido}</Text>
           {plimProfile && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: C.primary + '22', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginTop: 6, borderWidth: 1, borderColor: C.primaryLight + '33' }}>
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              backgroundColor: C.glassStrong,
+              paddingHorizontal: 12,
+              paddingVertical: 4,
+              borderRadius: 20,
+              marginTop: 6,
+              borderWidth: 1,
+              borderColor: C.borderPrimary,
+            }}>
               <Text style={{ fontSize: 14 }}>{plimProfile.profileType.emoji} </Text>
               <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{plimProfile.profileType.name}</Text>
             </View>
           )}
-          {profile.bio && <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20 }}>{profile.bio}</Text>}
+          {profile.bio && <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20, lineHeight: 20 }}>{profile.bio}</Text>}
           {profile.instagram && <Text style={{ fontSize: 12, color: C.primaryLight, marginTop: 4 }}>@{profile.instagram}</Text>}
 
-          <View style={{ backgroundColor: C.primary + '22', paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginTop: 10, borderWidth: 1, borderColor: C.primaryLight + '33' }}>
+          <View style={{ backgroundColor: C.glassStrong, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginTop: 10, borderWidth: 1, borderColor: C.borderPrimary }}>
             <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>nível {nivel}</Text>
           </View>
 
@@ -150,7 +197,7 @@ export default function PerfilScreen() {
             accessibilityLabel="Editar perfil"
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-            style={{ marginTop: 10 }}
+            style={{ marginTop: 12 }}
           >
             <Text style={{ fontSize: 12, color: C.textSub, textDecorationLine: 'underline' }}>editar perfil</Text>
           </Pressable>
@@ -159,12 +206,12 @@ export default function PerfilScreen() {
         {/* Stats */}
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
           {[
-            { val: xp,             label: 'XP total',    color: C.primaryLight },
-            { val: `🪙 ${profile.moedas}`, label: 'moedas', color: C.gold },
-            { val: `${profile.streak} 🔥`, label: 'streak', color: C.accent },
+            { val: xp,                    label: 'XP total', color: C.primaryLight },
+            { val: `🪙 ${profile.moedas}`, label: 'moedas',  color: C.gold         },
+            { val: `${profile.streak} 🔥`, label: 'streak',  color: C.accent       },
           ].map((s, i) => (
             <Animated.View key={i} entering={FadeInDown.delay(80 + i * 40).springify()} style={{ flex: 1 }}>
-              <View style={{ backgroundColor: C.surface, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>
+              <View style={{ backgroundColor: C.glass, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.borderPrimary }}>
                 <Text style={{ fontSize: 20, fontWeight: '800', color: s.color }}>{s.val}</Text>
                 <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>{s.label}</Text>
               </View>
@@ -173,19 +220,19 @@ export default function PerfilScreen() {
         </View>
 
         {/* XP Bar */}
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={{ backgroundColor: C.surface, borderRadius: 16, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: C.border }}>
+        <Animated.View entering={FadeInDown.delay(200).springify()} style={{ backgroundColor: C.surface, borderRadius: 16, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: C.border }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
             <Text style={{ fontSize: 12, color: C.textSub }}>próximo nível ({nivel + 1})</Text>
             <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{xp}/{xpProxNivel} XP</Text>
           </View>
-          <View style={{ backgroundColor: C.border, borderRadius: 6, height: 6, overflow: 'hidden' }}>
-            <Animated.View style={[{ height: 6, borderRadius: 6, backgroundColor: C.primaryLight }, xpBarStyle]} />
+          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 6, height: 6, overflow: 'hidden' }}>
+            <Animated.View style={[{ height: 6, borderRadius: 6, backgroundColor: C.primaryLight, shadowColor: C.primary, shadowOpacity: 0.8, shadowRadius: 6, elevation: 4 }, xpBarStyle]} />
           </View>
         </Animated.View>
 
         {/* Heatmap */}
-        <Animated.View entering={FadeInDown.delay(240).springify()}>
-          <Pressable onPress={() => router.push('/historico')} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 18, marginBottom: 20, borderWidth: 1, borderColor: C.border }}>
+        <Animated.View entering={FadeInDown.delay(240).springify()} style={{ marginBottom: 24 }}>
+          <Pressable onPress={() => router.push('/historico')} style={{ backgroundColor: C.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.border }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
               <Text style={{ fontSize: 14, fontWeight: '700', color: C.text }}>📊 histórico</Text>
               <Text style={{ fontSize: 12, color: C.primaryLight }}>ver tudo →</Text>
@@ -195,7 +242,7 @@ export default function PerfilScreen() {
                 {semana.map((dia) => {
                   const status: StatusDia = historicoDias[dia] ?? 'vazia';
                   const ehHoje = dia === new Date().toISOString().slice(0, 10);
-                  return <View key={dia} style={{ flex: 1, aspectRatio: 1, borderRadius: 4, backgroundColor: corDia[status], borderWidth: ehHoje ? 2 : 0, borderColor: C.primaryLight }} />;
+                  return <View key={dia} style={{ flex: 1, aspectRatio: 1, borderRadius: 5, backgroundColor: corDia[status], borderWidth: ehHoje ? 2 : 0, borderColor: C.primaryLight }} />;
                 })}
               </View>
             ))}
@@ -203,21 +250,30 @@ export default function PerfilScreen() {
         </Animated.View>
 
         {/* Desafios */}
-        <Animated.View entering={FadeInDown.delay(280).springify()}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 14 }}>desafios da semana</Text>
-          <View style={{ gap: 8, marginBottom: 20 }}>
+        <Animated.View entering={FadeInDown.delay(280).springify()} style={{ marginBottom: 20 }}>
+          <SectionLabel label="desafios da semana" />
+          <View style={{ gap: 8 }}>
             {desafios.map((d, i) => (
-              <Animated.View key={d.id} entering={FadeInDown.delay(300 + i * 40).springify()} style={{ backgroundColor: C.surface, borderRadius: 16, padding: 14, borderWidth: 1, borderColor: C.border, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Animated.View key={d.id} entering={FadeInDown.delay(300 + i * 40).springify()} style={{
+                backgroundColor: C.surface,
+                borderRadius: 16,
+                padding: 14,
+                borderWidth: 1,
+                borderColor: C.border,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 12,
+              }}>
                 <Text style={{ fontSize: 20 }}>{d.icone}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: C.text, marginBottom: 6 }}>{d.titulo}</Text>
-                  <View style={{ backgroundColor: C.border, borderRadius: 4, height: 4, overflow: 'hidden' }}>
-                    <View style={{ height: 4, borderRadius: 4, backgroundColor: d.completo ? C.success : C.primaryLight, width: `${Math.round((d.progresso / d.meta) * 100)}%` as any }} />
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: C.text, marginBottom: 6 }}>{d.titulo}</Text>
+                  <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 5, overflow: 'hidden' }}>
+                    <View style={{ height: 5, borderRadius: 4, backgroundColor: d.completo ? C.success : C.primaryLight, width: `${Math.round((d.progresso / d.meta) * 100)}%` as any }} />
                   </View>
                 </View>
                 {d.completo
                   ? <Text style={{ color: C.success, fontWeight: '800', fontSize: 16 }}>✓</Text>
-                  : <Text style={{ fontSize: 11, fontWeight: '800', color: C.primaryLight }}>+{d.xp}XP</Text>
+                  : <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight }}>+{d.xp}XP</Text>
                 }
               </Animated.View>
             ))}
@@ -225,18 +281,41 @@ export default function PerfilScreen() {
         </Animated.View>
 
         {/* Conquistas */}
-        <Animated.View entering={FadeInDown.delay(400).springify()}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 14 }}>conquistas</Text>
-          <View style={{ gap: 10, marginBottom: 20 }}>
+        <Animated.View entering={FadeInDown.delay(400).springify()} style={{ marginBottom: 20 }}>
+          <SectionLabel label="conquistas" />
+          <View style={{ gap: 10 }}>
             {profile.conquistas.map((c, i) => {
               const pStreak = c.id === 'tres_dias' ? Math.min(profile.streak / 3, 1) : c.id === 'semana_perfeita' ? Math.min(profile.streak / 7, 1) : 0;
               const temBarra = !c.desbloqueada && pStreak > 0;
               const hintVis  = hintAberto === c.id;
               return (
                 <Animated.View key={c.id} entering={FadeInDown.delay(420 + i * 30).springify()}>
-                  <Pressable onPress={() => !c.desbloqueada && setHintAberto(hintVis ? null : c.id)} disabled={c.desbloqueada}
-                    style={{ backgroundColor: C.surface, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: c.desbloqueada ? C.primaryLight + '33' : C.border, opacity: c.desbloqueada ? 1 : 0.6, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                    <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: c.desbloqueada ? C.primary + '22' : C.surfaceHigh, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: c.desbloqueada ? C.primaryLight + '44' : C.border }}>
+                  <Pressable
+                    onPress={() => !c.desbloqueada && setHintAberto(hintVis ? null : c.id)}
+                    disabled={c.desbloqueada}
+                    accessibilityRole="button"
+                    style={{
+                      backgroundColor: C.surface,
+                      borderRadius: 16,
+                      padding: 16,
+                      borderWidth: 1,
+                      borderColor: c.desbloqueada ? C.borderPrimary : C.border,
+                      opacity: c.desbloqueada ? 1 : 0.65,
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 14,
+                    }}
+                  >
+                    <View style={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: 13,
+                      backgroundColor: c.desbloqueada ? C.glassStrong : C.surfaceHigh,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: c.desbloqueada ? C.borderPrimary : C.border,
+                    }}>
                       <Text style={{ fontSize: 22 }}>{c.desbloqueada ? c.icone : '🔒'}</Text>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -244,19 +323,19 @@ export default function PerfilScreen() {
                       <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>{c.desc}</Text>
                       {temBarra && (
                         <View style={{ marginTop: 8 }}>
-                          <View style={{ backgroundColor: C.border, borderRadius: 4, height: 4, overflow: 'hidden' }}>
+                          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 4, overflow: 'hidden' }}>
                             <View style={{ height: 4, borderRadius: 4, backgroundColor: C.primaryLight, width: `${Math.round(pStreak * 100)}%` as any }} />
                           </View>
                           <Text style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>{c.id === 'tres_dias' ? `${profile.streak}/3 dias` : `${profile.streak}/7 dias`}</Text>
                         </View>
                       )}
                       {hintVis && (
-                        <View style={{ marginTop: 8, backgroundColor: C.primary + '22', borderRadius: 10, padding: 8 }}>
+                        <View style={{ marginTop: 8, backgroundColor: C.glassStrong, borderRadius: 10, padding: 8, borderWidth: 1, borderColor: C.borderPrimary }}>
                           <Text style={{ fontSize: 11, color: C.primaryLight }}>💡 {CONQUISTA_HINTS[c.id] ?? 'Continue usando o app.'}</Text>
                         </View>
                       )}
                     </View>
-                    {c.desbloqueada && <Text style={{ color: C.success, fontWeight: '800' }}>✓</Text>}
+                    {c.desbloqueada && <Text style={{ color: C.success, fontWeight: '800', fontSize: 16 }}>✓</Text>}
                   </Pressable>
                 </Animated.View>
               );
@@ -267,7 +346,7 @@ export default function PerfilScreen() {
         {/* Atalhos */}
         <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
           {[{ r: '/medicacao', i: '💊', l: 'Medicação' }, { r: '/parceiro', i: '👫', l: 'Parceiro' }, { r: '/ranking', i: '🏆', l: 'Ranking' }].map((a) => (
-            <Pressable key={a.r} onPress={() => router.push(a.r as any)} style={{ flex: 1 }}>
+            <Pressable key={a.r} onPress={() => router.push(a.r as any)} accessibilityRole="button" style={{ flex: 1 }}>
               <View style={{ backgroundColor: C.surface, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>
                 <Text style={{ fontSize: 24, marginBottom: 4 }}>{a.i}</Text>
                 <Text style={{ fontSize: 11, color: C.textSub }}>{a.l}</Text>
@@ -278,29 +357,57 @@ export default function PerfilScreen() {
 
         {/* Pro card */}
         {isPro ? (
-          <View style={{ backgroundColor: C.primary, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.primaryLight + '44' }}>
+          <View style={{ backgroundColor: C.primary, borderRadius: 18, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.borderPrimary }}>
             <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16, marginBottom: 4 }}>👑 Plim Pro ativo</Text>
             <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>Você tem acesso a todas as features premium. Obrigado!</Text>
           </View>
         ) : (
-          <Pressable onPress={() => abrirPaywall('Plim Pro')} accessibilityLabel="Ver planos Plim Pro" accessibilityRole="button" android_ripple={{ color: C.primaryLight + '22', borderless: false }} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1.5, borderColor: C.primaryLight + '44' }}>
+          <Pressable
+            onPress={() => abrirPaywall('Plim Pro')}
+            accessibilityLabel="Ver planos Plim Pro"
+            accessibilityRole="button"
+            android_ripple={{ color: C.primaryLight + '22', borderless: false }}
+            style={{
+              backgroundColor: C.glass,
+              borderRadius: 18,
+              padding: 20,
+              marginBottom: 14,
+              borderWidth: 1.5,
+              borderColor: C.borderPrimary,
+            }}
+          >
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
               <Text style={{ fontSize: 22 }}>👑</Text>
               <Text style={{ color: C.primaryLight, fontWeight: '800', fontSize: 17 }}>Plim Pro</Text>
             </View>
-            <Text style={{ color: C.textSub, fontSize: 13, lineHeight: 19, marginBottom: 14 }}>IA Coach · Foco ilimitado · Avatar premium · Backup na nuvem e muito mais.</Text>
-            <View style={{ backgroundColor: C.primary, borderRadius: 14, paddingVertical: 13, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 14 }}>🚀 Ver planos Pro</Text>
+            <Text style={{ color: C.textSub, fontSize: 13, lineHeight: 20, marginBottom: 14 }}>IA Coach · Foco ilimitado · Avatar premium · Backup na nuvem e muito mais.</Text>
+            <View style={{
+              backgroundColor: C.primary,
+              borderRadius: 14,
+              paddingVertical: 13,
+              alignItems: 'center',
+              shadowColor: C.primary,
+              shadowOpacity: 0.5,
+              shadowRadius: 12,
+              elevation: 8,
+            }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>🚀 Ver planos Pro</Text>
             </View>
           </Pressable>
         )}
 
         {!session ? (
-          <Pressable onPress={() => router.push('/(auth)/login')} accessibilityLabel="Criar conta ou entrar" accessibilityRole="button" android_ripple={{ color: C.primaryLight + '22', borderless: false }} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.border }}>
-            <Text style={{ color: C.text, fontWeight: '800', fontSize: 15, marginBottom: 4 }}>Crie sua conta grátis ✨</Text>
+          <Pressable
+            onPress={() => router.push('/(auth)/login')}
+            accessibilityLabel="Criar conta ou entrar"
+            accessibilityRole="button"
+            android_ripple={{ color: C.primaryLight + '22', borderless: false }}
+            style={{ backgroundColor: C.surface, borderRadius: 18, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.border }}
+          >
+            <Text style={{ color: C.text, fontWeight: '700', fontSize: 15, marginBottom: 4 }}>Crie sua conta grátis ✨</Text>
             <Text style={{ color: C.textSub, fontSize: 13, marginBottom: 14 }}>Salve seu progresso na nuvem</Text>
             <View style={{ backgroundColor: C.primaryLight, borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: '800' }}>Criar conta / Entrar</Text>
+              <Text style={{ color: '#fff', fontWeight: '700' }}>Criar conta / Entrar</Text>
             </View>
           </Pressable>
         ) : (
@@ -318,29 +425,29 @@ export default function PerfilScreen() {
 
       {/* Modal Avatar */}
       <Modal visible={modalAvatar} animationType="slide" transparent onRequestClose={() => setModalAvatar(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.7)' }} onPress={() => setModalAvatar(false)} />
-        <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', borderTopWidth: 1, borderColor: C.border }}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)' }} onPress={() => setModalAvatar(false)} />
+        <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', borderTopWidth: 1, borderColor: C.borderPrimary }}>
           <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-            <View style={{ width: 40, height: 4, backgroundColor: C.border, borderRadius: 2, alignSelf: 'center', marginTop: 14, marginBottom: 20 }} />
+            <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginTop: 14, marginBottom: 20 }} />
 
             <View style={{ alignItems: 'center', marginBottom: 24 }}>
               <Text style={{ fontSize: 18, fontWeight: '800', color: C.text, marginBottom: 16 }}>personalizar personagem</Text>
-              <View style={{ width: 120, height: 120, borderRadius: 60, overflow: 'hidden', borderWidth: 2, borderColor: C.primaryLight + '55' }}>
+              <View style={{ width: 120, height: 120, borderRadius: 60, overflow: 'hidden', borderWidth: 2, borderColor: C.borderPrimary }}>
                 <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={120} />
               </View>
             </View>
 
-            <SecaoLabel titulo="Gênero" />
+            <SectionLabel label="Gênero" />
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
               {(['masculino', 'feminino'] as const).map((g) => (
-                <Pressable key={g} onPress={() => setGenero(g)} style={{ flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: 'center', backgroundColor: profile.avatar_config.genero === g ? C.primary : C.surfaceHigh, borderWidth: 1.5, borderColor: profile.avatar_config.genero === g ? C.primaryLight + '55' : C.border }}>
+                <Pressable key={g} onPress={() => setGenero(g)} style={{ flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: 'center', backgroundColor: profile.avatar_config.genero === g ? C.primary : C.surfaceHigh, borderWidth: 1.5, borderColor: profile.avatar_config.genero === g ? C.borderPrimary : C.border }}>
                   <Text style={{ fontSize: 20, marginBottom: 4 }}>{g === 'masculino' ? '👦' : '👧'}</Text>
                   <Text style={{ fontSize: 12, fontWeight: '700', color: profile.avatar_config.genero === g ? '#fff' : C.textSub }}>{g === 'masculino' ? 'Masculino' : 'Feminino'}</Text>
                 </Pressable>
               ))}
             </View>
 
-            <SecaoLabel titulo="Tom de pele" />
+            <SectionLabel label="Tom de pele" />
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
               {SKIN_COLORS.map((op) => {
                 const ativo = profile.avatar_config.skinColor === op.hex;
@@ -348,15 +455,15 @@ export default function PerfilScreen() {
               })}
             </View>
 
-            <SecaoLabel titulo={`Cabelo ${profile.avatar_config.genero === 'feminino' ? '(feminino)' : '(masculino)'}`} />
+            <SectionLabel label={`Cabelo ${profile.avatar_config.genero === 'feminino' ? '(feminino)' : '(masculino)'}`} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               {hairOptions.map((op) => {
                 const ativo = profile.avatar_config.hairStyle === op.id;
-                return <Pressable key={op.id} onPress={() => updateAvatarConfig({ hairStyle: op.id })} style={{ width: '30%', paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: ativo ? C.primary + '22' : C.surfaceHigh, borderWidth: 1.5, borderColor: ativo ? C.primaryLight + '55' : C.border }}><Text style={{ fontSize: 11, color: ativo ? C.primaryLight : C.textSub, fontWeight: ativo ? '700' : '400' }}>{op.label}</Text></Pressable>;
+                return <Pressable key={op.id} onPress={() => updateAvatarConfig({ hairStyle: op.id })} style={{ width: '30%', paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: ativo ? C.glassStrong : C.surfaceHigh, borderWidth: 1.5, borderColor: ativo ? C.borderPrimary : C.border }}><Text style={{ fontSize: 11, color: ativo ? C.primaryLight : C.textSub, fontWeight: ativo ? '700' : '400' }}>{op.label}</Text></Pressable>;
               })}
             </View>
 
-            <SecaoLabel titulo="Cor do cabelo" />
+            <SectionLabel label="Cor do cabelo" />
             <View style={{ flexDirection: 'row', gap: 6, marginBottom: 20 }}>
               {HAIR_COLORS.map((op) => {
                 const ativo = profile.avatar_config.hairColor === op.hex;
@@ -364,12 +471,12 @@ export default function PerfilScreen() {
               })}
             </View>
 
-            <SecaoLabel titulo="Sobrancelhas" />
+            <SectionLabel label="Sobrancelhas" />
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
               {EYEBROW_OPCOES.map((op) => <ChipSelect key={op.id} ativo={profile.avatar_config.eyebrowsStyle === op.id} onPress={() => updateAvatarConfig({ eyebrowsStyle: op.id })} label={op.label} />)}
             </View>
 
-            <SecaoLabel titulo="Características" />
+            <SectionLabel label="Características" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               {[{ id: 'freckles', label: 'Sardas' }, { id: 'blush', label: 'Blush' }, { id: 'birthmark', label: 'Sinal' }, ...(profile.avatar_config.genero === 'masculino' ? [{ id: 'mustache', label: 'Bigode' }] : [])].map((f) => (
                 <ChipSelect key={f.id} ativo={(profile.avatar_config.features ?? []).includes(f.id)} onPress={() => toggleFeature(f.id)} label={f.label} />
@@ -377,12 +484,12 @@ export default function PerfilScreen() {
               {profile.avatar_config.genero === 'feminino' && <ChipSelect ativo={!!profile.avatar_config.earrings} onPress={() => updateAvatarConfig({ earrings: !profile.avatar_config.earrings })} label="Brincos" />}
             </View>
 
-            <SecaoLabel titulo="Óculos" />
+            <SectionLabel label="Óculos" />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
               {GLASSES_OPCOES.map((op) => <ChipSelect key={op.id} ativo={profile.avatar_config.glassesStyle === op.id} onPress={() => updateAvatarConfig({ glassesStyle: op.id })} label={op.label} />)}
             </View>
 
-            <SecaoLabel titulo="Cor de fundo" />
+            <SectionLabel label="Cor de fundo" />
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
               {BG_COLORS.map((op) => {
                 const ativo = profile.avatar_config.backgroundColor === op.hex;
@@ -390,8 +497,8 @@ export default function PerfilScreen() {
               })}
             </View>
 
-            <Pressable onPress={() => setModalAvatar(false)} style={{ backgroundColor: C.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6, marginBottom: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Salvar personagem</Text>
+            <Pressable onPress={() => setModalAvatar(false)} style={{ backgroundColor: C.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.5, shadowRadius: 12, elevation: 8, marginBottom: 10 }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Salvar personagem</Text>
             </Pressable>
           </ScrollView>
         </View>
@@ -399,9 +506,9 @@ export default function PerfilScreen() {
 
       {/* Modal Editar Perfil */}
       <Modal visible={modalPerfil} animationType="slide" transparent onRequestClose={() => setModalPerfil(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setModalPerfil(false)} />
-        <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40, borderTopWidth: 1, borderColor: C.border }}>
-          <View style={{ width: 40, height: 4, backgroundColor: C.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' }} onPress={() => setModalPerfil(false)} />
+        <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40, borderTopWidth: 1, borderColor: C.borderPrimary }}>
+          <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
           <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>editar perfil</Text>
           {[
             { label: 'Nome', val: editNome, set: setEditNome, ph: 'Seu nome completo' },
@@ -411,12 +518,17 @@ export default function PerfilScreen() {
           ].map((f) => (
             <View key={f.label} style={{ marginBottom: 14 }}>
               <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' }}>{f.label}</Text>
-              <TextInput placeholder={f.ph} placeholderTextColor={C.textMuted} value={f.val} onChangeText={f.set}
-                style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 14 }} />
+              <TextInput
+                placeholder={f.ph}
+                placeholderTextColor={C.textMuted}
+                value={f.val}
+                onChangeText={f.set}
+                style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 14 }}
+              />
             </View>
           ))}
-          <Pressable onPress={salvarPerfil} style={{ backgroundColor: C.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 6, shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Salvar</Text>
+          <Pressable onPress={salvarPerfil} style={{ backgroundColor: C.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 6, shadowColor: C.primary, shadowOpacity: 0.5, shadowRadius: 12, elevation: 8 }}>
+            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Salvar</Text>
           </Pressable>
         </View>
       </Modal>

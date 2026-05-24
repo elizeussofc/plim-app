@@ -39,12 +39,11 @@ const tipos: { key: TipoPost; label: string }[] = [
 ];
 
 const reacoes: { key: Reacao; emoji: string; label: string }[] = [
-  { key: 'apoio',    emoji: '🫂', label: 'Apoio'     },
-  { key: 'forca',    emoji: '💪', label: 'Força'     },
-  { key: 'parabens', emoji: '🎉', label: 'Parabéns'  },
+  { key: 'apoio',    emoji: '🫂', label: 'Apoio'    },
+  { key: 'forca',    emoji: '💪', label: 'Força'    },
+  { key: 'parabens', emoji: '🎉', label: 'Parabéns' },
 ];
 
-// Componente separado para evitar violação de hooks dentro de .map()
 function ReacaoBtn({ emoji, label, count, ativo, onPress }: {
   emoji: string; label: string; count: number; ativo: boolean; onPress: () => void;
 }) {
@@ -65,11 +64,16 @@ function ReacaoBtn({ emoji, label, count, ativo, onPress }: {
         accessibilityState={{ selected: ativo }}
         android_ripple={{ color: C.primaryLight + '33', borderless: true }}
         style={{
-          flexDirection: 'row', alignItems: 'center', gap: 5,
-          paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 5,
+          paddingHorizontal: 12,
+          paddingVertical: 8,
+          borderRadius: 20,
           minHeight: 44,
-          backgroundColor: ativo ? C.primary + '33' : C.surfaceHigh,
-          borderWidth: 1, borderColor: ativo ? C.primaryLight + '55' : C.border,
+          backgroundColor: ativo ? C.glassStrong : C.surfaceHigh,
+          borderWidth: 1,
+          borderColor: ativo ? C.borderPrimary : C.border,
         }}
       >
         <Text style={{ fontSize: 14 }}>{emoji}</Text>
@@ -85,12 +89,25 @@ function PostCard({ post, onReagir, delay }: { post: Post; onReagir: (id: string
   const cor = tipoCor[post.tipo];
   return (
     <Animated.View entering={FadeInDown.delay(delay).springify()} style={{
-      backgroundColor: C.surface, borderRadius: 20, padding: 18,
-      borderWidth: 1, borderColor: C.border, marginBottom: 12,
+      backgroundColor: C.surface,
+      borderRadius: 16,
+      padding: 18,
+      borderWidth: 1,
+      borderColor: C.border,
+      marginBottom: 12,
     }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: C.primary + '22', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: C.primaryLight + '33' }}>
+          <View style={{
+            width: 36,
+            height: 36,
+            borderRadius: 18,
+            backgroundColor: C.glassStrong,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 1,
+            borderColor: C.borderPrimary,
+          }}>
             <Text style={{ fontSize: 14, fontWeight: '800', color: C.primaryLight }}>{post.apelido[0]}</Text>
           </View>
           <Text style={{ fontSize: 13, fontWeight: '700', color: C.text }}>{post.apelido}</Text>
@@ -98,7 +115,16 @@ function PostCard({ post, onReagir, delay }: { post: Post; onReagir: (id: string
         <Text style={{ fontSize: 11, color: C.textMuted }}>{post.tempo}</Text>
       </View>
 
-      <View style={{ backgroundColor: cor + '22', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 10, borderWidth: 1, borderColor: cor + '44' }}>
+      <View style={{
+        backgroundColor: cor + '20',
+        borderRadius: 20,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        alignSelf: 'flex-start',
+        marginBottom: 10,
+        borderWidth: 1,
+        borderColor: cor + '44',
+      }}>
         <Text style={{ fontSize: 11, fontWeight: '700', color: cor }}>{tipoLabel[post.tipo]}</Text>
       </View>
 
@@ -128,10 +154,10 @@ export default function ComunidadeScreen() {
   const addMoedas = useUserStore((s) => s.addMoedas);
   const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
 
-  const [posts, setPosts]       = useState<Post[]>(postsMock);
+  const [posts, setPosts]             = useState<Post[]>(postsMock);
   const [modalAberto, setModalAberto] = useState(false);
-  const [novoTexto, setNovoTexto] = useState('');
-  const [novoTipo, setNovoTipo]  = useState<TipoPost>('texto');
+  const [novoTexto, setNovoTexto]     = useState('');
+  const [novoTipo, setNovoTipo]       = useState<TipoPost>('texto');
 
   function reagir(postId: string, reacao: Reacao) {
     setPosts((prev) => prev.map((p) => {
@@ -158,15 +184,25 @@ export default function ComunidadeScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Header */}
         <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <Text style={{ fontSize: 26, fontWeight: '800', color: C.text, letterSpacing: -0.5 }}>comunidade</Text>
+          <Text style={{ fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 }}>comunidade</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Pressable
               onPress={() => router.push('/ranking')}
               accessibilityLabel="Ver ranking"
               accessibilityRole="button"
               android_ripple={{ color: C.gold + '44', borderless: false }}
-              style={{ backgroundColor: C.surfaceHigh, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, borderWidth: 1, borderColor: C.border, minHeight: 44, justifyContent: 'center' }}
+              style={{
+                backgroundColor: C.surfaceHigh,
+                paddingHorizontal: 14,
+                paddingVertical: 9,
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: C.border,
+                minHeight: 44,
+                justifyContent: 'center',
+              }}
             >
               <Text style={{ color: C.gold, fontWeight: '700', fontSize: 13 }}>🏆 ranking</Text>
             </Pressable>
@@ -175,23 +211,49 @@ export default function ComunidadeScreen() {
               accessibilityLabel="Criar novo post"
               accessibilityRole="button"
               android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-              style={{ backgroundColor: C.primary, paddingHorizontal: 14, paddingVertical: 9, borderRadius: 20, shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 8, elevation: 6, minHeight: 44, justifyContent: 'center' }}
+              style={{
+                backgroundColor: C.primary,
+                paddingHorizontal: 14,
+                paddingVertical: 9,
+                borderRadius: 20,
+                shadowColor: C.primary,
+                shadowOpacity: 0.5,
+                shadowRadius: 10,
+                elevation: 8,
+                minHeight: 44,
+                justifyContent: 'center',
+              }}
             >
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>+ post</Text>
             </Pressable>
           </View>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.delay(80).springify()} style={{ backgroundColor: C.surface, borderRadius: 18, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: C.border }}>
+        {/* Banner de boas-vindas */}
+        <Animated.View entering={FadeInDown.delay(80).springify()} style={{
+          backgroundColor: C.glass,
+          borderRadius: 16,
+          padding: 16,
+          marginBottom: 20,
+          borderWidth: 1,
+          borderColor: C.borderPrimary,
+        }}>
           <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', lineHeight: 20 }}>
             🤝 um lugar seguro. sem julgamentos, sem competição.{'\n'}só apoio de verdade.
           </Text>
         </Animated.View>
 
         {posts.length === 0 && (
-          <Animated.View entering={FadeInDown.delay(140).springify()} style={{ backgroundColor: C.surface, borderRadius: 20, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>
+          <Animated.View entering={FadeInDown.delay(140).springify()} style={{
+            backgroundColor: C.surface,
+            borderRadius: 18,
+            padding: 32,
+            alignItems: 'center',
+            borderWidth: 1,
+            borderColor: C.border,
+          }}>
             <Text style={{ fontSize: 36, marginBottom: 12 }}>💬</Text>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: C.primaryLight, marginBottom: 6 }}>Ainda silencioso por aqui</Text>
+            <Text style={{ fontSize: 15, fontWeight: '700', color: C.primaryLight, marginBottom: 6 }}>Ainda silencioso por aqui</Text>
             <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center' }}>Seja o primeiro a compartilhar algo com a comunidade.</Text>
           </Animated.View>
         )}
@@ -203,9 +265,18 @@ export default function ComunidadeScreen() {
 
       <Modal visible={modalAberto} animationType="slide" transparent onRequestClose={() => setModalAberto(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)' }} onPress={() => setModalAberto(false)} accessibilityLabel="Fechar modal" />
-          <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40, borderTopWidth: 1, borderColor: C.border }}>
-            <View style={{ width: 40, height: 4, backgroundColor: C.border, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' }} onPress={() => setModalAberto(false)} accessibilityLabel="Fechar modal" />
+          <View style={{
+            backgroundColor: C.surface,
+            borderTopLeftRadius: 28,
+            borderTopRightRadius: 28,
+            paddingHorizontal: 24,
+            paddingTop: 20,
+            paddingBottom: 40,
+            borderTopWidth: 1,
+            borderColor: C.borderPrimary,
+          }}>
+            <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
             <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>compartilhar</Text>
 
             <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>tipo</Text>
@@ -217,7 +288,15 @@ export default function ComunidadeScreen() {
                   accessibilityLabel={`Tipo: ${t.label}`}
                   accessibilityRole="radio"
                   accessibilityState={{ selected: novoTipo === t.key }}
-                  style={{ flex: 1, paddingVertical: 10, borderRadius: 14, alignItems: 'center', backgroundColor: novoTipo === t.key ? C.primary : C.surfaceHigh, borderWidth: 1, borderColor: novoTipo === t.key ? C.primaryLight + '55' : C.border }}
+                  style={{
+                    flex: 1,
+                    paddingVertical: 10,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    backgroundColor: novoTipo === t.key ? C.primary : C.surfaceHigh,
+                    borderWidth: 1,
+                    borderColor: novoTipo === t.key ? C.borderPrimary : C.border,
+                  }}
                 >
                   <Text style={{ fontSize: 12, fontWeight: '700', color: novoTipo === t.key ? '#fff' : C.textSub }}>{t.label}</Text>
                 </Pressable>
@@ -226,10 +305,27 @@ export default function ComunidadeScreen() {
 
             <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>mensagem</Text>
             <TextInput
-              multiline numberOfLines={4} placeholder="Conte como está indo... a comunidade te apoia 🤝"
-              placeholderTextColor={C.textMuted} value={novoTexto} onChangeText={setNovoTexto} autoFocus
+              multiline
+              numberOfLines={4}
+              placeholder="Conte como está indo... a comunidade te apoia 🤝"
+              placeholderTextColor={C.textMuted}
+              value={novoTexto}
+              onChangeText={setNovoTexto}
+              autoFocus
               accessibilityLabel="Mensagem para a comunidade"
-              style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 14, textAlignVertical: 'top', minHeight: 100, marginBottom: 20 }}
+              style={{
+                backgroundColor: C.surfaceHigh,
+                borderWidth: 1,
+                borderColor: C.border,
+                borderRadius: 14,
+                paddingHorizontal: 16,
+                paddingVertical: 13,
+                color: C.text,
+                fontSize: 14,
+                textAlignVertical: 'top',
+                minHeight: 100,
+                marginBottom: 20,
+              }}
             />
             <Pressable
               onPress={compartilhar}
@@ -237,9 +333,18 @@ export default function ComunidadeScreen() {
               accessibilityRole="button"
               disabled={!novoTexto.trim()}
               android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-              style={{ backgroundColor: novoTexto.trim() ? C.primary : C.primary + '55', borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 10, elevation: 6 }}
+              style={{
+                backgroundColor: novoTexto.trim() ? C.primary : C.primary + '55',
+                borderRadius: 16,
+                paddingVertical: 16,
+                alignItems: 'center',
+                shadowColor: C.primary,
+                shadowOpacity: novoTexto.trim() ? 0.5 : 0,
+                shadowRadius: 12,
+                elevation: novoTexto.trim() ? 8 : 0,
+              }}
             >
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>Publicar</Text>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Publicar</Text>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
