@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 export type StatusTarefa = 'pendente' | 'feita' | 'pulada';
@@ -97,3 +98,31 @@ export const useRotinaStore = create<RotinaState>((set) => ({
       },
     })),
 }));
+
+// ── Hidratação manual (compatível com Expo web + native) ──────────────────────
+
+const STORAGE_KEY = 'plim-rotina-store';
+
+AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+  if (!raw) return;
+  try {
+    const saved = JSON.parse(raw);
+    if (saved?.tarefas || saved?.historicoDias) {
+      useRotinaStore.setState({
+        tarefas:      saved.tarefas      ?? tarefasPadrao,
+        historicoDias: saved.historicoDias ?? {},
+      });
+    }
+  } catch {}
+}).catch(() => {});
+
+let _saveTimer: ReturnType<typeof setTimeout> | null = null;
+useRotinaStore.subscribe((state) => {
+  if (_saveTimer) clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(() => {
+    AsyncStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ tarefas: state.tarefas, historicoDias: state.historicoDias }),
+    ).catch(() => {});
+  }, 400);
+});
