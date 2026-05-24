@@ -1,124 +1,165 @@
-import { Card, Text } from '@/components/ui';
+import { C } from '@/lib/theme';
 import { usePaywallStore } from '@/stores/paywallStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
-import { Pressable, ScrollView, View } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, {
+  FadeInDown, FadeInUp,
+  useAnimatedStyle, useSharedValue, withSpring,
+} from 'react-native-reanimated';
 
 const principal = [
-  { route: '/despejo-mental', icone: '🧠', titulo: 'Despejo Mental', desc: 'Jogue seus pensamentos pra fora. Sem filtro.',       cor: 'bg-violet-100', corTexto: 'text-violet-700', premium: false },
-  { route: '/sessao-foco',    icone: '🎯', titulo: 'Sessão de Foco', desc: 'Timer Pomodoro. Cada minuto conta.',                cor: 'bg-orange-100', corTexto: 'text-orange-700', premium: false },
-  { route: '/modo-calma',     icone: '😌', titulo: 'Modo Calma',     desc: 'Respira. Desacelera. Um passo de cada vez.',        cor: 'bg-emerald-100', corTexto: 'text-emerald-700', premium: false },
-  { route: '/ia-tdah',        icone: '🤖', titulo: 'Plim IA',        desc: 'Assistente especializado em TDAH. Converse agora.', cor: 'bg-blue-100',   corTexto: 'text-blue-700',   premium: true },
+  { route: '/despejo-mental', icone: '🧠', titulo: 'Despejo Mental', desc: 'Jogue seus pensamentos pra fora. Sem filtro.', cor: C.primary,  premium: false },
+  { route: '/sessao-foco',    icone: '🎯', titulo: 'Sessão de Foco', desc: 'Timer Pomodoro. Cada minuto conta.',           cor: C.accent,   premium: false },
+  { route: '/modo-calma',     icone: '😌', titulo: 'Modo Calma',     desc: 'Respira. Desacelera. Um passo de cada vez.',  cor: C.success,  premium: false },
+  { route: '/ia-tdah',        icone: '🤖', titulo: 'Plim IA',        desc: 'Assistente especializado em TDAH.',           cor: '#3B82F6',  premium: true  },
 ];
 
 const extras = [
-  { route: '/medicacao', icone: '💊', titulo: 'Medicação', desc: 'Lembretes e histórico', premium: false },
-  { route: '/historico', icone: '📊', titulo: 'Histórico', desc: 'Heatmap da rotina',     premium: false },
-  { route: '/parceiro',  icone: '👫', titulo: 'Parceiro',  desc: 'Acompanhe juntos',      premium: true  },
-  { route: '/ranking',   icone: '🏆', titulo: 'Ranking',   desc: 'Competição ao vivo',    premium: false },
+  { route: '/medicacao', icone: '💊', titulo: 'Medicação', desc: 'Lembretes e histórico', premium: false, cor: '#EC4899' },
+  { route: '/historico', icone: '📊', titulo: 'Histórico', desc: 'Heatmap da rotina',     premium: false, cor: '#8B5CF6' },
+  { route: '/parceiro',  icone: '👫', titulo: 'Parceiro',  desc: 'Acompanhe juntos',      premium: true,  cor: '#F59E0B' },
+  { route: '/ranking',   icone: '🏆', titulo: 'Ranking',   desc: 'Competição ao vivo',    premium: false, cor: '#EF4444' },
 ];
 
+function PrincipalCard({ item, onPress, delay }: { item: typeof principal[0]; onPress: () => void; delay: number }) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  function press() {
+    scale.value = withSpring(0.96, { damping: 15 }, () => { scale.value = withSpring(1); });
+    onPress();
+  }
+
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={animStyle}>
+      <Pressable onPress={press} style={{
+        backgroundColor: C.surface,
+        borderRadius: 20,
+        padding: 18,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        borderWidth: 1,
+        borderColor: C.border,
+        marginBottom: 10,
+      }}>
+        <View style={{
+          width: 56, height: 56, borderRadius: 18,
+          backgroundColor: item.cor + '22',
+          alignItems: 'center', justifyContent: 'center',
+          borderWidth: 1, borderColor: item.cor + '44',
+        }}>
+          <Text style={{ fontSize: 26 }}>{item.icone}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <Text style={{ fontSize: 15, fontWeight: '800', color: C.text }}>{item.titulo}</Text>
+            {item.premium && (
+              <View style={{ backgroundColor: C.accent, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>👑 PRO</Text>
+              </View>
+            )}
+          </View>
+          <Text style={{ fontSize: 12, color: C.textSub }}>{item.desc}</Text>
+        </View>
+        <Text style={{ color: C.textMuted, fontSize: 20 }}>›</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+function ExtraCard({ item, onPress, delay }: { item: typeof extras[0]; onPress: () => void; delay: number }) {
+  const scale = useSharedValue(1);
+  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
+  function press() {
+    scale.value = withSpring(0.92, { damping: 15 }, () => { scale.value = withSpring(1); });
+    onPress();
+  }
+
+  return (
+    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[animStyle, { width: '47%' }]}>
+      <Pressable onPress={press} style={{
+        backgroundColor: C.surface,
+        borderRadius: 18,
+        padding: 18,
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: C.border,
+      }}>
+        <View style={{ position: 'relative', marginBottom: 10 }}>
+          <Text style={{ fontSize: 30 }}>{item.icone}</Text>
+          {item.premium && (
+            <View style={{ position: 'absolute', top: -4, right: -8, backgroundColor: C.accent, borderRadius: 6, paddingHorizontal: 4, paddingVertical: 1 }}>
+              <Text style={{ fontSize: 8, color: '#fff', fontWeight: '800' }}>PRO</Text>
+            </View>
+          )}
+        </View>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: C.text, marginBottom: 2 }}>{item.titulo}</Text>
+        <Text style={{ fontSize: 11, color: C.textSub }}>{item.desc}</Text>
+      </Pressable>
+    </Animated.View>
+  );
+}
+
 export default function PlimScreen() {
-  const router = useRouter();
-  const isPro = useUserStore((s) => s.profile.plano === 'pro');
+  const router     = useRouter();
+  const isPro      = useUserStore((s) => s.profile.plano === 'pro');
   const abrirPaywall = usePaywallStore((s) => s.abrir);
 
   function navegar(route: string, premium: boolean, nome: string) {
-    if (premium && !isPro) {
-      abrirPaywall(nome);
-      return;
-    }
+    if (premium && !isPro) { abrirPaywall(nome); return; }
     router.push(route as any);
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-violet-50">
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView
         style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="items-center mb-6 mt-2">
-          <View
-            className="w-20 h-20 rounded-full bg-violet-600 items-center justify-center mb-3"
-            style={{ shadowColor: '#7C3AED', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.35, shadowRadius: 12, elevation: 10 }}
-          >
-            <Text className="text-4xl">⚡</Text>
+        {/* Header */}
+        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ alignItems: 'center', marginBottom: 28, marginTop: 8 }}>
+          <View style={{
+            width: 80, height: 80, borderRadius: 28,
+            backgroundColor: C.primary + '22',
+            alignItems: 'center', justifyContent: 'center', marginBottom: 12,
+            borderWidth: 1.5, borderColor: C.primaryLight + '55',
+            shadowColor: C.primary, shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
+          }}>
+            <Text style={{ fontSize: 38 }}>⚡</Text>
           </View>
-          <Text variant="h2" className="text-violet-800">Botão Plim</Text>
-          <Text variant="small" color="secondary" className="text-center mt-1">Seu hub de foco e ferramentas</Text>
-        </View>
+          <Text style={{ fontSize: 26, fontWeight: '800', color: C.text, letterSpacing: -0.5 }}>botão plim</Text>
+          <Text style={{ fontSize: 13, color: C.textSub, marginTop: 4 }}>seu hub de foco e ferramentas</Text>
+        </Animated.View>
 
         {/* Modos principais */}
-        <View className="gap-3 mb-5">
-          {principal.map((op) => {
-            const bloqueado = op.premium && !isPro;
-            return (
-              <Pressable
-                key={op.route}
-                onPress={() => navegar(op.route, op.premium, op.titulo)}
-                className="active:opacity-70"
-              >
-                <Card variant="elevated" padding="lg">
-                  <View className="flex-row items-center gap-4">
-                    <View className={`w-14 h-14 rounded-3xl ${op.cor} items-center justify-center`}>
-                      <Text className="text-2xl">{op.icone}</Text>
-                    </View>
-                    <View className="flex-1">
-                      <View className="flex-row items-center gap-2">
-                        <Text className={`font-bold text-base ${op.corTexto}`}>{op.titulo}</Text>
-                        {bloqueado && (
-                          <View style={{ backgroundColor: '#F97316', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>👑 PRO</Text>
-                          </View>
-                        )}
-                      </View>
-                      <Text variant="small" color="secondary" className="mt-0.5">{op.desc}</Text>
-                    </View>
-                    <Text className="text-slate-300 text-xl">{bloqueado ? '🔒' : '›'}</Text>
-                  </View>
-                </Card>
-              </Pressable>
-            );
-          })}
+        <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 14 }}>modos principais</Text>
+        {principal.map((op, i) => (
+          <PrincipalCard key={op.route} item={op} delay={80 + i * 60} onPress={() => navegar(op.route, op.premium, op.titulo)} />
+        ))}
+
+        {/* Ferramentas */}
+        <Text style={{ fontSize: 11, fontWeight: '700', color: C.textMuted, letterSpacing: 1.5, textTransform: 'uppercase', marginTop: 10, marginBottom: 14 }}>ferramentas</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+          {extras.map((e, i) => (
+            <ExtraCard key={e.route} item={e} delay={340 + i * 50} onPress={() => navegar(e.route, e.premium, e.titulo)} />
+          ))}
         </View>
 
-        {/* Ferramentas extras */}
-        <Text variant="h3" className="mb-3">Ferramentas</Text>
-        <View className="flex-row flex-wrap gap-3">
-          {extras.map((e) => {
-            const bloqueado = e.premium && !isPro;
-            return (
-              <Pressable
-                key={e.route}
-                onPress={() => navegar(e.route, e.premium, e.titulo)}
-                className="active:opacity-70"
-                style={{ width: '47%' }}
-              >
-                <Card variant="default" padding="md" className="items-center">
-                  <View style={{ position: 'relative' }}>
-                    <Text className="text-3xl mb-1">{e.icone}</Text>
-                    {bloqueado && (
-                      <View style={{ position: 'absolute', top: -4, right: -8, backgroundColor: '#F97316', borderRadius: 8, paddingHorizontal: 4, paddingVertical: 1 }}>
-                        <Text style={{ fontSize: 8, color: '#fff', fontWeight: '800' }}>PRO</Text>
-                      </View>
-                    )}
-                  </View>
-                  <Text className="font-semibold text-slate-800 text-sm">{e.titulo}</Text>
-                  <Text variant="caption" color="secondary">{e.desc}</Text>
-                </Card>
-              </Pressable>
-            );
-          })}
-        </View>
-
-        <Card variant="flat" padding="md" className="mt-5">
-          <Text variant="small" color="secondary" className="text-center leading-5">
-            💡 <Text variant="small" className="font-semibold text-violet-700">Dica Plim:</Text>
-            {' '}Não precisa fazer tudo hoje.{'\n'}Escolha uma coisa. Comece agora.
+        {/* Dica */}
+        <Animated.View entering={FadeInDown.delay(560).springify()} style={{
+          backgroundColor: C.surface, borderRadius: 18, padding: 18, marginTop: 20,
+          borderWidth: 1, borderColor: C.primaryLight + '22',
+        }}>
+          <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', lineHeight: 20 }}>
+            💡 <Text style={{ fontWeight: '700', color: C.primaryLight }}>dica plim: </Text>
+            não precisa fazer tudo hoje.{'\n'}escolha uma coisa. comece agora.
           </Text>
-        </Card>
+        </Animated.View>
       </ScrollView>
     </SafeAreaView>
   );
