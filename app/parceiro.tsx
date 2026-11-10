@@ -41,7 +41,7 @@ export default function ParceiroScreen() {
     const cancelar = assinarRankingRealtime(async () => {
       await buscarDadosParceiro(parceiroIdSalvo);
     });
-    return cancelar;
+    return () => { cancelar(); };
   }, [parceiroIdSalvo]);
 
   async function buscarDadosParceiro(userId: string) {

@@ -16,5 +16,9 @@
     "nativewind-env.d.ts",
     "global.d.ts",
     ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "supabase/functions"
   ]
 }

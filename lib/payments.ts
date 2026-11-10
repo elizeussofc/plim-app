@@ -10,6 +10,43 @@ export const RC_PACKAGE_ANUAL = 'plim_anual';
 
 const ADMIN_URL = 'https://plim-admin.vercel.app';
 
+// Chaves públicas do SDK do RevenueCat (podem ficar no app).
+// ATENÇÃO: a chave iOS abaixo é de TESTE — trocar pela chave `appl_...` antes de publicar na App Store.
+const RC_KEY_IOS = process.env.EXPO_PUBLIC_RC_KEY_IOS ?? 'test_YWBUdIQtLKNfmunQBMZGDrSaRnc';
+const RC_KEY_ANDROID = process.env.EXPO_PUBLIC_RC_KEY_ANDROID ?? 'goog_EfwRlQSSEexvVTJEXMHoDWqwDQH';
+
+// ── Configuração única do RevenueCat (mobile) ──────────────────────────────
+let _rcPronto: Promise<boolean> | null = null;
+export function configurarRevenueCat(): Promise<boolean> {
+  if (Platform.OS === 'web') return Promise.resolve(false);
+  if (!_rcPronto) {
+    _rcPronto = (async () => {
+      try {
+        const { default: Purchases, LOG_LEVEL } = await import('react-native-purchases');
+        Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.WARN);
+        Purchases.configure({ apiKey: Platform.OS === 'ios' ? RC_KEY_IOS : RC_KEY_ANDROID });
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+  }
+  return _rcPronto;
+}
+
+// ── Ao entrar na conta: vincula o usuário e confere a assinatura na loja ───
+// A assinatura validada pelo RevenueCat é a fonte da verdade no celular.
+export async function sincronizarPro(userId: string): Promise<boolean> {
+  if (!(await configurarRevenueCat())) return false;
+  try {
+    const { default: Purchases } = await import('react-native-purchases');
+    const { customerInfo } = await Purchases.logIn(userId);
+    return customerInfo.entitlements.active[RC_ENTITLEMENT] !== undefined;
+  } catch {
+    return false;
+  }
+}
+
 // ── Web: Stripe Checkout ───────────────────────────────────────────────────
 async function assinarStripe(planoId: PlanoId, userId: string): Promise<boolean> {
   try {
@@ -31,6 +68,7 @@ async function assinarStripe(planoId: PlanoId, userId: string): Promise<boolean>
 // ── Mobile: RevenueCat ─────────────────────────────────────────────────────
 async function assinarRevenueCat(planoId: PlanoId, userId: string): Promise<boolean> {
   try {
+    if (!(await configurarRevenueCat())) throw new Error('RevenueCat indisponível');
     const { default: Purchases } = await import('react-native-purchases');
 
     // Vincula o userId do Supabase ao RevenueCat

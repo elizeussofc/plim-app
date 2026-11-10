@@ -10,6 +10,6 @@ interface PaywallState {
 export const usePaywallStore = create<PaywallState>((set) => ({
   visivel: false,
   origem: null,
-  abrir: (origem = null) => set({ visivel: true, origem }),
+  abrir: (origem) => set({ visivel: true, origem: origem ?? null }),
   fechar: () => set({ visivel: false, origem: null }),
 }));

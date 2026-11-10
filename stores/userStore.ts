@@ -208,7 +208,7 @@ useUserStore.subscribe((state) => {
       bio: profile.bio,
       instagram: profile.instagram,
       email: profile.email,
-      plano: profile.plano,
+      // `plano` não é enviado: só o servidor (webhooks) define quem é Pro.
       xp_total: profile.xp_total,
       nivel: profile.nivel,
       moedas: profile.moedas,
