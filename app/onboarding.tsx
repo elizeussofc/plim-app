@@ -19,8 +19,12 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AvatarPalco from '@/components/AvatarPalco';
+import EditorAvatar from '@/components/EditorAvatar';
 import { Botao } from '@/components/plim';
 import { Text } from '@/components/ui';
+import { normalizarAvatar } from '@/lib/avatar';
+import { somInicio } from '@/lib/sons';
 import { useUserStore } from '@/stores/userStore';
 import {
   classifyProfile,
@@ -536,6 +540,30 @@ function StepProfile({ profile }: { profile: PlimProfileType | null }) {
   );
 }
 
+// ─── Tela 9: Monte o seu boneco ───────────────────────────────────────────────
+
+function StepAvatar() {
+  const perfil = useUserStore((s) => s.profile);
+  const updateAvatarConfig = useUserStore((s) => s.updateAvatarConfig);
+  const avatar = normalizarAvatar(perfil.avatar_config);
+  const parado = perfil.preferencias?.reduzir_animacoes === true;
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Text variant="h2" style={{ textAlign: 'center', color: '#2B1D4E', marginBottom: 4 }}>
+        Agora monte o seu boneco
+      </Text>
+      <Text style={{ textAlign: 'center', color: '#64577F', fontSize: 14, lineHeight: 20 }}>
+        Ele acompanha você no app. Dá para mudar quando quiser, no Perfil.
+      </Text>
+      <AvatarPalco config={avatar} expressao="feliz" altura={210} parado={parado} />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: 14, paddingBottom: 8 }}>
+        <EditorAvatar avatar={avatar} aoMudar={updateAvatarConfig} />
+      </ScrollView>
+    </View>
+  );
+}
+
 // ─── Tela principal ───────────────────────────────────────────────────────────
 
 const TOTAL_CONTENT_STEPS = 8;
@@ -631,7 +659,12 @@ export default function OnboardingScreen() {
     goToStep(8, 1);
   }
 
-  async function handleEnterApp() {
+  /**
+   * Fim das perguntas: guarda as respostas e vai direto para o boneco.
+   * As respostas são gravadas aqui, e não só no fim, para ninguém ter de responder
+   * tudo de novo se fechar o app no meio da montagem do boneco.
+   */
+  async function handleCreateAvatar() {
     if (profile) {
       useUserStore.getState().updateProfile({ apelido: profile.name });
     }
@@ -643,6 +676,11 @@ export default function OnboardingScreen() {
       distractions: answers.distractions,
       motivation: answers.motivation ?? 'progresso',
     });
+    goToStep(9, 1);
+  }
+
+  function handleEnterApp() {
+    somInicio();
     router.replace('/(tabs)');
   }
 
@@ -702,6 +740,7 @@ export default function OnboardingScreen() {
         );
       case 7: return <StepLoading onDone={handleLoaderDone} />;
       case 8: return <StepProfile profile={profile} />;
+      case 9: return <StepAvatar />;
       default: return null;
     }
   }
@@ -710,6 +749,7 @@ export default function OnboardingScreen() {
   const isStep0 = step === 0;
   const isLoader = step === 7;
   const isReveal = step === 8;
+  const isAvatar = step === 9;
   const showBackBtn = step > 0 && step < 7;
   const showNextBtn = step >= 1 && step <= 6;
   const isOptional = step === 4;
@@ -757,7 +797,8 @@ export default function OnboardingScreen() {
             </View>
           )}
 
-          {isReveal && <Botao rotulo="Entrar no Plim" icone="foguete" onPress={handleEnterApp} />}
+          {isReveal && <Botao rotulo="Criar meu boneco" onPress={handleCreateAvatar} />}
+          {isAvatar && <Botao rotulo="Entrar no Plim" icone="foguete" onPress={handleEnterApp} />}
         </View>
       )}
     </SafeAreaView>

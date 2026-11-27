@@ -1,15 +1,33 @@
 # Plim — ativar a segurança da IA e do plano Pro
 
-O código já está pronto. Faltam 5 passos que só o dono das contas consegue fazer.
+O código já está pronto. Faltam 6 passos (do 0 ao 5) que só o dono das contas consegue fazer.
 Enquanto eles não forem feitos, o app continua funcionando como antes (modo de transição).
+
+## 0. Acordar o projeto do Supabase
+
+Em 27/11/2026 o endereço do banco que o app usa não existia mais na internet
+(conferido em dois servidores de DNS públicos). Sem ele não há login, cadastro, Grupo,
+ranking nem Plim IA; o resto do app funciona porque guarda os dados no aparelho.
+
+No painel do Supabase (supabase.com/dashboard), veja como o projeto do Plim aparece:
+
+- **Pausado** (o plano grátis pausa projetos sem uso): clique em restaurar e espere ficar ativo.
+- **Não aparece** (foi apagado): crie um projeto novo. Nesse caso, no passo 1, cole antes os
+  arquivos `001_initial_schema.sql`, `003_ranking.sql` e `004_features.sql`, nessa ordem, e
+  troque `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` na Vercel pelos do projeto novo.
 
 ## 1. Banco de dados (Supabase)
 
-No painel do Supabase > SQL Editor, cole e rode o arquivo
-`supabase/migrations/006_seguranca_plano_ia.sql`.
+No painel do Supabase > SQL Editor, cole e rode o arquivo `supabase/ATUALIZAR-BANCO.sql`
+inteiro. Ele junta as migrations 005, 006 e 007 e pode rodar mais de uma vez.
 
-O que ele faz: impede que o app marque o próprio usuário como Pro e cria o
-contador diário de mensagens da IA.
+O que ele faz:
+
+- cria as colunas do perfil que o app grava (sequência, conquistas, bio, Instagram). Sem elas,
+  o perfil de quem está logado não é salvo na nuvem. A versão antiga desse arquivo tinha um
+  comando que o Postgres recusa, então ele nunca rodou por inteiro;
+- impede que o app marque o próprio usuário como Pro e cria o contador diário de mensagens da IA;
+- cria as tabelas, as regras e o balde de imagens do Grupo (detalhes em `docs/GRUPO-SETUP.md`).
 
 ## 2. Publicar as duas funções do servidor
 

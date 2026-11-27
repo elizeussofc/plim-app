@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { test } from 'node:test';
-import { CHAPEUS, COBRE_O_TOPO, COSTAS, PESCOCOS, avatarConfigPadrao, chaveAvatar, normalizarAvatar } from '../lib/avatar.ts';
+import { CHAPEUS, COBRE_O_TOPO, COSTAS, OPCOES_BONECO, PESCOCOS, avatarConfigPadrao, chaveAvatar, normalizarAvatar } from '../lib/avatar.ts';
 import { FALAS } from '../lib/falas.ts';
 import { montarResumo, periodo, tendencia } from '../lib/resumo.ts';
 import { LUGARES, PECAS, faltam, pecasDe, semPecasDoPro, situacaoDaPeca, vestir } from '../lib/roupas.ts';
@@ -25,6 +25,19 @@ test('toda peça do catálogo existe no avatar e dentro do arquivo 3D', () => {
   for (const p of PECAS) assert.ok(nomes.some((n) => n.startsWith(`${prefixo[p.lugar]}__${p.id}__`)), `a peça ${p.id} não está no arquivo 3D`);
   for (const cabelo of ['curto', 'coque']) assert.ok(nomes.some((n) => n.startsWith(`hairtop__${cabelo}__`)), `falta o alto do cabelo ${cabelo}`);
   assert.ok(COBRE_O_TOPO.every((c) => CHAPEUS.includes(c)));
+});
+
+test('a escolha do boneco é masculino ou feminino, e cada um tem o seu cabelo no arquivo 3D', () => {
+  assert.deepEqual(OPCOES_BONECO.map((o) => o.label), ['Masculino', 'Feminino']);
+  const glb = readFileSync(new URL('../public/avatar/plim_avatar.glb', import.meta.url));
+  const nomes = JSON.parse(glb.subarray(20, 20 + glb.readUInt32LE(12)).toString('utf8')).nodes.map((n) => n.name);
+  for (const o of OPCOES_BONECO) {
+    assert.ok(nomes.some((n) => n.startsWith(`hair__${o.id}__`) || n.startsWith(`hairtop__${o.id}__`)), `o boneco ${o.label} não tem cabelo no arquivo 3D`);
+    assert.equal(normalizarAvatar({ ...padrao, cabelo: o.id }).cabelo, o.id, 'a escolha sobrevive a salvar e abrir de novo');
+  }
+  // quem já tinha boneco salvo com o nome antigo do cabelo continua com o mesmo boneco
+  assert.equal(normalizarAvatar({ cabelo: 'coque' }).cabelo, 'coque');
+  assert.equal(avatarConfigPadrao.cabelo, OPCOES_BONECO[0].id);
 });
 
 test('o melhor fica no Pro, mas o grátis tem peça em todo lugar', () => {

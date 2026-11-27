@@ -11,6 +11,9 @@ alter table public.profiles
 
 -- Política de leitura para o painel admin (service_role já bypassa RLS,
 -- mas garantimos que admins autenticados também possam ler todos os perfis)
-create policy if not exists "Admin lê todos os perfis"
+-- (O Postgres não aceita "create policy if not exists": o arquivo inteiro falhava aqui
+-- e as colunas acima nunca eram criadas. Apagar e criar de novo dá no mesmo e pode repetir.)
+drop policy if exists "Admin lê todos os perfis" on public.profiles;
+create policy "Admin lê todos os perfis"
   on public.profiles for select
   using (auth.jwt() ->> 'role' = 'admin');

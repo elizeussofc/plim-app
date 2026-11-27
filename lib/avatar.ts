@@ -55,9 +55,14 @@ export const avatarConfigPadrao: AvatarConfig = {
   corRaio: 'F97316',
 };
 
-export const OPCOES_CABELO: { id: Cabelo; label: string }[] = [
-  { id: 'curto', label: 'Curto' },
-  { id: 'coque', label: 'Coque' },
+/**
+ * A pessoa escolhe boneco masculino ou feminino. Por dentro continua sendo o campo
+ * `cabelo`, porque é o nome das peças no .glb e o que já está salvo nos aparelhos:
+ * 'curto' é o boneco masculino e 'coque' é o feminino.
+ */
+export const OPCOES_BONECO: { id: Cabelo; label: string }[] = [
+  { id: 'curto', label: 'Masculino' },
+  { id: 'coque', label: 'Feminino' },
 ];
 
 export const OPCOES_PELE = ['F6D7BD', 'E8B893', 'C98A5E', 'A66A43', '7B4A2E', '4E2F1E'];

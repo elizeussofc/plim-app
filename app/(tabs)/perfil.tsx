@@ -1,14 +1,13 @@
 import AvatarPalco from '@/components/AvatarPalco';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
+import EditorAvatar from '@/components/EditorAvatar';
 import GrupoNoPerfil from '@/components/grupo/GrupoNoPerfil';
 import { Balao, useFalaVisivel } from '@/components/Balao';
 import Icone from '@/components/Icone';
 import { Almofada, Barra, Botao, Numero, Peca, PecaBotao, Secao, Selo, Tela } from '@/components/plim';
 import { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
 import { Text } from '@/components/Texto';
-import {
-  chaveAvatar, normalizarAvatar, OPCOES_CABELO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE,
-} from '@/lib/avatar';
+import { chaveAvatar, normalizarAvatar } from '@/lib/avatar';
 import { avisar } from '@/lib/avisar';
 import { dataLocal, hojeLocal } from '@/lib/dia';
 import { limparInstagram } from '@/lib/grupo';
@@ -51,57 +50,6 @@ function gerarUltimos35Dias(): string[] {
     dias.push(dataLocal(d));
   }
   return dias;
-}
-
-/** Fileira de cores para escolher (pele, cabelo, roupa, fundo). */
-function Cores({ titulo, opcoes, atual, aoEscolher }: { titulo: string; opcoes: string[]; atual: string; aoEscolher: (hex: string) => void }) {
-  return (
-    <View style={{ marginBottom: 18 }}>
-      <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>{titulo}</Text>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        {opcoes.map((hex) => {
-          const ativo = atual.toUpperCase() === hex.toUpperCase();
-          return (
-            <Pressable
-              key={hex}
-              onPress={() => aoEscolher(hex)}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: ativo }}
-              accessibilityLabel={`${titulo}: cor ${hex}`}
-              hitSlop={4}
-              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `#${hex}`, borderWidth: ativo ? 4 : 2, borderColor: ativo ? C.primary : C.border, alignItems: 'center', justifyContent: 'center' }}
-            >
-              {ativo && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.surface, borderWidth: 2, borderColor: C.primary }} />}
-            </Pressable>
-          );
-        })}
-      </View>
-    </View>
-  );
-}
-
-function Opcao({ ativo, rotulo, aoTocar }: { ativo: boolean; rotulo: string; aoTocar: () => void }) {
-  return (
-    <Pressable
-      onPress={aoTocar}
-      accessibilityRole="button"
-      accessibilityState={{ selected: ativo }}
-      style={({ pressed }) => ({
-        flex: 1,
-        minHeight: 48,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: R.md,
-        backgroundColor: ativo ? C.primary : C.surface,
-        borderWidth: 2,
-        borderBottomWidth: pressed ? 2 : 5,
-        marginTop: pressed ? 3 : 0,
-        borderColor: ativo ? C.primaryDim : C.border,
-      })}
-    >
-      <Text style={{ fontFamily: F.display, fontSize: 15, color: ativo ? C.onPrimary : C.textSub }}>{rotulo}</Text>
-    </Pressable>
-  );
 }
 
 export default function PerfilScreen() {
@@ -404,25 +352,7 @@ export default function PerfilScreen() {
           <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 28, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
             <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', marginBottom: 16 }}>Arraste o boneco para girar. Toque nele e ele acena.</Text>
 
-            <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>Cabelo</Text>
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
-              {OPCOES_CABELO.map((op) => (
-                <Opcao key={op.id} ativo={avatar.cabelo === op.id} rotulo={op.label} aoTocar={() => updateAvatarConfig({ ...avatar, cabelo: op.id })} />
-              ))}
-            </View>
-
-            <Cores titulo="Cor do cabelo" opcoes={OPCOES_COR_CABELO} atual={avatar.corCabelo} aoEscolher={(h) => updateAvatarConfig({ ...avatar, corCabelo: h })} />
-            <Cores titulo="Tom de pele" opcoes={OPCOES_PELE} atual={avatar.pele} aoEscolher={(h) => updateAvatarConfig({ ...avatar, pele: h })} />
-            <Cores titulo="Moletom" opcoes={OPCOES_MOLETOM} atual={avatar.corMoletom} aoEscolher={(h) => updateAvatarConfig({ ...avatar, corMoletom: h })} />
-            <Cores titulo="Calça" opcoes={OPCOES_CALCA} atual={avatar.corCalca} aoEscolher={(h) => updateAvatarConfig({ ...avatar, corCalca: h })} />
-
-            <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>Acessórios</Text>
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
-              <Opcao ativo={avatar.oculos} rotulo="Óculos" aoTocar={() => updateAvatarConfig({ ...avatar, oculos: !avatar.oculos })} />
-              <Opcao ativo={avatar.fone} rotulo="Fone" aoTocar={() => updateAvatarConfig({ ...avatar, fone: !avatar.fone })} />
-            </View>
-
-            <Cores titulo="Fundo do retrato" opcoes={OPCOES_FUNDO} atual={avatar.fundo} aoEscolher={(h) => updateAvatarConfig({ ...avatar, fundo: h })} />
+            <EditorAvatar avatar={avatar} aoMudar={updateAvatarConfig} />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}>
               <AvatarPersonagem config={avatar} size={56} />
