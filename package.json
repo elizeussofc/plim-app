@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "ts": "tsc --noEmit",
     "postinstall": "patch-package",
-    "test": "node --test tests/regras.test.mjs"
+    "test": "node --test tests/regras.test.mjs tests/trilhas-falas.test.mjs"
   },
   "dependencies": {
     "@expo-google-fonts/atkinson-hyperlegible": "^0.4.1",

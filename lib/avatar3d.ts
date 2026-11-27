@@ -21,6 +21,6 @@ export async function retratoAvatar(_cfg: AvatarConfig, _expressao: Expressao, _
   throw new Error('Avatar 3D ao vivo disponível só na web.');
 }
 
-export async function criarPalco(_caixa: unknown, _cfg: AvatarConfig, _expressao: Expressao, _parado = false): Promise<Palco> {
+export async function criarPalco(_caixa: unknown, _cfg: AvatarConfig, _expressao: Expressao, _parado = false, _aoTocar?: () => void): Promise<Palco> {
   throw new Error('Avatar 3D ao vivo disponível só na web.');
 }

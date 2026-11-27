@@ -6,7 +6,7 @@ import { C, F } from '@/lib/theme';
 import { useUserStore } from '@/stores/userStore';
 import { Image, View } from 'react-native';
 
-const PRINCIPAIS: Ferramenta[] = [FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
+const PRINCIPAIS: Ferramenta[] = [FERRAMENTAS.trilhas, FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
 const EXTRAS: Ferramenta[] = [FERRAMENTAS.medicacao, FERRAMENTAS.historico, FERRAMENTAS.parceiro, FERRAMENTAS.ranking];
 
 /** Aba Plim: as ferramentas para quando a cabeça precisa de ajuda agora. */

@@ -1,4 +1,6 @@
 import { Botao, Cabecalho } from '@/components/plim';
+import { dizer } from '@/stores/falaStore';
+import { silenciarSons } from '@/lib/sons';
 import { Text } from '@/components/Texto';
 import { C, F } from '@/lib/theme';
 import { useDesafiosStore } from '@/stores/desafiosStore';
@@ -28,6 +30,12 @@ export default function ModoCalmaScreen() {
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
   const contou = useRef(false);
 
+  // Aqui é lugar de silêncio: nenhum efeito sonoro toca enquanto esta tela está aberta.
+  useEffect(() => {
+    silenciarSons(true);
+    return () => silenciarSons(false);
+  }, []);
+
   useEffect(() => {
     if (!ativo) {
       animRef.current?.stop();
@@ -49,6 +57,7 @@ export default function ModoCalmaScreen() {
           if (feitos >= CICLOS_PARA_CONTAR && !contou.current) {
             contou.current = true;
             registrarEvento('calma_3x')(addXp, addMoedas);
+            dizer('calma');
           }
         }
         proxima();

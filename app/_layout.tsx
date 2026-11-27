@@ -10,6 +10,7 @@ import { View } from 'react-native';
 import '../global.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import Avisos from '@/components/Avisos';
+import { useCelebracoes } from '@/lib/celebrar';
 import { configurarRevenueCat } from '@/lib/payments';
 import { C } from '@/lib/theme';
 
@@ -26,6 +27,12 @@ function RevenueCatProvider({ children }: { children: React.ReactNode }) {
     configurarRevenueCat();
   }, []);
   return <>{children}</>;
+}
+
+/** Aviso, som e fala do avatar quando a pessoa sobe de nível, ganha conquista etc. */
+function Celebracoes() {
+  useCelebracoes();
+  return null;
 }
 
 export default function RootLayout() {
@@ -55,6 +62,7 @@ export default function RootLayout() {
             <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           </Stack>
           <Avisos />
+          <Celebracoes />
         </AuthProvider>
       </RevenueCatProvider>
     </QueryClientProvider>

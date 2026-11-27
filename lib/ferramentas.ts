@@ -19,6 +19,7 @@ export interface Ferramenta {
 }
 
 export const FERRAMENTAS = {
+  trilhas:   { rota: '/trilhas',        icone: 'placa',    titulo: 'Trilhas',        desc: 'Missões com relógio, do seu tamanho.',          tinta: 'laranja', pro: false },
   despejo:   { rota: '/despejo-mental', icone: 'cerebro',  titulo: 'Despejo Mental', desc: 'Tire da cabeça o que está pesando. Sem filtro.', tinta: 'rosa',    pro: false },
   foco:      { rota: '/sessao-foco',    icone: 'alvo',     titulo: 'Sessão de Foco', desc: 'Um cronômetro e uma coisa só. Cada minuto conta.', tinta: 'laranja', pro: false },
   calma:     { rota: '/modo-calma',     icone: 'lotus',    titulo: 'Modo Calma',     desc: 'Respire junto com o círculo e desacelere.',    tinta: 'verde',   pro: false },

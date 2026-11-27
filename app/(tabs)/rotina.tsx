@@ -4,6 +4,9 @@ import { Text } from '@/components/Texto';
 import { avisar, confirmar } from '@/lib/avisar';
 import { adicionarAoCalendario } from '@/lib/calendar';
 import { premiarTarefa, sincronizarDia } from '@/lib/cicloDiario';
+import { situacaoAoConcluir } from '@/lib/falas';
+import { somTarefa } from '@/lib/sons';
+import { dizer } from '@/stores/falaStore';
 import { agendarLembreteDiario, cancelarLembrete } from '@/lib/notifications';
 import { sincronizarPontuacao } from '@/lib/ranking';
 import { C, F, R } from '@/lib/theme';
@@ -73,16 +76,22 @@ export default function RotinaScreen() {
 
   /** Tocar na tarefa marca ou desmarca. Pular é um botão à parte. */
   function marcar(t: Tarefa) {
-    if (t.status === 'feita') definirStatus(t.id, 'pendente');
-    else {
+    if (t.status === 'feita') {
+      definirStatus(t.id, 'pendente');
+      dizer('desfez');
+    } else {
       premiarTarefa(t.id);
       definirStatus(t.id, 'feita');
+      somTarefa(feitas);
+      dizer(situacaoAoConcluir(feitas + 1, tarefas.length));
     }
     sincronizarDia();
   }
 
   function pular(t: Tarefa) {
-    definirStatus(t.id, t.status === 'pulada' ? 'pendente' : 'pulada');
+    const vaiPular = t.status !== 'pulada';
+    definirStatus(t.id, vaiPular ? 'pulada' : 'pendente');
+    if (vaiPular) dizer(puladas + 1 >= 3 ? 'pulou_varias' : 'pulou');
     sincronizarDia();
   }
 

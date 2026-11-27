@@ -1,4 +1,6 @@
 import Icone from '@/components/Icone';
+import { dizer } from '@/stores/falaStore';
+import { somFoco } from '@/lib/sons';
 import { Botao, Cabecalho } from '@/components/plim';
 import { Text } from '@/components/Texto';
 import { C, F, R } from '@/lib/theme';
@@ -55,6 +57,8 @@ export default function SessaoFocoScreen() {
   // Prêmio da sessão inteira: uma vez só, quando termina.
   useEffect(() => {
     if (!completo) return;
+    somFoco();
+    dizer('foco_completo');
     addXp(30);
     addMoedas(15);
     unlockConquista('foco_total');
@@ -82,6 +86,7 @@ export default function SessaoFocoScreen() {
       if (minutosFeitos >= 1) {
         addXp(minutosFeitos * 2);
         addMoedas(minutosFeitos);
+        dizer('foco_parou');
       }
     }
     setRodando(false);

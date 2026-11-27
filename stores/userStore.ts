@@ -42,6 +42,10 @@ export interface Profile {
     reduzir_animacoes: boolean;
     tema: 'light' | 'dark' | 'system';
     fonte: 'padrao' | 'dislexia';
+    /** Efeitos sonoros (padrão: ligado). */
+    sons?: boolean;
+    /** Balões de fala do avatar (padrão: ligado). */
+    falas?: boolean;
   };
 }
 
@@ -80,6 +84,8 @@ const profilePadrao: Profile = {
     reduzir_animacoes: false,
     tema: 'light',
     fonte: 'padrao',
+    sons: true,
+    falas: true,
   },
 };
 

@@ -36,3 +36,16 @@ export function sequenciaDeDias(historico: Record<string, string>, hoje: string 
   }
   return n;
 }
+
+/**
+ * Há quantos dias foi o último dia com tarefa feita: 0 = hoje, 1 = ontem...
+ * Devolve -1 se nunca houve um dia ativo.
+ */
+export function diasDesdeUltimoAtivo(historico: Record<string, string>, hoje: string = hojeLocal()): number {
+  const ativos = Object.keys(historico).filter((d) => d <= hoje && (historico[d] === 'parcial' || historico[d] === 'completa')).sort();
+  const ultimo = ativos.pop();
+  if (!ultimo) return -1;
+  const [a1, m1, d1] = ultimo.split('-').map(Number);
+  const [a2, m2, d2] = hoje.split('-').map(Number);
+  return Math.round((new Date(a2, m2 - 1, d2).getTime() - new Date(a1, m1 - 1, d1).getTime()) / 86_400_000);
+}

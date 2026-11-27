@@ -193,7 +193,7 @@ export interface Palco {
  * Monta o avatar de corpo inteiro dentro de `caixa` (um elemento da página).
  * Arrastar gira o boneco; tocar faz ele acenar. Com `parado`, não há movimento sozinho.
  */
-export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressao: Expressao, parado = false): Promise<Palco> {
+export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressao: Expressao, parado = false, aoTocar?: () => void): Promise<Palco> {
   const b = await carregarBase();
   const { THREE } = b;
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
@@ -271,7 +271,7 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
     acordar();
   };
   const cima = () => {
-    if (arrastando && andou < 6) { acenoInicio = performance.now(); acordar(); }
+    if (arrastando && andou < 6) { acenoInicio = performance.now(); acordar(); aoTocar?.(); }
     arrastando = false;
     canvas.style.cursor = 'grab';
   };

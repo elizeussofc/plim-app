@@ -1,24 +1,27 @@
 import AvatarPalco from '@/components/AvatarPalco';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
+import { Balao, useFalaVisivel } from '@/components/Balao';
 import Icone from '@/components/Icone';
 import { Almofada, Barra, Botao, Numero, Peca, PecaBotao, Secao, Selo, Tela } from '@/components/plim';
 import { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
 import { Text } from '@/components/Texto';
 import {
-  normalizarAvatar, OPCOES_CABELO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE,
+  chaveAvatar, normalizarAvatar, OPCOES_CABELO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE,
 } from '@/lib/avatar';
 import { dataLocal, hojeLocal } from '@/lib/dia';
+import { somToque } from '@/lib/sons';
 import { supabase } from '@/lib/supabase';
 import { C, F, R } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useDesafiosStore } from '@/stores/desafiosStore';
+import { dizer } from '@/stores/falaStore';
 import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
 import { usePaywallStore } from '@/stores/paywallStore';
 import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
+import { Modal, Pressable, ScrollView, Switch, TextInput, View } from 'react-native';
 
 const CONQUISTA_HINTS: Record<string, string> = {
   primeiro_passo: 'Complete 1 tarefa na sua Rotina.',
@@ -130,6 +133,30 @@ export default function PerfilScreen() {
   const avatar = normalizarAvatar(profile.avatar_config);
   const parado = profile.preferencias?.reduzir_animacoes === true;
   const hoje = hojeLocal();
+  const fala = useFalaVisivel();
+  const toques = useRef(0);
+  const visualAoAbrir = useRef('');
+  const prefs = profile.preferencias ?? {};
+
+  function tocouNoAvatar() {
+    toques.current += 1;
+    dizer(toques.current % 5 === 0 ? 'toque_demais' : 'toque');
+  }
+
+  function abrirVisual() {
+    visualAoAbrir.current = chaveAvatar(avatar, 'feliz') + avatar.fundo;
+    setModalAvatar(true);
+  }
+
+  function fecharVisual() {
+    setModalAvatar(false);
+    if (visualAoAbrir.current !== chaveAvatar(avatar, 'feliz') + avatar.fundo) dizer('visual');
+  }
+
+  function preferir(parcial: Partial<typeof profile.preferencias>) {
+    updateProfile({ preferencias: { ...profile.preferencias, ...parcial } });
+    if (parcial.sons === true) somToque(); // confirma no ouvido que o som voltou
+  }
 
   function salvarPerfil() {
     updateProfile({
@@ -158,7 +185,12 @@ export default function PerfilScreen() {
         <Peca tinta="roxo" padding={0} estilo={{ marginBottom: 16, overflow: 'hidden' }}>
           {modalAvatar
             ? <View style={{ height: 270 }} />
-            : <AvatarPalco config={avatar} expressao={expressao} altura={270} parado={parado} />}
+            : <AvatarPalco config={avatar} expressao={fala?.humor ?? expressao} altura={270} parado={parado} aoTocar={tocouNoAvatar} />}
+          {fala && !modalAvatar && (
+            <View pointerEvents="box-none" style={{ position: 'absolute', top: 12, left: 14, right: 14, zIndex: 5 }}>
+              <Balao fala={fala} ponta="baixo-centro" />
+            </View>
+          )}
           <View style={{ backgroundColor: C.surface, borderTopWidth: 2, borderColor: C.borderPrimary, padding: 16, alignItems: 'center' }}>
             <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 24, color: C.text }} numberOfLines={1}>{nomeExibido}</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
@@ -169,7 +201,7 @@ export default function PerfilScreen() {
             {!!profile.bio && <Text style={{ fontSize: 14, color: C.textSub, textAlign: 'center', marginTop: 10, lineHeight: 21 }}>{profile.bio}</Text>}
             {!!profile.instagram && <Text style={{ fontSize: 13, color: C.primaryLight, marginTop: 4 }}>@{profile.instagram}</Text>}
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignSelf: 'stretch' }}>
-              <Botao rotulo="Mudar visual" icone="paleta" cor="roxo" pequeno onPress={() => setModalAvatar(true)} estilo={{ flex: 1 }} />
+              <Botao rotulo="Mudar visual" icone="paleta" cor="roxo" pequeno onPress={abrirVisual} estilo={{ flex: 1 }} />
               <Botao rotulo="Editar perfil" icone="lapis" cor="claro" pequeno onPress={abrirEdicao} estilo={{ flex: 1 }} />
             </View>
           </View>
@@ -288,6 +320,31 @@ export default function PerfilScreen() {
           ))}
         </View>
 
+        {/* Preferências */}
+        <Secao titulo="Do seu jeito" />
+        <Peca padding={6} estilo={{ marginBottom: 22 }}>
+          {([
+            ['sons', 'Sons', 'Plim ao concluir, fanfarra ao subir de nível', prefs.sons !== false, (v: boolean) => preferir({ sons: v })],
+            ['falas', 'Falas do avatar', 'Balões com comentários sobre o seu dia', prefs.falas !== false, (v: boolean) => preferir({ falas: v })],
+            ['movimento', 'Menos movimento', 'O avatar fica parado, sem balançar', prefs.reduzir_animacoes === true, (v: boolean) => preferir({ reduzir_animacoes: v })],
+          ] as const).map(([chave, titulo, desc, valor, mudar], i) => (
+            <View key={chave} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 12, borderTopWidth: i === 0 ? 0 : 2, borderColor: C.surfaceHigh }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.text }}>{titulo}</Text>
+                <Text style={{ fontSize: 13, color: C.textSub, marginTop: 1 }}>{desc}</Text>
+              </View>
+              <Switch
+                value={valor}
+                onValueChange={mudar}
+                accessibilityLabel={titulo}
+                trackColor={{ false: C.borderBright, true: C.primary }}
+                thumbColor={C.surface}
+                {...({ activeThumbColor: C.surface } as object)}
+              />
+            </View>
+          ))}
+        </Peca>
+
         {/* Plim Pro */}
         {isPro ? (
           <Peca tinta="ouro" estilo={{ marginBottom: 14 }}>
@@ -324,8 +381,8 @@ export default function PerfilScreen() {
       </Tela>
 
       {/* Mudar visual do avatar */}
-      <Modal visible={modalAvatar} animationType="slide" transparent onRequestClose={() => setModalAvatar(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(43,29,78,0.55)' }} onPress={() => setModalAvatar(false)} accessibilityLabel="Fechar" />
+      <Modal visible={modalAvatar} animationType="slide" transparent onRequestClose={fecharVisual}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(43,29,78,0.55)' }} onPress={fecharVisual} accessibilityLabel="Fechar" />
         <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '94%', width: '100%', maxWidth: 480, alignSelf: 'center' }}>
           <View style={{ width: 44, height: 5, backgroundColor: C.borderBright, borderRadius: 3, alignSelf: 'center', marginTop: 10 }} />
           {modalAvatar && <AvatarPalco config={avatar} expressao="feliz" altura={230} parado={parado} />}
@@ -357,7 +414,7 @@ export default function PerfilScreen() {
               <Text style={{ flex: 1, fontSize: 13, color: C.textSub, lineHeight: 19 }}>É assim que seu retrato aparece no início e na barra de baixo.</Text>
             </View>
 
-            <Botao rotulo="Pronto" onPress={() => setModalAvatar(false)} />
+            <Botao rotulo="Pronto" onPress={fecharVisual} />
           </ScrollView>
         </View>
       </Modal>

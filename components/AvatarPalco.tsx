@@ -15,13 +15,17 @@ interface Props {
   altura?: number;
   /** Sem movimento sozinho (preferência "reduzir animações"). */
   parado?: boolean;
+  /** Chamado quando a pessoa toca no boneco (ele acena). */
+  aoTocar?: () => void;
 }
 
 /**
  * Palco do avatar de corpo inteiro. Na web é o boneco 3D ao vivo: arraste para girar,
  * toque para ele acenar. No celular (ou se o 3D falhar) mostra o retrato fixo.
  */
-export default function AvatarPalco({ config, expressao = 'feliz', altura = 280, parado = false }: Props) {
+export default function AvatarPalco({ config, expressao = 'feliz', altura = 280, parado = false, aoTocar }: Props) {
+  const tocar = useRef(aoTocar);
+  tocar.current = aoTocar;
   const cfg = useMemo(() => normalizarAvatar(config), [config]);
   const chave = chaveAvatar(cfg, expressao);
   const caixa = useRef<View>(null);
@@ -31,7 +35,7 @@ export default function AvatarPalco({ config, expressao = 'feliz', altura = 280,
   useEffect(() => {
     if (Platform.OS !== 'web' || !caixa.current) return;
     let cancelado = false;
-    criarPalco(caixa.current as unknown as HTMLElement, cfg, expressao, parado)
+    criarPalco(caixa.current as unknown as HTMLElement, cfg, expressao, parado, () => tocar.current?.())
       .then((p) => {
         if (cancelado) { p.destruir(); return; }
         palco.current = p;

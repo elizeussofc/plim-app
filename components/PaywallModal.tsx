@@ -14,6 +14,8 @@ import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, View 
 const BENEFICIOS: { icone: NomeIcone; titulo: string; desc: string }[] = [
   { icone: 'robo', titulo: 'Plim IA', desc: 'Um assistente que entende TDAH para destravar, organizar a cabeça ou só conversar.' },
   { icone: 'parceria', titulo: 'Modo Parceiro', desc: 'Convide alguém de confiança para acompanhar sua rotina de perto.' },
+  { icone: 'placa', titulo: 'Trilhas sem limite', desc: 'Mais de duas trilhas ao mesmo tempo e os níveis 6 a 10, com missões maiores.' },
+  { icone: 'lapis', titulo: 'Missões do seu jeito', desc: 'Crie suas próprias missões com relógio em qualquer trilha.' },
 ];
 
 const EM_BREVE = 'Em breve no Pro: roupas e acessórios para o avatar e resumo semanal da sua rotina.';

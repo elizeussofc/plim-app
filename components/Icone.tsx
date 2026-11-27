@@ -50,6 +50,23 @@ export const ICONES = {
   pensamento: require('../assets/icones/pensamento.webp'),
   escudo: require('../assets/icones/escudo.webp'),
   gema: require('../assets/icones/gema.webp'),
+  // trilhas (segunda leva, nov/2026)
+  'trilha-estudo': require('../assets/icones/trilha-estudo.webp'),
+  'trilha-casa': require('../assets/icones/trilha-casa.webp'),
+  'trilha-corpo': require('../assets/icones/trilha-corpo.webp'),
+  'trilha-trabalho': require('../assets/icones/trilha-trabalho.webp'),
+  'trilha-mente': require('../assets/icones/trilha-mente.webp'),
+  'trilha-dinheiro': require('../assets/icones/trilha-dinheiro.webp'),
+  'trilha-filhos': require('../assets/icones/trilha-filhos.webp'),
+  'trilha-pet': require('../assets/icones/trilha-pet.webp'),
+  cronometro: require('../assets/icones/cronometro.webp'),
+  chegada: require('../assets/icones/chegada.webp'),
+  placa: require('../assets/icones/placa.webp'),
+  mochila: require('../assets/icones/mochila.webp'),
+  subiu: require('../assets/icones/subiu.webp'),
+  desceu: require('../assets/icones/desceu.webp'),
+  gato: require('../assets/icones/gato.webp'),
+  balao: require('../assets/icones/balao.webp'),
 } as const;
 
 export type NomeIcone = keyof typeof ICONES;

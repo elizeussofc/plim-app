@@ -1,4 +1,6 @@
 import { Botao, Cabecalho, Peca, Secao } from '@/components/plim';
+import { dizer } from '@/stores/falaStore';
+import { somGuardar } from '@/lib/sons';
 import { Text } from '@/components/Texto';
 import { avisar, confirmar } from '@/lib/avisar';
 import { C, F, R } from '@/lib/theme';
@@ -57,6 +59,8 @@ export default function DespejoMentalScreen() {
     unlockConquista('despejou');
     if (premiado) { addXp(15); addMoedas(5); }
     setTexto('');
+    somGuardar();
+    dizer('despejo');
     avisar(premiado ? '✅ Guardado! +15 XP' : '✅ Guardado', 'Saiu da cabeça e ficou aqui embaixo.');
   }
 

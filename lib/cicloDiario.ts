@@ -7,6 +7,9 @@
 import { useEffect } from 'react';
 import { AppState } from 'react-native';
 import { sequenciaDeDias } from '@/lib/dia';
+import { situacaoAoConcluir, situacaoDaSequencia } from '@/lib/falas';
+import { somTarefa } from '@/lib/sons';
+import { dizer } from '@/stores/falaStore';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { rotinaCarregada, useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
@@ -22,7 +25,12 @@ export function sincronizarDia() {
 
   const dias = sequenciaDeDias(historicoDias);
   const usuario = useUserStore.getState();
-  if (usuario.profile.streak !== dias) usuario.definirStreak(dias);
+  if (usuario.profile.streak !== dias) {
+    const subiu = dias > usuario.profile.streak;
+    usuario.definirStreak(dias);
+    const marco = subiu ? situacaoDaSequencia(dias) : null;
+    if (marco) dizer(marco);
+  }
   if (dias > 0) useDesafiosStore.getState().definirProgresso('streak_3', dias)(usuario.addXp, usuario.addMoedas);
 }
 
@@ -54,7 +62,11 @@ export function premiarTarefa(id: string) {
 
 /** Marca a tarefa como feita, com prêmio e sequência em dia. Usado pelo botão "Feito" do Início. */
 export function concluirTarefa(id: string) {
+  const antes = useRotinaStore.getState().tarefas;
+  const feitasAntes = antes.filter((t) => t.status === 'feita').length;
   premiarTarefa(id);
   useRotinaStore.getState().concluir(id);
+  somTarefa(feitasAntes);
+  dizer(situacaoAoConcluir(feitasAntes + 1, antes.length));
   sincronizarDia();
 }

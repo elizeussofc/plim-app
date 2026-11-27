@@ -1,19 +1,28 @@
 import AvatarPersonagem from '@/components/AvatarPersonagem';
-import Icone from '@/components/Icone';
+import { Balao, useFalaVisivel } from '@/components/Balao';
+import Icone, { type NomeIcone } from '@/components/Icone';
 import { Almofada, Barra, Botao, Numero, Peca, PecaBotao, Secao, Selo, Tela } from '@/components/plim';
 import TermometroRotina, { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
 import { Text } from '@/components/Texto';
 import { concluirTarefa } from '@/lib/cicloDiario';
+import { diasDesdeUltimoAtivo } from '@/lib/dia';
+import { situacaoAoAbrir } from '@/lib/falas';
 import { FERRAMENTAS, useAbrirFerramenta, type Ferramenta } from '@/lib/ferramentas';
 import { getMensagemDoDia } from '@/lib/mensagensDoDia';
 import { C, F } from '@/lib/theme';
+import { AREAS, missoesDoNivel } from '@/lib/trilhas';
 import { useDesafiosStore } from '@/stores/desafiosStore';
+import { dizer } from '@/stores/falaStore';
 import { loadOnboardingProfile, type Chronotype, type PlimUserProfile } from '@/stores/onboardingStore';
 import { useRotinaStore, type Tarefa } from '@/stores/rotinaStore';
+import { useTrilhaStore } from '@/stores/trilhaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Image, Pressable, View } from 'react-native';
+
+/** O avatar cumprimenta uma vez por abertura do app, não a cada volta ao Início. */
+let falouAoAbrir = false;
 
 const ATALHOS: Ferramenta[] = [FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
 
@@ -92,6 +101,38 @@ function ProximoPasso() {
   );
 }
 
+/** Atalho para as trilhas: a missão em andamento, a próxima sugerida ou o convite para montar a primeira. */
+function CartaoTrilhas() {
+  const router = useRouter();
+  const trilhas = useTrilhaStore((s) => s.trilhas);
+  const ativa = useTrilhaStore((s) => s.ativa);
+  const primeira = trilhas[0];
+  const area = primeira ? AREAS.find((a) => a.id === primeira.area) : null;
+  const proxima = primeira ? missoesDoNivel(primeira.area, primeira.nivel, primeira.proprias)[0] : null;
+
+  const icone: NomeIcone = ativa ? 'cronometro' : area ? (area.icone as NomeIcone) : 'placa';
+  const sobre = ativa ? 'Missão em andamento' : area ? `Trilha ${area.nome} · nível ${primeira.nivel}` : 'Novo: Trilhas';
+  const titulo = ativa ? ativa.titulo : proxima ? proxima.titulo : 'Missões com relógio para estudo, casa, filhos, pet e mais';
+  return (
+    <PecaBotao
+      tinta="laranja"
+      padding={14}
+      estilo={{ marginBottom: 16 }}
+      onPress={() => router.push((ativa ? '/missao' : '/trilhas') as never)}
+      accessibilityLabel={`${sobre}. ${titulo}. Abrir.`}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        <Icone nome={icone} tamanho={46} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.accentDim }}>{sobre}</Text>
+          <Text style={{ fontFamily: F.display, fontSize: 16, color: C.text, lineHeight: 21 }} numberOfLines={2}>{titulo}</Text>
+        </View>
+        <Text style={{ fontFamily: F.displayX, fontSize: 22, color: C.textMuted }}>›</Text>
+      </View>
+    </PecaBotao>
+  );
+}
+
 export default function InicioScreen() {
   const router   = useRouter();
   const abrir    = useAbrirFerramenta();
@@ -117,6 +158,26 @@ export default function InicioScreen() {
   const desafiosCompletos = desafios.length - desafiosAtivos.length;
 
   const expressao = expressaoDoScore(calcularScoreRotina(tarefas, profile.streak, profile.xp_total));
+  const fala = useFalaVisivel();
+
+  // Ao abrir o app, o avatar comenta como está o dia (depois de ler o que estava salvo).
+  useEffect(() => {
+    if (falouAoAbrir) return;
+    const t = setTimeout(() => {
+      if (falouAoAbrir) return;
+      falouAoAbrir = true;
+      const rotina = useRotinaStore.getState();
+      dizer(situacaoAoAbrir({
+        hora: new Date().getHours(),
+        feitas: rotina.tarefas.filter((x) => x.status === 'feita').length,
+        puladas: rotina.tarefas.filter((x) => x.status === 'pulada').length,
+        total: rotina.tarefas.length,
+        sequencia: useUserStore.getState().profile.streak,
+        diasParado: diasDesdeUltimoAtivo(rotina.historicoDias),
+      }));
+    }, 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <Tela espacoFinal={130}>
@@ -130,12 +191,16 @@ export default function InicioScreen() {
         </View>
         <Pressable onPress={() => router.push('/(tabs)/perfil')} accessibilityLabel="Abrir meu perfil" accessibilityRole="button" hitSlop={8}>
           <View style={{ borderRadius: 36, borderWidth: 3, borderColor: C.primary, borderBottomWidth: 6 }}>
-            <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={62} />
+            <AvatarPersonagem config={profile.avatar_config} expressao={fala?.humor ?? expressao} size={62} />
           </View>
         </Pressable>
       </View>
 
+      {/* O avatar fala: comenta o que a pessoa fez (ou não fez) */}
+      {fala && <Balao fala={fala} ponta="cima-direita" estilo={{ marginTop: -8, marginBottom: 16, marginLeft: 36 }} />}
+
       <ProximoPasso />
+      <CartaoTrilhas />
 
       {/* Números */}
       <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
