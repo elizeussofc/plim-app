@@ -84,6 +84,23 @@ export const ICONES = {
   'fin-investir': require('../assets/icones/fin-investir.webp'),
   'fin-reserva': require('../assets/icones/fin-reserva.webp'),
   'fin-extra': require('../assets/icones/fin-extra.webp'),
+  // Sono, Casa, Estudos, Guarda-roupa e Resumo
+  'sono-cama': require('../assets/icones/sono-cama.webp'),
+  'sono-despertador': require('../assets/icones/sono-despertador.webp'),
+  'sono-cha': require('../assets/icones/sono-cha.webp'),
+  'casa-vassoura': require('../assets/icones/casa-vassoura.webp'),
+  'casa-cozinha': require('../assets/icones/casa-cozinha.webp'),
+  'casa-banheiro': require('../assets/icones/casa-banheiro.webp'),
+  'casa-sala': require('../assets/icones/casa-sala.webp'),
+  'casa-lavanderia': require('../assets/icones/casa-lavanderia.webp'),
+  'casa-quintal': require('../assets/icones/casa-quintal.webp'),
+  'casa-cardapio': require('../assets/icones/casa-cardapio.webp'),
+  'casa-cesta': require('../assets/icones/casa-cesta.webp'),
+  'estudo-caderno': require('../assets/icones/estudo-caderno.webp'),
+  'estudo-cartao': require('../assets/icones/estudo-cartao.webp'),
+  'estudo-prova': require('../assets/icones/estudo-prova.webp'),
+  'roupa-cabide': require('../assets/icones/roupa-cabide.webp'),
+  'resumo-carta': require('../assets/icones/resumo-carta.webp'),
 } as const;
 
 export type NomeIcone = keyof typeof ICONES;

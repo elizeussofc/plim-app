@@ -6,13 +6,15 @@
  *  - desafio ou rotina completa: três plins em arpejo;
  *  - nível: fanfarra própria, afinada um semitom acima para combinar com o plim;
  *  - conquista, fim de foco e despejo guardado: um som próprio cada;
- *  - Gym: o haltere pousando no chão ("ferro"); Finanças: a moeda no cofrinho; Grupo: a bolha ("pop").
+ *  - Gym: o haltere pousando no chão ("ferro"); Finanças: a moeda no cofrinho; Grupo: a bolha ("pop");
+ *  - Sono: a caixinha de música ("sininho"); Estudos: a página virando; Casa: o pano no vidro
+ *    ("esfrega"); Guarda-roupa: o zíper.
  * Os arquivos ficam em public/sons e só são baixados no primeiro toque na tela.
  */
 
-type Nome = 'plim' | 'nivel' | 'conquista' | 'foco' | 'guardar' | 'moeda' | 'ferro' | 'pop';
+type Nome = 'plim' | 'nivel' | 'conquista' | 'foco' | 'guardar' | 'moeda' | 'ferro' | 'pop' | 'sininho' | 'pagina' | 'esfrega' | 'ziper';
 
-const VOLUME: Record<Nome, number> = { plim: 0.5, nivel: 0.55, conquista: 0.4, foco: 0.65, guardar: 0.45, moeda: 0.4, ferro: 0.6, pop: 0.5 };
+const VOLUME: Record<Nome, number> = { plim: 0.5, nivel: 0.55, conquista: 0.4, foco: 0.65, guardar: 0.45, moeda: 0.4, ferro: 0.6, pop: 0.5, sininho: 0.5, pagina: 0.6, esfrega: 0.4, ziper: 0.55 };
 /** Degraus da escala pentatônica maior, em semitons: dó ré mi sol lá dó. */
 const PENTA = [0, 2, 4, 7, 9, 12];
 const semitons = (n: number) => Math.pow(2, n / 12);
@@ -260,6 +262,91 @@ export function somComentar() {
 export function somStory() {
   [0, 4, 9].forEach((tom, i) => tocar('pop', { tom, atraso: i * 0.09 }));
   vibrar(14);
+}
+
+// ───────────────────────── Sono ─────────────────────────
+
+/** Passo do ritual marcado: uma nota grave e baixinha, para não acordar ninguém. */
+export function somPassoSono() {
+  tocar('plim', { tom: -7, volume: 0.4 });
+}
+
+/** Ritual completo ou noite anotada: a caixinha de música. */
+export function somSono() {
+  tocar('sininho');
+  vibrar(10);
+}
+
+// ───────────────────────── Estudos ─────────────────────────
+
+/** Tópico novo ou revisão respondida: a página vira. */
+export function somPagina() {
+  tocar('pagina');
+}
+
+/** Lembrou na revisão: página e uma nota aguda. */
+export function somLembrei() {
+  tocar('pagina');
+  tocar('plim', { tom: 9, atraso: 0.12, volume: 0.6 });
+  vibrar(10);
+}
+
+/** Fim do tempo de estudo: página e o som do fim de foco. Toca mesmo com a tela em segundo plano. */
+export function somEstudoFim() {
+  tocar('pagina');
+  tocar('foco', { atraso: 0.25 });
+  vibrar([60, 80, 60]);
+}
+
+// ───────────────────────── Casa ─────────────────────────
+
+/** Tarefa de casa feita: o pano no vidro. */
+export function somLimpo() {
+  tocar('esfrega');
+  vibrar(12);
+}
+
+/** Faxina relâmpago completa: o pano e três plins subindo. */
+export function somFaxina() {
+  tocar('esfrega');
+  [0, 4, 7].forEach((tom, i) => tocar('plim', { tom: tom + 12, atraso: 0.7 + i * 0.11, volume: 0.85 }));
+  vibrar([14, 50, 14, 50, 22]);
+}
+
+/** Item da lista de mercado riscado: uma bolha grave. */
+export function somItem() {
+  tocar('pop', { tom: -4, volume: 0.8 });
+}
+
+/** Compra fechada: a moeda sai e um plim de "resolvido". */
+export function somCompra() {
+  tocar('moeda', { tom: -3 });
+  tocar('plim', { tom: 7, atraso: 0.2, volume: 0.7 });
+  vibrar(14);
+}
+
+// ───────────────────────── Guarda-roupa ─────────────────────────
+
+/** Vestiu ou tirou uma peça: o zíper. */
+export function somVestir() {
+  tocar('ziper');
+  vibrar(8);
+}
+
+/** Comprou uma peça com moedas: a moeda e o zíper. */
+export function somPecaNova() {
+  tocar('moeda');
+  tocar('ziper', { atraso: 0.2 });
+  tocar('plim', { tom: 12, atraso: 0.75, volume: 0.7 });
+  vibrar([14, 40, 20]);
+}
+
+// ───────────────────────── Resumo da semana ─────────────────────────
+
+/** O resumo da semana abriu: a carta desdobra e três plins subindo. */
+export function somResumo() {
+  tocar('pagina');
+  [0, 4, 7].forEach((tom, i) => tocar('plim', { tom, atraso: 0.3 + i * 0.12, volume: 0.8 }));
 }
 
 // O navegador só deixa tocar depois de um toque na página: o primeiro toque

@@ -10,18 +10,20 @@ import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 
-/** Só o que o Pro realmente libera hoje. O que ainda não existe fica em "em breve". */
+/** Só o que o Pro realmente libera hoje. */
 const BENEFICIOS: { icone: NomeIcone; titulo: string; desc: string }[] = [
   { icone: 'trilha-corpo', titulo: 'Gym Plim', desc: 'Treino guiado que evolui com você, cada exercício explicado com imagem, e o que comer antes e depois.' },
   { icone: 'fin-investir', titulo: 'Finanças completas', desc: 'Teto por categoria, plano 50-30-20, metas e contas sem limite, saída das dívidas, patrimônio e simulador.' },
   { icone: 'conversa', titulo: 'Grupo sem trava', desc: 'Comente em qualquer publicação, veja quem visitou seu perfil e o Instagram de quem cadastrou.' },
+  { icone: 'resumo-carta', titulo: 'Resumo da semana com conselho', desc: 'A comparação com a semana anterior, o ponto de atenção, um passo concreto e a leitura da Plim IA.' },
+  { icone: 'sono-cama', titulo: 'Sono, Estudos e Casa completos', desc: 'A leitura das suas noites, o plano até a prova, e o cardápio da semana que vira lista de mercado.' },
+  { icone: 'roupa-cabide', titulo: 'Peças exclusivas do avatar', desc: 'Coroa, medalha e capa de herói só para quem assina.' },
   { icone: 'robo', titulo: 'Plim IA', desc: 'Um assistente que entende TDAH para destravar, organizar a cabeça ou só conversar.' },
   { icone: 'parceria', titulo: 'Modo Parceiro', desc: 'Convide alguém de confiança para acompanhar sua rotina de perto.' },
   { icone: 'placa', titulo: 'Trilhas sem limite', desc: 'Mais de duas trilhas ao mesmo tempo e os níveis 6 a 10, com missões maiores.' },
   { icone: 'lapis', titulo: 'Missões do seu jeito', desc: 'Crie suas próprias missões com relógio em qualquer trilha.' },
 ];
 
-const EM_BREVE = 'Em breve no Pro: roupas e acessórios para o avatar e resumo semanal da sua rotina.';
 
 const PLANOS: { id: PlanoId; label: string; preco: string; sub: string; selo?: string }[] = [
   { id: 'anual', label: 'Anual', preco: 'R$ 149', sub: 'por ano · sai a R$ 12,40 por mês', selo: 'economize 38%' },
@@ -108,7 +110,6 @@ export default function PaywallModal() {
                 </View>
               ))}
             </View>
-            <Text style={{ fontSize: 13, color: C.textMuted, marginTop: 10, lineHeight: 19 }}>{EM_BREVE}</Text>
 
             {/* Planos */}
             <View style={{ gap: 10, marginTop: 20 }} accessibilityRole="radiogroup">

@@ -10,6 +10,11 @@ const MSG_LOGIN =
 const MSG_ERRO = '❌ Não consegui falar com a IA agora. Tenta de novo em instantes.';
 const MSG_REDE = '❌ Sem conexão com a internet. Verifique sua rede e tente novamente.';
 
+/** A resposta é um aviso do app (sem login, sem rede, limite do dia) e não uma fala da IA? */
+export function ehAvisoDaIA(texto: string): boolean {
+  return texto.startsWith('🔐') || texto.startsWith('❌') || texto.startsWith('⏳');
+}
+
 function msgLimite(plano?: string, limite?: number) {
   const n = limite ?? 10;
   return plano === 'pro'

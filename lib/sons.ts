@@ -31,3 +31,15 @@ export function somReagir() {}
 export function somPostar() {}
 export function somComentar() {}
 export function somStory() {}
+export function somPassoSono() {}
+export function somSono() {}
+export function somPagina() {}
+export function somLembrei() {}
+export function somEstudoFim() {}
+export function somLimpo() {}
+export function somFaxina() {}
+export function somItem() {}
+export function somCompra() {}
+export function somVestir() {}
+export function somPecaNova() {}
+export function somResumo() {}

@@ -9,6 +9,15 @@
 
 export type Expressao = 'feliz' | 'neutro' | 'triste' | 'animado';
 export type Cabelo = 'curto' | 'coque';
+/** Peças do guarda-roupa. '' = nada naquele lugar. Os nomes são os das peças dentro do .glb. */
+export type Chapeu = '' | 'bone' | 'gorro' | 'laco' | 'festa' | 'orelhas' | 'coroa';
+export type Pescoco = '' | 'cachecol' | 'gravata' | 'medalha';
+export type Costas = '' | 'mochila' | 'capa';
+export const CHAPEUS: Chapeu[] = ['bone', 'gorro', 'laco', 'festa', 'orelhas', 'coroa'];
+export const PESCOCOS: Pescoco[] = ['cachecol', 'gravata', 'medalha'];
+export const COSTAS: Costas[] = ['mochila', 'capa'];
+/** Chapéus que cobrem o alto da cabeça: com eles o coque e as mechas ficam escondidos. */
+export const COBRE_O_TOPO: Chapeu[] = ['bone', 'gorro', 'festa', 'coroa'];
 
 export interface AvatarConfig {
   cabelo: Cabelo;
@@ -19,6 +28,13 @@ export interface AvatarConfig {
   oculos: boolean;
   fone: boolean;
   fundo: string;       // cor do círculo atrás do retrato
+  chapeu: Chapeu;
+  pescoco: Pescoco;
+  costas: Costas;
+  corChapeu: string;   // boné, gorro, laço, chapéu de festa e orelhas
+  corExtra: string;    // cachecol, gravata, fita da medalha, mochila e capa
+  corTenis: string;
+  corRaio: string;     // estampa do moletom
 }
 
 export const avatarConfigPadrao: AvatarConfig = {
@@ -30,6 +46,13 @@ export const avatarConfigPadrao: AvatarConfig = {
   oculos: false,
   fone: false,
   fundo: 'E7DBFF',
+  chapeu: '',
+  pescoco: '',
+  costas: '',
+  corChapeu: 'EA580C',
+  corExtra: '2F7FE6',
+  corTenis: 'F4F4F5',
+  corRaio: 'F97316',
 };
 
 export const OPCOES_CABELO: { id: Cabelo; label: string }[] = [
@@ -41,6 +64,9 @@ export const OPCOES_PELE = ['F6D7BD', 'E8B893', 'C98A5E', 'A66A43', '7B4A2E', '4
 export const OPCOES_COR_CABELO = ['1F1410', '3B2219', '6B4226', 'B5732E', 'E0B85C', 'C2410C', 'DB4F93', '7C3AED', '2F7FE6', 'B8B5C4'];
 export const OPCOES_MOLETOM = ['7C3AED', 'EA580C', '0E9F6E', '2F7FE6', 'DB4F93', 'D9A106', '2B1D4E', 'F4EDE1'];
 export const OPCOES_CALCA = ['3A4250', '2B1D4E', '1E5FB8', '6B4226', '8A7FA3', 'F4EDE1'];
+export const OPCOES_PECA = ['EA580C', '7C3AED', '2F7FE6', '0E9F6E', 'DB4F93', 'D9A106', '2B1D4E', 'F4EDE1'];
+export const OPCOES_TENIS = ['F4F4F5', '2B1D4E', 'EA580C', '2F7FE6', 'DB4F93', '0E9F6E'];
+export const OPCOES_RAIO = ['F97316', 'FFFFFF', 'FFD23F', '2B1D4E', '5EEAD4', 'F59AB5'];
 export const OPCOES_FUNDO = ['E7DBFF', 'FFE9D6', 'DDF6EA', 'DDECFF', 'FFE1EE', 'FFF1C7', 'F4EDE1', '2B1D4E'];
 
 const HEX = /^[0-9a-fA-F]{6}$/;
@@ -66,6 +92,13 @@ export function normalizarAvatar(bruto: unknown): AvatarConfig {
       oculos: b.oculos === true,
       fone: b.fone === true,
       fundo: hex(b.fundo, p.fundo),
+      chapeu: (CHAPEUS as string[]).includes(b.chapeu as string) ? (b.chapeu as Chapeu) : '',
+      pescoco: (PESCOCOS as string[]).includes(b.pescoco as string) ? (b.pescoco as Pescoco) : '',
+      costas: (COSTAS as string[]).includes(b.costas as string) ? (b.costas as Costas) : '',
+      corChapeu: hex(b.corChapeu, p.corChapeu),
+      corExtra: hex(b.corExtra, p.corExtra),
+      corTenis: hex(b.corTenis, p.corTenis),
+      corRaio: hex(b.corRaio, p.corRaio),
     };
   }
 
@@ -90,5 +123,5 @@ export function escurecer(corHex: string, fator = 0.84): string {
 
 /** Chave estável de um avatar, para cache de imagem. */
 export function chaveAvatar(c: AvatarConfig, expressao: Expressao): string {
-  return [c.cabelo, c.pele, c.corCabelo, c.corMoletom, c.corCalca, c.oculos ? 1 : 0, c.fone ? 1 : 0, expressao].join('-');
+  return [c.cabelo, c.pele, c.corCabelo, c.corMoletom, c.corCalca, c.oculos ? 1 : 0, c.fone ? 1 : 0, c.chapeu, c.pescoco, c.costas, c.corChapeu, c.corExtra, c.corTenis, c.corRaio, expressao].join('-');
 }

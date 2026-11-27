@@ -5,13 +5,14 @@
  *   - criarPalco(): um palco vivo num <canvas>, que gira ao arrastar e acena ao toque.
  * three.js só é baixado quando o primeiro avatar aparece (import dinâmico).
  */
-import { chaveAvatar, escurecer, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import { COBRE_O_TOPO, chaveAvatar, escurecer, type AvatarConfig, type Expressao } from '@/lib/avatar';
 
 type Three = typeof import('three');
 type Object3D = import('three').Object3D;
 type Quaternion = import('three').Quaternion;
 
-const URL_GLB = '/avatar/plim_avatar.glb';
+/** O número muda quando o arquivo ganha peças novas, para o navegador não usar o antigo guardado. */
+const URL_GLB = '/avatar/plim_avatar.glb?v=2';
 const GRAUS = Math.PI / 180;
 /** Ângulo dos braços com que o .glb foi exportado (pose A). */
 const ABERTURA_EXPORTADA = 49 * GRAUS;
@@ -77,7 +78,14 @@ function aplicarVisual(THREE: Three, raiz: Object3D, cfg: AvatarConfig, expressa
     top: cfg.corMoletom,
     top_detail: escurecer(cfg.corMoletom),
     bottom: cfg.corCalca,
+    shoe: cfg.corTenis,
+    accent: cfg.corRaio,
+    hat: cfg.corChapeu,
+    hat_detail: escurecer(cfg.corChapeu),
+    extra: cfg.corExtra,
+    extra_detail: escurecer(cfg.corExtra),
   };
+  const topoCoberto = COBRE_O_TOPO.includes(cfg.chapeu);
   raiz.traverse((o) => {
     const malha = o as import('three').Mesh;
     if (!malha.isMesh) return;
@@ -85,6 +93,10 @@ function aplicarVisual(THREE: Three, raiz: Object3D, cfg: AvatarConfig, expressa
     const slot = p[0];
     const item = p.length >= 3 ? p[1] : null;
     if (slot === 'hair') malha.visible = item === cfg.cabelo;
+    else if (slot === 'hairtop') malha.visible = item === cfg.cabelo && !topoCoberto;
+    else if (slot === 'hat') malha.visible = item === cfg.chapeu;
+    else if (slot === 'neck') malha.visible = item === cfg.pescoco;
+    else if (slot === 'back') malha.visible = item === cfg.costas;
     else if (slot === 'acc') malha.visible = item === 'oculos' ? cfg.oculos : item === 'fone' ? cfg.fone : false;
     else if (slot === 'brow' || slot === 'mouth') malha.visible = item === expressao;
     else malha.visible = true;
@@ -93,7 +105,7 @@ function aplicarVisual(THREE: Three, raiz: Object3D, cfg: AvatarConfig, expressa
     if (mat && mat.name && cores[mat.name]) mat.color.set('#' + cores[mat.name]);
     if (mat && !mat.userData.plim) {
       mat.userData.plim = true;
-      mat.roughness = mat.name === 'iris' || mat.name === 'dark' || mat.name === 'eye_white' ? 0.3 : 0.7;
+      mat.roughness = mat.name === 'iris' || mat.name === 'dark' || mat.name === 'eye_white' ? 0.3 : mat.name === 'gold' ? 0.42 : 0.7;
       mat.metalness = 0;
     }
   });
@@ -111,13 +123,22 @@ function iluminar(THREE: Three, cena: import('three').Scene) {
 
 export type Enquadramento = 'busto' | 'corpo';
 
-function enquadrar(cam: import('three').PerspectiveCamera, enq: Enquadramento, cabelo: AvatarConfig['cabelo']) {
+/** Altura do ponto mais alto do boneco, contando o cabelo e o chapéu. */
+function alturaDoTopo(cfg: AvatarConfig): number {
+  const chapeu: Record<string, number> = { gorro: 1.66, festa: 1.67, coroa: 1.58, orelhas: 1.58, bone: 1.52 };
+  const cabelo = cfg.cabelo === 'coque' && !COBRE_O_TOPO.includes(cfg.chapeu) ? 1.6 : 1.5;
+  return Math.max(cabelo, chapeu[cfg.chapeu] ?? 0);
+}
+
+function enquadrar(cam: import('three').PerspectiveCamera, enq: Enquadramento, cfg: AvatarConfig) {
+  const topo = alturaDoTopo(cfg);
   if (enq === 'busto') {
+    // Chapéu alto: a câmera recua e sobe um pouco, para a ponta não sair do retrato.
+    const alto = topo > 1.6;
     cam.fov = 20;
-    cam.position.set(0, 1.2, 2.75);
-    cam.lookAt(0, 1.13, 0);
+    cam.position.set(0, alto ? 1.25 : 1.2, alto ? 3.05 : 2.75);
+    cam.lookAt(0, alto ? 1.18 : 1.13, 0);
   } else {
-    const topo = cabelo === 'coque' ? 1.6 : 1.5;
     cam.fov = 24;
     cam.position.set(0, topo / 2 + 0.12, 4.05);
     cam.lookAt(0, topo / 2 - 0.01, 0);
@@ -172,11 +193,11 @@ export async function retratoAvatar(cfg: AvatarConfig, expressao: Expressao, enq
   const [l, a] = enq === 'busto' ? [320, 320] : [360, 480];
   e.renderer.setSize(l, a, false);
   e.cam.aspect = l / a;
-  enquadrar(e.cam, enq, cfg.cabelo);
+  enquadrar(e.cam, enq, cfg);
   aplicarVisual(e.THREE, e.boneco.raiz, cfg, expressao);
   e.renderer.render(e.cena, e.cam);
   const url = e.renderer.domElement.toDataURL('image/png');
-  if (cacheRetrato.size > 40) cacheRetrato.clear();
+  if (cacheRetrato.size > 60) cacheRetrato.clear();
   cacheRetrato.set(chave, url);
   return url;
 }
@@ -225,7 +246,7 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
     const a = Math.max(1, caixa.clientHeight);
     renderer.setSize(l, a, false);
     cam.aspect = l / a;
-    enquadrar(cam, 'corpo', atual.cabelo);
+    enquadrar(cam, 'corpo', atual);
   }
 
   function desenhar(agora: number) {
@@ -290,7 +311,7 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
       atual = novo;
       expr = novaExpr;
       aplicarVisual(THREE, boneco.raiz, atual, expr);
-      enquadrar(cam, 'corpo', atual.cabelo);
+      enquadrar(cam, 'corpo', atual);
       acordar();
     },
     acenar() { acenoInicio = performance.now(); acordar(); },

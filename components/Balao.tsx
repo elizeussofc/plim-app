@@ -85,3 +85,28 @@ export function FalaFlutuante({ fundo }: { fundo: number }) {
     </View>
   );
 }
+
+/** Abas (quem cuida é a FalaFlutuante), telas de entrada e telas de relógio em tela cheia, onde o balão atrapalharia. */
+const SEM_BALAO = ['/', '/rotina', '/foco', '/comunidade', '/perfil', '/login', '/cadastro', '/onboarding', '/gym-treino', '/missao', '/sessao-foco', '/modo-calma', '/ia-tdah'];
+
+/**
+ * Nas telas internas (Gym, Finanças, Sono, Estudos, Casa, Guarda-roupa, Resumo...) o avatar
+ * aparece pequeno no rodapé. Essas telas rolam, então a fala não fica em cima de botão fixo.
+ * Antes ele falava nessas telas e ninguém via: o balão só existia dentro das abas.
+ */
+export function FalaDasTelasInternas() {
+  const caminho = usePathname();
+  const fala = useFalaVisivel();
+  const config = useUserStore((s) => s.profile.avatar_config);
+  if (!fala || SEM_BALAO.includes(caminho)) return null;
+  return (
+    <View pointerEvents="box-none" style={{ position: 'absolute', left: 0, right: 0, bottom: 18, zIndex: 15, alignItems: 'center' }}>
+      <View pointerEvents="box-none" style={{ width: '100%', maxWidth: 480, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
+        <View style={{ borderRadius: 30, borderWidth: 3, borderBottomWidth: 5, borderColor: C.primary, backgroundColor: C.surface }}>
+          <AvatarPersonagem config={config} expressao={fala.humor} size={48} />
+        </View>
+        <Balao fala={fala} ponta="esquerda" estilo={{ flex: 1, marginBottom: 6 }} />
+      </View>
+    </View>
+  );
+}

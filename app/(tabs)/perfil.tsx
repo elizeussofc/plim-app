@@ -215,6 +215,7 @@ export default function PerfilScreen() {
               <Botao rotulo="Mudar visual" icone="paleta" cor="roxo" pequeno onPress={abrirVisual} estilo={{ flex: 1 }} />
               <Botao rotulo="Editar perfil" icone="lapis" cor="claro" pequeno onPress={abrirEdicao} estilo={{ flex: 1 }} />
             </View>
+            <Botao rotulo="Guarda-roupa" icone="roupa-cabide" cor="laranja" pequeno onPress={() => router.push('/guarda-roupa')} estilo={{ alignSelf: 'stretch', marginTop: 10 }} />
           </View>
         </Peca>
 

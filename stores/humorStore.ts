@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { hojeLocal } from '@/lib/dia';
 
@@ -38,3 +39,29 @@ export const useHumorStore = create<HumorState>((set, get) => ({
 
   humorHoje: () => get().historico.find((r) => r.data === hoje()),
 }));
+
+// O humor não era guardado: sumia ao recarregar o app. O resumo da semana precisa dele.
+const STORAGE_KEY = 'plim-humor-store';
+let _carregado = false;
+
+AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
+  if (raw) {
+    try {
+      const s = JSON.parse(raw);
+      if (Array.isArray(s?.historico)) {
+        const validos = s.historico.filter((r: RegistroHumor) => typeof r?.data === 'string' && r.humor >= 1 && r.humor <= 5);
+        // Junta com o que a pessoa já marcou nesta sessão antes de a leitura terminar.
+        useHumorStore.setState((atual) => {
+          const datas = new Set(atual.historico.map((r) => r.data));
+          return { historico: [...atual.historico, ...validos.filter((r: RegistroHumor) => !datas.has(r.data))].sort((a, b) => (a.data < b.data ? 1 : -1)).slice(0, 30) };
+        });
+      }
+    } catch {}
+  }
+  _carregado = true;
+}).catch(() => { _carregado = true; });
+
+useHumorStore.subscribe((s) => {
+  if (!_carregado) return; // nada de gravar por cima antes de ler
+  AsyncStorage.setItem(STORAGE_KEY, JSON.stringify({ historico: s.historico })).catch(() => {});
+});

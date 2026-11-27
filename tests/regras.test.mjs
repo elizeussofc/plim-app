@@ -103,7 +103,10 @@ test('normalizarAvatar converte o avatar 2D antigo aproveitando pele, cabelo, ó
 
 test('normalizarAvatar mantém o avatar 3D e conserta campo inválido', () => {
   const novo = { cabelo: 'coque', pele: 'A66A43', corCabelo: 'DB4F93', corMoletom: 'EA580C', corCalca: '2B1D4E', oculos: true, fone: true, fundo: 'DDF6EA' };
-  assert.deepEqual(normalizarAvatar(novo), novo);
+  // O avatar ganhou as peças do guarda-roupa: o que estava salvo fica igual e os campos novos entram com o padrão.
+  assert.deepEqual(normalizarAvatar(novo), { ...avatarConfigPadrao, ...novo });
+  const completo = { ...novo, chapeu: 'gorro', pescoco: 'cachecol', costas: 'mochila', corChapeu: '0E9F6E', corExtra: 'DB4F93', corTenis: '2B1D4E', corRaio: 'FFFFFF' };
+  assert.deepEqual(normalizarAvatar(completo), completo, 'avatar já no formato novo volta idêntico');
   assert.equal(normalizarAvatar({ ...novo, pele: 'não é cor' }).pele, avatarConfigPadrao.pele);
   assert.equal(normalizarAvatar({ ...novo, oculos: 'sim' }).oculos, false);
 });

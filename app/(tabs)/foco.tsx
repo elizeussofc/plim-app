@@ -9,7 +9,9 @@ import { Image, View } from 'react-native';
 const PRINCIPAIS: Ferramenta[] = [FERRAMENTAS.trilhas, FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
 /** O que o Pro tem de maior: cada um deixa experimentar antes de pedir a assinatura. */
 const VIDA: Ferramenta[] = [FERRAMENTAS.gym, FERRAMENTAS.financas];
-const EXTRAS: Ferramenta[] = [FERRAMENTAS.medicacao, FERRAMENTAS.historico, FERRAMENTAS.parceiro, FERRAMENTAS.ranking];
+/** O dia a dia fora do trabalho: dormir, estudar, cuidar da casa, e o balanço de tudo. */
+const DIA_A_DIA: Ferramenta[] = [FERRAMENTAS.resumo, FERRAMENTAS.sono, FERRAMENTAS.estudos, FERRAMENTAS.casa];
+const EXTRAS: Ferramenta[] = [FERRAMENTAS.roupas, FERRAMENTAS.medicacao, FERRAMENTAS.historico, FERRAMENTAS.parceiro, FERRAMENTAS.ranking];
 
 function Cartao({ f, ehPro, aoAbrir }: { f: Ferramenta; ehPro: boolean; aoAbrir: (f: Ferramenta) => void }) {
   const selo = ehPro ? undefined : f.pro ? 'Pro' : f.selo;
@@ -57,6 +59,12 @@ export default function PlimScreen() {
       <Secao titulo="Corpo e bolso" />
       <View style={{ gap: 12, marginBottom: 24 }}>
         {VIDA.map((f) => <Cartao key={f.rota} f={f} ehPro={ehPro} aoAbrir={abrir} />)}
+      </View>
+
+      {/* Dia a dia */}
+      <Secao titulo="Sua vida em dia" />
+      <View style={{ gap: 12, marginBottom: 24 }}>
+        {DIA_A_DIA.map((f) => <Cartao key={f.rota} f={f} ehPro={ehPro} aoAbrir={abrir} />)}
       </View>
 
       {/* Mais */}

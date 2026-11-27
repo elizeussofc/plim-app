@@ -38,6 +38,13 @@ CORES = {
     'mouth': '#3A1F18',
     'acc': '#1E293B',
     'acc2': '#F97316',
+    'hat': '#EA580C',
+    'hat_detail': '#C2410C',
+    'extra': '#2F7FE6',
+    'extra_detail': '#1E5FB8',
+    'gold': '#F2B705',
+    'white': '#F4EDE1',
+    'pink': '#F59AB5',
 }
 
 
@@ -383,17 +390,27 @@ def construir(cabelo='curto', pose_a=True, expressao='feliz', acessorios=(), abe
             (0, -0.060, 0.031, 0.064, 0.130)], seg=20, world=m_pe)
 
     # ── cabelo e acessórios ──
+    cobre = any(a in COBRE_O_TOPO for a in acessorios)
+    antes = set(bpy.data.objects)
     if tudo:
-        antes = set(bpy.data.objects)
         for fn in list(CABELOS.values()) + list(ACESSORIOS.values()):
             fn(J)
-        for ob in set(bpy.data.objects) - antes:
-            slot, item = ob.name.split('__')[:2]
-            ob.hide_render = not (item == cabelo if slot == 'hair' else item in acessorios)
     else:
         CABELOS[cabelo](J)
         for a in acessorios:
             ACESSORIOS[a](J)
+    for ob in set(bpy.data.objects) - antes:
+        slot, item = ob.name.split('__')[:2]
+        if slot == 'hair':
+            visivel = item == cabelo
+        elif slot == 'hairtop':
+            visivel = item == cabelo and not cobre
+        else:
+            visivel = item in acessorios
+        if tudo:
+            ob.hide_render = not visivel
+        elif not visivel:
+            bpy.data.objects.remove(ob, do_unlink=True)
 
     fundir()
     if pose_a:
@@ -502,8 +519,8 @@ def cabelo_coque(J):
     def linha(t):
         return 1.305 - 0.125 * _ss(t / 1.05) - 0.17 * _ss((t - 1.85) / 0.45)
     _touca('hair__coque__cap', J, linha)
-    esfera('hair__coque__bun', 'hair', J['head'], (0, 0.03, 1.485), 1.0, (0.125, 0.12, 0.085), seg=20)
-    toro('hair__coque__elastico', 'hair', J['head'], (0, 0.03, 1.415), 0.07, 0.022, seg=20, tubo=8)
+    esfera('hairtop__coque__bun', 'hair', J['head'], (0, 0.03, 1.485), 1.0, (0.125, 0.12, 0.085), seg=20)
+    toro('hairtop__coque__elastico', 'hair', J['head'], (0, 0.03, 1.415), 0.07, 0.022, seg=20, tubo=8)
 
 
 def cabelo_curto(J):
@@ -522,8 +539,8 @@ def cabelo_curto(J):
         (0.140, 0.160, 1.270, 0.110, -0.55, 0.70), (0.000, 0.205, 1.200, 0.110, 0.00, 0.90),
     ]
     for i, (x, y, z, r, gy, gx) in enumerate(mechas):
-        esfera(f'hair__curto__mecha_{i}', 'hair', J['head'], (x, y, z), 1.0, (r * 0.62, r * 0.55, r), (gx, gy, 0), seg=10)
-    esfera('hair__curto__topete', 'hair', J['head'], (-0.02, -0.03, 1.465), 1.0, (0.03, 0.03, 0.062), (0.2, 0.35, 0), seg=8)
+        esfera(f'hairtop__curto__mecha_{i}', 'hair', J['head'], (x, y, z), 1.0, (r * 0.62, r * 0.55, r), (gx, gy, 0), seg=10)
+    esfera('hairtop__curto__topete', 'hair', J['head'], (-0.02, -0.03, 1.465), 1.0, (0.03, 0.03, 0.062), (0.2, 0.35, 0), seg=8)
 
 
 # ───────────────────────── acessórios ───────────────────────────────────────
@@ -546,7 +563,187 @@ def acc_fone(J):
         esfera('acc__fone__detalhe_' + s_, 'acc2', J['head'], (sx * 0.315, 0.016, 1.085), 1.0, (0.016, 0.044, 0.054), seg=12)
 
 
-ACESSORIOS = {'oculos': acc_oculos, 'fone': acc_fone}
+# ───────────────────────── chapéus ──────────────────────────────────────────
+# O cabelo tem mais volume atrás, então o chapéu fica 1,2 cm para trás do centro da cabeça.
+CHAPEU_C = (0.0, 0.012, 1.165)
+CHAPEU_R = (0.292, 0.276, 0.310)
+
+
+def _raio_do_domo(z, centro, raios):
+    k = math.sqrt(max(0.0, 1 - ((z - centro[2]) / raios[2]) ** 2))
+    return raios[0] * k, raios[1] * k
+
+
+def domo(nome, material, parent, centro, raios, z0, n=10, seg=36):
+    """Copa de chapéu: a parte de um elipsoide que fica acima de z0, fechada embaixo."""
+    topo = centro[2] + raios[2]
+    secoes = []
+    for i in range(n + 1):
+        z = z0 + (topo - z0) * math.sin((i / n) * math.pi / 2)
+        rx, ry = _raio_do_domo(z, centro, raios)
+        secoes.append((centro[0], centro[1], z, max(rx, 0.004), max(ry, 0.004)))
+    return loft(nome, material, parent, secoes, seg=seg, tampas=(True, True))
+
+
+def faixa(nome, material, parent, centro, raios, perfil, seg=36):
+    """Faixa em volta da copa. perfil: lista de (z, folga), a folga multiplica o raio da copa."""
+    secoes = []
+    for z, folga in perfil:
+        rx, ry = _raio_do_domo(z, centro, raios)
+        secoes.append((centro[0], centro[1], z, rx * folga, ry * folga))
+    return loft(nome, material, parent, secoes, seg=seg, tampas=(True, True))
+
+
+def hat_bone(J):
+    domo('hat__bone__copa', 'hat', J['head'], CHAPEU_C, CHAPEU_R, 1.245)
+    faixa('hat__bone__faixa', 'hat_detail', J['head'], CHAPEU_C, CHAPEU_R,
+          [(1.236, 0.985), (1.245, 1.016), (1.268, 1.018), (1.278, 0.99)])
+    esfera('hat__bone__aba', 'hat_detail', J['head'], (0, -0.305, 1.247), 1.0, (0.190, 0.125, 0.016), (0.15, 0, 0), seg=24)
+    esfera('hat__bone__botao', 'hat_detail', J['head'], (0, 0.012, 1.478), 0.022, seg=10)
+
+
+GORRO_R = (0.296, 0.280, 0.360)
+
+
+def hat_gorro(J):
+    domo('hat__gorro__copa', 'hat', J['head'], CHAPEU_C, GORRO_R, 1.250)
+    faixa('hat__gorro__dobra', 'hat_detail', J['head'], CHAPEU_C, GORRO_R,
+          [(1.222, 0.99), (1.234, 1.042), (1.262, 1.056), (1.300, 1.052), (1.316, 1.0)])
+    esfera('hat__gorro__pompom', 'white', J['head'], (0, 0.012, 1.572), 0.060, seg=16)
+
+
+def hat_coroa(J):
+    cx, cy = 0.0, 0.012
+    toro('hat__coroa__aro', 'gold', J['head'], (cx, cy, 1.405), 0.136, 0.015, escala=(1.07, 1.0, 2.5), seg=32, tubo=10)
+    for i in range(6):
+        a = math.pi / 2 + i * math.pi / 3
+        x, y = cx + 0.136 * 1.07 * math.cos(a), cy + 0.136 * math.sin(a)
+        cone(f'hat__coroa__ponta_{i}', 'gold', J['head'], (x, y, 1.425), (x * 1.06, y * 1.06, 1.535), 0.036, 0.008, seg=12)
+        esfera(f'hat__coroa__bola_{i}', 'gold', J['head'], (x * 1.06, y * 1.06, 1.540), 0.016, seg=8)
+    for i in range(6):
+        a = math.pi / 2 + (i + 0.5) * math.pi / 3
+        x, y = cx + 0.150 * 1.07 * math.cos(a), cy + 0.150 * math.sin(a)
+        esfera(f'hat__coroa__pedra_{i}', 'pink', J['head'], (x, y, 1.405), 0.017, seg=8)
+
+
+def hat_festa(J):
+    base, ponta = Vector((0.072, -0.020, 1.374)), Vector((0.157, -0.040, 1.609))
+    cone('hat__festa__cone', 'hat', J['head'], base, ponta, 0.095, 0.007, seg=24)
+    toro('hat__festa__borda', 'white', J['head'], base, 0.094, 0.016, rot=(0.08, 0.348, 0), seg=24, tubo=8)
+    esfera('hat__festa__pompom', 'white', J['head'], ponta, 0.032, seg=12)
+    for i, f in enumerate((0.32, 0.62)):  # duas listras
+        c = base.lerp(ponta, f)
+        toro(f'hat__festa__listra_{i}', 'hat_detail', J['head'], c, 0.095 * (1 - f) + 0.004, 0.010, rot=(0.08, 0.348, 0), seg=20, tubo=6)
+
+
+def hat_orelhas(J):
+    arco('hat__orelhas__arco', 'hat', J['head'], (0, 1.15), 0.279, 10, 170, 0.014, n=24, plano_y=0.0)
+    for s_, sx in (('L', 1), ('R', -1)):
+        a = math.radians(57)
+        p = Vector((sx * 0.279 * math.cos(a), 0, 1.15 + 0.279 * math.sin(a)))
+        m = Matrix.Translation(p) @ Matrix.Rotation(sx * 0.42, 4, 'Y')
+        loft('hat__orelhas__orelha_' + s_, 'hat', J['head'],
+             [(0, 0, -0.02, 0.070, 0.036), (0, 0, 0.03, 0.062, 0.034), (0, 0, 0.085, 0.036, 0.024),
+              (0, 0, 0.125, 0.014, 0.012), (0, 0, 0.138, 0.004, 0.004)], seg=16, world=m)
+        loft('hat__orelhas__dentro_' + s_, 'pink', J['head'],
+             [(0, -0.022, 0.0, 0.040, 0.018), (0, -0.020, 0.04, 0.034, 0.016), (0, -0.014, 0.085, 0.016, 0.012),
+              (0, -0.010, 0.105, 0.004, 0.004)], seg=12, world=m)
+
+
+def hat_laco(J):
+    # Fica no lado esquerdo do alto da cabeça, deitado sobre o cabelo (a normal ali aponta para fora e para a frente).
+    c = Vector((0.155, -0.092, 1.420))
+    deita = Matrix.Rotation(0.50, 4, 'Y') @ Matrix.Rotation(-0.30, 4, 'X')
+    for s_, d in (('L', 1), ('R', -1)):
+        asa = Matrix.Translation(c) @ deita @ Matrix.Rotation(d * math.radians(82), 4, 'Y')
+        loft('hat__laco__asa_' + s_, 'hat', J['head'],
+             [(0, 0, 0.004, 0.014, 0.012), (0, 0, 0.030, 0.034, 0.022), (0, 0, 0.066, 0.052, 0.026),
+              (0, 0, 0.092, 0.050, 0.024), (0, 0, 0.104, 0.030, 0.016)], seg=16, world=asa)
+        ponta = Matrix.Translation(c) @ deita @ Matrix.Rotation(d * math.radians(158), 4, 'Y')
+        loft('hat__laco__fita_' + s_, 'hat_detail', J['head'],
+             [(0, 0, 0.006, 0.012, 0.010), (0, 0, 0.040, 0.020, 0.010), (0, 0, 0.074, 0.024, 0.009),
+              (0, 0, 0.080, 0.012, 0.006)], seg=12, world=ponta)
+    esfera('hat__laco__no', 'hat_detail', J['head'], c, 1.0, (0.027, 0.024, 0.027), seg=12)
+
+
+# ───────────────────────── pescoço ──────────────────────────────────────────
+def neck_cachecol(J):
+    toro('neck__cachecol__volta', 'extra', J['chest'], (0, 0.004, 0.930), 0.090, 0.042, rot=(0.10, 0, 0),
+         escala=(1.20, 1.15, 1.0), seg=28, tubo=12)
+    caixa('neck__cachecol__ponta', 'extra', J['chest'], (0.072, -0.132, 0.835), (0.092, 0.042, 0.200), (0.06, 0, -0.10), subsurf=3)
+    caixa('neck__cachecol__franja', 'extra_detail', J['chest'], (0.083, -0.137, 0.742), (0.086, 0.034, 0.040), (0.06, 0, -0.10), subsurf=2)
+
+
+def neck_gravata(J):
+    for s_, sx in (('L', 1), ('R', -1)):
+        esfera('neck__gravata__asa_' + s_, 'extra', J['chest'], (sx * 0.043, -0.130, 0.888), 1.0,
+               (0.045, 0.020, 0.032), (0, 0, sx * 0.18), seg=14)
+    esfera('neck__gravata__no', 'extra_detail', J['chest'], (0, -0.138, 0.888), 1.0, (0.020, 0.020, 0.023), seg=10)
+
+
+def neck_medalha(J):
+    for s_, sx in (('L', 1), ('R', -1)):
+        cone('neck__medalha__fita_' + s_, 'extra', J['chest'], (sx * 0.064, -0.082, 0.905), (0, -0.117, 0.832), 0.012, 0.012, seg=8)
+    esfera('neck__medalha__disco', 'gold', J['chest'], (0, -0.124, 0.800), 1.0, (0.038, 0.012, 0.038), seg=20)
+    esfera('neck__medalha__miolo', 'white', J['chest'], (0, -0.134, 0.800), 1.0, (0.016, 0.006, 0.016), seg=10)
+
+
+# ───────────────────────── costas ───────────────────────────────────────────
+def back_mochila(J):
+    loft('back__mochila__corpo', 'extra', J['chest'], [
+        (0, 0.185, 0.548, 0.060, 0.030), (0, 0.188, 0.566, 0.118, 0.066), (0, 0.190, 0.610, 0.136, 0.080),
+        (0, 0.190, 0.790, 0.132, 0.078), (0, 0.186, 0.850, 0.112, 0.064), (0, 0.182, 0.880, 0.050, 0.030)], seg=24, expo=3.4)
+    loft('back__mochila__bolso', 'extra_detail', J['chest'], [
+        (0, 0.262, 0.582, 0.040, 0.012), (0, 0.270, 0.598, 0.088, 0.030), (0, 0.270, 0.700, 0.088, 0.030),
+        (0, 0.262, 0.718, 0.050, 0.014)], seg=20, expo=3.4)
+    toro('back__mochila__alcinha', 'extra_detail', J['chest'], (0, 0.185, 0.885), 0.030, 0.010, rot=(0, math.pi / 2, 0), seg=16, tubo=6)
+    for s_, sx in (('L', 1), ('R', -1)):
+        pts = [(sx * 0.100, -0.102, 0.640), (sx * 0.098, -0.092, 0.800), (sx * 0.092, -0.050, 0.888),
+               (sx * 0.090, 0.005, 0.898), (sx * 0.090, 0.070, 0.870), (sx * 0.090, 0.120, 0.800)]
+        for i in range(len(pts) - 1):
+            cone(f'back__mochila__alca_{s_}{i}', 'extra_detail', J['chest'], pts[i], pts[i + 1], 0.016, 0.016, seg=8, tampas=False)
+            esfera(f'back__mochila__junta_{s_}{i}', 'extra_detail', J['chest'], pts[i], 0.016, seg=8)
+
+
+def back_capa(J):
+    n_ang, n_z = 18, 12
+    z_topo, z_base = 0.895, 0.250
+    bm = bmesh.new()
+    grade = []
+    for i in range(n_z + 1):
+        f = i / n_z
+        z = z_topo + (z_base - z_topo) * f
+        raio = 0.118 + 0.170 * f ** 0.9          # abre para baixo
+        meio = math.radians(62 + 26 * f)         # meia-abertura em volta das costas
+        linha = []
+        for j in range(n_ang + 1):
+            g = -1 + 2 * j / n_ang
+            th = g * meio
+            onda = 1 + 0.050 * f * math.cos(g * math.pi * 3)   # pregas do pano
+            linha.append(bm.verts.new((raio * onda * math.sin(th) * 1.12,
+                                       0.030 + raio * onda * math.cos(th) * 0.88 + 0.050 * f, z)))
+        grade.append(linha)
+    for i in range(n_z):
+        for j in range(n_ang):
+            bm.faces.new((grade[i][j], grade[i + 1][j], grade[i + 1][j + 1], grade[i][j + 1]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    pano = _finish('back__capa__pano', bm, 'extra', J['chest'])
+    mod = pano.modifiers.new('solid', 'SOLIDIFY')
+    mod.thickness = 0.016
+    mod.offset = 0.0
+    toro('back__capa__gola', 'extra_detail', J['chest'], (0, 0.010, 0.918), 0.086, 0.030, rot=(0.14, 0, 0),
+         escala=(1.20, 1.14, 0.95), seg=28, tubo=10)
+    esfera('back__capa__broche', 'gold', J['chest'], (0, -0.120, 0.893), 1.0, (0.026, 0.016, 0.026), seg=12)
+
+
+ACESSORIOS = {
+    'oculos': acc_oculos, 'fone': acc_fone,
+    'bone': hat_bone, 'gorro': hat_gorro, 'coroa': hat_coroa, 'festa': hat_festa, 'orelhas': hat_orelhas, 'laco': hat_laco,
+    'cachecol': neck_cachecol, 'gravata': neck_gravata, 'medalha': neck_medalha,
+    'mochila': back_mochila, 'capa': back_capa,
+}
+# Chapéus que cobrem o alto da cabeça: com eles o coque e as mechas somem.
+COBRE_O_TOPO = {'bone', 'gorro', 'coroa', 'festa'}
 
 CABELOS = {'curto': cabelo_curto, 'coque': cabelo_coque}
 
@@ -640,6 +837,7 @@ def main():
     ap.add_argument('--blend', action='store_true',
                     help='salva um .blend por variante (entrada dos renders de revisão)')
     ap.add_argument('--so', help='monta só estas variantes (nomes separados por vírgula)')
+    ap.add_argument('--pecas', help='renders de revisão das peças novas: nomes separados por vírgula, ou "todas"')
     ap.add_argument('--glb', action='store_true',
                     help='gera plim_avatar.glb e plim_avatar.blend com TODAS as peças trocáveis')
     a = ap.parse_args(sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else None)
@@ -661,6 +859,21 @@ def main():
           'iris': '#3B6E8F'}),
     ]
     padrao = dict(CORES)
+    if a.pecas:
+        nomes = [n for n in ACESSORIOS if n not in ('oculos', 'fone')] if a.pecas == 'todas' else [x.strip() for x in a.pecas.split(',')]
+        for nome in nomes:
+            de_costas = ACESSORIOS[nome].__name__.startswith('back_')
+            na_cabeca = ACESSORIOS[nome].__name__.startswith('hat_')
+            for cabelo in (('curto', 'coque') if na_cabeca else ('curto',)):
+                limpar()
+                construir(cabelo=cabelo, acessorios=(nome,), abertura=17.0)
+                preparar_render(res=(420, 560), amostras=a.amostras)
+                no_pescoco = ACESSORIOS[nome].__name__.startswith('neck_')
+                alvo = (0, 0, 1.20) if na_cabeca else (0, 0, 0.80) if no_pescoco else (0, 0, 0.76)
+                dist = 1.9 if na_cabeca else 1.9 if no_pescoco else 3.9
+                vistas = [('frente', 0), ('34', 38)] + ([('costas', 180), ('lado', 90)] if de_costas else [('lado', 90)] if na_cabeca else [])
+                for vista, ang in vistas:
+                    renderizar(os.path.join(a.out, f'peca_{nome}_{cabelo}_{vista}.png'), camera(vista, ang, dist=dist, alvo=alvo))
     if a.glb:
         limpar()
         construir(abertura=a.abertura, tudo=True)

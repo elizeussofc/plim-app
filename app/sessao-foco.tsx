@@ -4,6 +4,7 @@ import { somFoco } from '@/lib/sons';
 import { Botao, Cabecalho } from '@/components/plim';
 import { Text } from '@/components/Texto';
 import { C, F, R } from '@/lib/theme';
+import { registrarAtividade } from '@/stores/atividadeStore';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
@@ -61,6 +62,7 @@ export default function SessaoFocoScreen() {
     dizer('foco_completo');
     addXp(30);
     addMoedas(15);
+    registrarAtividade('foco', duracaoMin);
     unlockConquista('foco_total');
     if (duracaoMin >= 20) registrarEvento('foco_20min')(addXp, addMoedas);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -86,6 +88,7 @@ export default function SessaoFocoScreen() {
       if (minutosFeitos >= 1) {
         addXp(minutosFeitos * 2);
         addMoedas(minutosFeitos);
+        registrarAtividade('foco', minutosFeitos);
         dizer('foco_parou');
       }
     }

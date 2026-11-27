@@ -5,6 +5,7 @@ import { confirmar } from '@/lib/avisar';
 import { somAviso, somDesceu, somSubiu } from '@/lib/sons';
 import { C, F } from '@/lib/theme';
 import { AREAS, NIVEL_MAX, NIVEL_MAX_GRATIS, type AreaId } from '@/lib/trilhas';
+import { registrarAtividade } from '@/stores/atividadeStore';
 import { dizer } from '@/stores/falaStore';
 import { usePaywallStore } from '@/stores/paywallStore';
 import { useTrilhaStore } from '@/stores/trilhaStore';
@@ -67,6 +68,7 @@ export default function MissaoScreen() {
     addXp(r.xp);
     if (r.moedas) addMoedas(r.moedas);
     if (sucesso) {
+      registrarAtividade('missoes');
       somSubiu();
       dizer(r.bateuNoTeto ? 'missao_teto' : 'missao_ok');
     } else {

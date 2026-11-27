@@ -22,7 +22,12 @@ export type Situacao =
   | 'missao_inicio' | 'missao_ok' | 'missao_falhou' | 'missao_teto' | 'trilha_nova'
   | 'gym_plano' | 'gym_inicio' | 'gym_fim' | 'gym_carga' | 'gym_leve' | 'gym_parou'
   | 'fin_gasto' | 'fin_ganho' | 'fin_conta' | 'fin_meta' | 'fin_estourou' | 'fin_aporte'
-  | 'grupo_post' | 'grupo_story' | 'grupo_comentou' | 'grupo_reagiu';
+  | 'grupo_post' | 'grupo_story' | 'grupo_comentou' | 'grupo_reagiu'
+  | 'sono_meta' | 'sono_ritual' | 'sono_boa' | 'sono_curta'
+  | 'estudo_inicio' | 'estudo_fim' | 'estudo_parou' | 'estudo_lembrei' | 'estudo_esqueci' | 'estudo_topico' | 'estudo_em_dia'
+  | 'casa_tarefa' | 'casa_faxina' | 'casa_cardapio' | 'casa_compra'
+  | 'roupa_vestiu' | 'roupa_comprou' | 'roupa_sem_moedas'
+  | 'resumo_boa' | 'resumo_fraca';
 
 interface Fala { texto: string; humor: Humor }
 
@@ -196,6 +201,74 @@ export const FALAS: Record<Situacao, Fala[]> = {
   sem_rotina: f('neutro',
     'Sua rotina está vazia. Eu aceito qualquer tarefa, até beber água.',
     'Sem tarefas por aqui. Cria uma pequena e eu paro de encarar.'),
+
+  sono_meta: f('feliz',
+    'Meta de sono anotada. Eu aviso a hora de desligar. Fingir que não ouviu é com você.',
+    'Combinado. Hora marcada é hora marcada, até para dormir.'),
+  sono_ritual: f('feliz',
+    'Ritual completo. Agora é cama. Eu fico de vigia, que nem pisco.',
+    'Tudo desligado, menos eu. Boa noite.',
+    'Celular longe, luz baixa. Até amanhã.'),
+  sono_boa: f('animado',
+    'Noite bem dormida. Dá para ver daqui: você está quase com a minha disposição.',
+    'Dormiu o que precisava. Hoje a cabeça agradece.'),
+  sono_curta: f('neutro',
+    'Noite curta. Acontece. Hoje a gente pega leve e deita mais cedo.',
+    'Faltou sono. Não é dia de exigir muito de você. Uma coisa de cada vez.'),
+
+  estudo_inicio: f('animado',
+    'Valendo. Eu fico quieto. É raro, aproveita.',
+    'Relógio rodando. Uma matéria só, sem abrir outra aba.'),
+  estudo_fim: f('animado',
+    'Tempo cumprido! A cabeça cresceu um pouquinho. Eu medi.',
+    'Sessão fechada. Agora descansa, que descanso também fixa.'),
+  estudo_parou: f('neutro',
+    'Parou antes. O que você estudou continua valendo.',
+    'Tudo bem interromper. Da próxima, tenta um tempo menor.'),
+  estudo_lembrei: f('feliz',
+    'Lembrou! Essa já mora na sua cabeça. Volto a perguntar daqui a uns dias.',
+    'Acertou sem olhar. É assim que a memória firma.'),
+  estudo_esqueci: f('neutro',
+    'Esqueceu. Normal: esquecer um pouco e tentar de novo é o que fixa. Amanhã eu pergunto outra vez.',
+    'Essa escapou. Dá uma olhada no material e amanhã a gente repete.'),
+  estudo_topico: f('feliz',
+    'Anotado. Amanhã eu cobro. Com carinho, mas cobro.',
+    'Tópico guardado. Eu apareço na hora certa de revisar.'),
+  estudo_em_dia: f('animado',
+    'Revisões em dia! Minha memória é de massinha e nem eu consigo isso.',
+    'Zerou as revisões de hoje. Pode fechar o caderno sem culpa.'),
+
+  casa_tarefa: f('feliz',
+    'Uma a menos. A casa notou. Eu também.',
+    'Feito! A bagunça perdeu essa.',
+    'Limpo. Eu ajudaria, mas minha mão não solta do corpo.'),
+  casa_faxina: f('animado',
+    'Faxina relâmpago concluída. Poucos minutos e a casa já é outra.',
+    'Acabou! E nem precisou do dia inteiro. Anota aí: dá para fazer em pedaços.'),
+  casa_cardapio: f('feliz',
+    'Cardápio montado. Decisão a menos para o você de amanhã.',
+    'Semana planejada. Às seis da tarde ninguém vai perguntar "o que tem de janta?".'),
+  casa_compra: f('feliz',
+    'Compra fechada e anotada. Geladeira cheia e conta em dia.',
+    'Mercado resolvido. O que foi para o carrinho saiu da lista.'),
+
+  roupa_vestiu: f('animado',
+    'Olha eu! Ficou bom, né? Pode falar.',
+    'Gostei. Gira aí para eu me ver de costas.',
+    'Estilo novo. Meu moletom está com ciúme.'),
+  roupa_comprou: f('animado',
+    'Peça nova no guarda-roupa! Suas moedas viraram estilo.',
+    'Comprado. Eu prometo usar com responsabilidade.'),
+  roupa_sem_moedas: f('neutro',
+    'Faltam moedas para essa. Missão e desafio rendem, e eu espero.',
+    'Ainda não dá. Mais umas tarefas e ela é minha. Digo, nossa.'),
+
+  resumo_boa: f('animado',
+    'Li a sua semana. Teve bastante coisa feita. Eu guardei tudo.',
+    'Semana movimentada. Olha o resumo com calma, tem motivo para gostar.'),
+  resumo_fraca: f('feliz',
+    'Semana mais parada. Sem drama: o resumo mostra por onde recomeçar.',
+    'Poucos registros esta semana. Escolhe uma coisa só do resumo e começa por ela.'),
 };
 
 export interface EstadoParaFala {

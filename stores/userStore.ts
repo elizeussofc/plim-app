@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { avatarConfigPadrao, normalizarAvatar, type AvatarConfig } from '@/lib/avatar';
+import { semPecasDoPro } from '@/lib/roupas';
 import { supabase } from '@/lib/supabase';
 export type { AvatarConfig };
 
@@ -46,6 +47,8 @@ export interface Profile {
     sons?: boolean;
     /** Balões de fala do avatar (padrão: ligado). */
     falas?: boolean;
+    /** Peças do guarda-roupa compradas com moedas. */
+    roupas?: string[];
   };
 }
 
@@ -164,6 +167,8 @@ export const useUserStore = create<UserState>((set) => ({
       .eq('id', userId)
       .single();
     if (error || !data) return;
+    // Só aqui o plano é o que o servidor diz. Se a pessoa não assina, as peças do Pro saem do boneco.
+    const semPro = (cfg: AvatarConfig) => ((data.plano ?? 'free') === 'pro' ? cfg : semPecasDoPro(cfg));
     set((s) => ({
       profile: {
         ...s.profile,
@@ -179,7 +184,7 @@ export const useUserStore = create<UserState>((set) => ({
         moedas: data.moedas ?? s.profile.moedas,
         streak: data.streak ?? s.profile.streak,
         avatar_emoji: data.avatar_emoji ?? s.profile.avatar_emoji,
-        avatar_config: data.avatar_config ? normalizarAvatar(data.avatar_config) : s.profile.avatar_config,
+        avatar_config: semPro(data.avatar_config ? normalizarAvatar(data.avatar_config) : s.profile.avatar_config),
         conquistas: data.conquistas?.length ? data.conquistas : s.profile.conquistas,
         preferencias: data.preferencias ?? s.profile.preferencias,
       },
