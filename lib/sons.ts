@@ -18,3 +18,16 @@ export function somDesceu() {}
 export function somAviso() {}
 export function somBalao() {}
 export function somToque() {}
+export function somSerie() {}
+export function somDescanso() {}
+export function somCarga() {}
+export function somTreino() {}
+export function somMoeda() {}
+export function somGasto() {}
+export function somConta() {}
+export function somMeta() {}
+export function somEstourou() {}
+export function somReagir() {}
+export function somPostar() {}
+export function somComentar() {}
+export function somStory() {}

@@ -12,6 +12,7 @@ import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, View 
 
 /** Só o que o Pro realmente libera hoje. O que ainda não existe fica em "em breve". */
 const BENEFICIOS: { icone: NomeIcone; titulo: string; desc: string }[] = [
+  { icone: 'trilha-corpo', titulo: 'Gym Plim', desc: 'Treino guiado que evolui com você, cada exercício explicado com imagem, e o que comer antes e depois.' },
   { icone: 'robo', titulo: 'Plim IA', desc: 'Um assistente que entende TDAH para destravar, organizar a cabeça ou só conversar.' },
   { icone: 'parceria', titulo: 'Modo Parceiro', desc: 'Convide alguém de confiança para acompanhar sua rotina de perto.' },
   { icone: 'placa', titulo: 'Trilhas sem limite', desc: 'Mais de duas trilhas ao mesmo tempo e os níveis 6 a 10, com missões maiores.' },

@@ -19,7 +19,10 @@ export type Situacao =
   | 'nivel' | 'conquista' | 'desafio'
   | 'despejo' | 'foco_completo' | 'foco_parou' | 'calma'
   | 'toque' | 'toque_demais' | 'visual' | 'sem_rotina'
-  | 'missao_inicio' | 'missao_ok' | 'missao_falhou' | 'missao_teto' | 'trilha_nova';
+  | 'missao_inicio' | 'missao_ok' | 'missao_falhou' | 'missao_teto' | 'trilha_nova'
+  | 'gym_plano' | 'gym_inicio' | 'gym_fim' | 'gym_carga' | 'gym_leve' | 'gym_parou'
+  | 'fin_gasto' | 'fin_ganho' | 'fin_conta' | 'fin_meta' | 'fin_estourou' | 'fin_aporte'
+  | 'grupo_post' | 'grupo_story' | 'grupo_comentou' | 'grupo_reagiu';
 
 interface Fala { texto: string; humor: Humor }
 
@@ -140,6 +143,56 @@ export const FALAS: Record<Situacao, Fala[]> = {
   trilha_nova: f('feliz',
     'Trilha nova! Começa pequeno. Eu gosto de ver você ganhando.',
     'Boa escolha. A primeira missão é curtinha de propósito.'),
+  gym_plano: f('feliz',
+    'Plano montado. Ele cresce junto com você, sem pular degrau.',
+    'Treino pronto! Eu fico com a parte difícil: contar o descanso.'),
+  gym_inicio: f('animado',
+    'Bora. Capricho na execução vale mais que peso no ego.',
+    'Aquecimento primeiro. Eu sei, eu sei. Mas primeiro.'),
+  gym_fim: f('animado',
+    'Treino feito! Agora água e proteína. Ordem do treinador de moletom.',
+    'Acabou! O músculo cresce no descanso, então descansar também é treinar.',
+    'Mais um treino na conta. Constância ganha de intensidade.'),
+  gym_carga: f('animado',
+    'Hora de subir a carga! Pouquinho, do jeito certo.',
+    'Você bateu a meta em tudo. O peso que se cuide.'),
+  gym_leve: f('feliz',
+    'Semana leve. Não é moleza, é estratégia: o corpo agradece.',
+    'Uma série a menos em tudo esta semana. Recuperar também faz crescer.'),
+  gym_parou: f('neutro',
+    'Treino pela metade também conta. Ficou registrado o que você fez.',
+    'Parou antes? Tudo bem. O próximo treino continua te esperando.'),
+  fin_gasto: f('neutro',
+    'Anotado. Dinheiro que a gente enxerga para de sumir.',
+    'Gasto no caderno. Eu não julgo, só anoto.',
+    'Registrado. Saber para onde foi já é metade do controle.'),
+  fin_ganho: f('feliz',
+    'Entrou dinheiro! Antes de gastar, separa a fatia de guardar.',
+    'Opa, entrada. Que tal pagar você primeiro?'),
+  fin_conta: f('feliz',
+    'Conta paga. Uma coisa a menos morando na sua cabeça.',
+    'Paga antes de vencer. Os juros ficaram sem assunto.'),
+  fin_meta: f('animado',
+    'Meta batida! Isso aí foi você, parcela por parcela.',
+    'Chegou! Guardar aos poucos funciona. Eu vi acontecer.'),
+  fin_estourou: f('neutro',
+    'Essa categoria passou do combinado. Dá para compensar em outra.',
+    'Estourou o teto aqui. Sem drama: o mês ainda tem conserto.'),
+  fin_aporte: f('feliz',
+    'Guardou! Pouco e sempre vira muito. A matemática garante.',
+    'Mais um tijolinho na reserva. Eu contei.'),
+  grupo_post: f('feliz',
+    'Publicado! Vai que isso anima alguém que estava travado hoje.',
+    'Foi para o grupo. Contar o que fez também é comemorar.'),
+  grupo_story: f('feliz',
+    'Story no ar por 24 horas. Depois some, igual a minha dignidade.',
+    'Postou! Eu apareço em algum? Só curiosidade.'),
+  grupo_comentou: f('feliz',
+    'Comentário enviado. Palavra boa dá um empurrão em alguém.',
+    'Gentileza registrada. Faz bem para os dois lados.'),
+  grupo_reagiu: f('feliz',
+    'Reagiu! Um emoji seu pode ser o empurrão de alguém.',
+    'Torcida entregue. Barato e funciona.'),
   sem_rotina: f('neutro',
     'Sua rotina está vazia. Eu aceito qualquer tarefa, até beber água.',
     'Sem tarefas por aqui. Cria uma pequena e eu paro de encarar.'),

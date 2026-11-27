@@ -7,7 +7,28 @@ import { useUserStore } from '@/stores/userStore';
 import { Image, View } from 'react-native';
 
 const PRINCIPAIS: Ferramenta[] = [FERRAMENTAS.trilhas, FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
+/** O que o Pro tem de maior: cada um deixa experimentar antes de pedir a assinatura. */
+const VIDA: Ferramenta[] = [FERRAMENTAS.gym];
 const EXTRAS: Ferramenta[] = [FERRAMENTAS.medicacao, FERRAMENTAS.historico, FERRAMENTAS.parceiro, FERRAMENTAS.ranking];
+
+function Cartao({ f, ehPro, aoAbrir }: { f: Ferramenta; ehPro: boolean; aoAbrir: (f: Ferramenta) => void }) {
+  const selo = ehPro ? undefined : f.pro ? 'Pro' : f.selo;
+  return (
+    <PecaBotao onPress={() => aoAbrir(f)} accessibilityLabel={`${f.titulo}. ${f.desc}${selo ? ` ${selo}.` : ''}`} padding={14}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Almofada icone={f.icone} tinta={f.tinta} tamanho={62} />
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <Text style={{ fontFamily: F.display, fontSize: 18, color: C.text }}>{f.titulo}</Text>
+            {selo && <Selo texto={selo} icone="coroa" tinta="ouro" />}
+          </View>
+          <Text style={{ fontSize: 14, color: C.textSub, marginTop: 2, lineHeight: 20 }}>{f.desc}</Text>
+        </View>
+        <Text style={{ fontFamily: F.displayX, fontSize: 22, color: C.textMuted }}>›</Text>
+      </View>
+    </PecaBotao>
+  );
+}
 
 /** Aba Plim: as ferramentas para quando a cabeça precisa de ajuda agora. */
 export default function PlimScreen() {
@@ -29,21 +50,13 @@ export default function PlimScreen() {
 
       {/* Principais */}
       <View style={{ gap: 12, marginBottom: 24 }}>
-        {PRINCIPAIS.map((f) => (
-          <PecaBotao key={f.rota} onPress={() => abrir(f)} accessibilityLabel={`${f.titulo}. ${f.desc}${f.pro && !ehPro ? ' Faz parte do Plim Pro.' : ''}`} padding={14}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <Almofada icone={f.icone} tinta={f.tinta} tamanho={62} />
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <Text style={{ fontFamily: F.display, fontSize: 18, color: C.text }}>{f.titulo}</Text>
-                  {f.pro && !ehPro && <Selo texto="Pro" icone="coroa" tinta="ouro" />}
-                </View>
-                <Text style={{ fontSize: 14, color: C.textSub, marginTop: 2, lineHeight: 20 }}>{f.desc}</Text>
-              </View>
-              <Text style={{ fontFamily: F.displayX, fontSize: 22, color: C.textMuted }}>›</Text>
-            </View>
-          </PecaBotao>
-        ))}
+        {PRINCIPAIS.map((f) => <Cartao key={f.rota} f={f} ehPro={ehPro} aoAbrir={abrir} />)}
+      </View>
+
+      {/* Corpo e bolso */}
+      <Secao titulo="Corpo e bolso" />
+      <View style={{ gap: 12, marginBottom: 24 }}>
+        {VIDA.map((f) => <Cartao key={f.rota} f={f} ehPro={ehPro} aoAbrir={abrir} />)}
       </View>
 
       {/* Mais */}

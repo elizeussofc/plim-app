@@ -5,13 +5,14 @@
  *  - tarefa feita: um plim, que sobe de tom a cada tarefa do dia (escala pentatônica);
  *  - desafio ou rotina completa: três plins em arpejo;
  *  - nível: fanfarra própria, afinada um semitom acima para combinar com o plim;
- *  - conquista, fim de foco e despejo guardado: um som próprio cada.
+ *  - conquista, fim de foco e despejo guardado: um som próprio cada;
+ *  - Gym: o haltere pousando no chão ("ferro"); Finanças: a moeda no cofrinho; Grupo: a bolha ("pop").
  * Os arquivos ficam em public/sons e só são baixados no primeiro toque na tela.
  */
 
-type Nome = 'plim' | 'nivel' | 'conquista' | 'foco' | 'guardar';
+type Nome = 'plim' | 'nivel' | 'conquista' | 'foco' | 'guardar' | 'moeda' | 'ferro' | 'pop';
 
-const VOLUME: Record<Nome, number> = { plim: 0.5, nivel: 0.55, conquista: 0.4, foco: 0.65, guardar: 0.45 };
+const VOLUME: Record<Nome, number> = { plim: 0.5, nivel: 0.55, conquista: 0.4, foco: 0.65, guardar: 0.45, moeda: 0.4, ferro: 0.6, pop: 0.5 };
 /** Degraus da escala pentatônica maior, em semitons: dó ré mi sol lá dó. */
 const PENTA = [0, 2, 4, 7, 9, 12];
 const semitons = (n: number) => Math.pow(2, n / 12);
@@ -169,6 +170,96 @@ export function somBalao() {
 /** Confirmação curta (ligar uma opção, escolher uma trilha). */
 export function somToque() {
   tocar('plim', { tom: 4, volume: 0.5 });
+}
+
+// ───────────────────────── Gym ─────────────────────────
+
+/** Série feita: o haltere pousa no chão. */
+export function somSerie() {
+  tocar('ferro');
+  vibrar(14);
+}
+
+/** Acabou o descanso: duas notas subindo, "volta!". Toca mesmo com a tela em segundo plano. */
+export function somDescanso() {
+  tocar('plim', { tom: 0, volume: 0.8 });
+  tocar('plim', { tom: 7, atraso: 0.14, volume: 0.9 });
+  vibrar([40, 60, 40]);
+}
+
+/** O Plim mandou subir a carga: haltere e uma nota aguda logo depois. */
+export function somCarga() {
+  tocar('ferro', { tom: 2 });
+  tocar('plim', { tom: 12, atraso: 0.16, volume: 0.7 });
+}
+
+/** Treino terminado: haltere no chão e a fanfarra de nível. */
+export function somTreino() {
+  tocar('ferro');
+  tocar('nivel', { tom: 1, atraso: 0.3 });
+  vibrar([18, 60, 18, 60, 40]);
+}
+
+// ───────────────────────── Finanças ─────────────────────────
+
+/** Entrou dinheiro ou a pessoa guardou: moeda no cofrinho. */
+export function somMoeda() {
+  tocar('moeda');
+  vibrar(12);
+}
+
+/** Gasto anotado: um toque grave e discreto. Anotar gasto não é para dar susto. */
+export function somGasto() {
+  tocar('guardar', { tom: -3, volume: 0.9 });
+}
+
+/** Conta paga: moeda e um plim de "resolvido". */
+export function somConta() {
+  tocar('moeda', { tom: -2 });
+  tocar('plim', { tom: 4, atraso: 0.18, volume: 0.7 });
+  vibrar(14);
+}
+
+/** Meta de dinheiro batida: duas moedas e o som de conquista. */
+export function somMeta() {
+  tocar('moeda');
+  tocar('moeda', { tom: 4, atraso: 0.14 });
+  tocar('conquista', { atraso: 0.4 });
+  vibrar([14, 40, 14, 40, 30]);
+}
+
+/** Passou do teto de uma categoria: duas notas descendo, baixinho. */
+export function somEstourou() {
+  tocar('plim', { tom: 2, volume: 0.5 });
+  tocar('plim', { tom: -2, atraso: 0.18, volume: 0.45 });
+}
+
+// ───────────────────────── Grupo ─────────────────────────
+
+/** Reagiu com um emoji: uma bolha. */
+export function somReagir() {
+  tocar('pop', { tom: 3 });
+  vibrar(8);
+}
+
+/** Publicou no grupo: bolha e duas notas subindo. */
+export function somPostar() {
+  tocar('pop');
+  tocar('plim', { tom: 7, atraso: 0.12, volume: 0.7 });
+  tocar('plim', { tom: 12, atraso: 0.24, volume: 0.8 });
+  vibrar(16);
+}
+
+/** Comentou: duas bolhas, a segunda mais grave. */
+export function somComentar() {
+  tocar('pop', { tom: 2 });
+  tocar('pop', { tom: -3, atraso: 0.11 });
+}
+
+/** Story no ar: três bolhas subindo. */
+export function somStory() {
+  [0, 4, 9].forEach((tom, i) => tocar('pop', { tom, atraso: i * 0.09 }));
+  vibrar(14);
 }
 
 // O navegador só deixa tocar depois de um toque na página: o primeiro toque

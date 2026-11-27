@@ -10,6 +10,7 @@ import { View } from 'react-native';
 import '../global.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import Avisos from '@/components/Avisos';
+import PaywallModal from '@/components/PaywallModal';
 import { useCelebracoes } from '@/lib/celebrar';
 import { configurarRevenueCat } from '@/lib/payments';
 import { C } from '@/lib/theme';
@@ -61,6 +62,7 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="onboarding" options={{ animation: 'fade' }} />
           </Stack>
+          <PaywallModal />
           <Avisos />
           <Celebracoes />
         </AuthProvider>

@@ -1,7 +1,6 @@
 import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { FalaFlutuante } from '@/components/Balao';
 import Icone, { type NomeIcone } from '@/components/Icone';
-import PaywallModal from '@/components/PaywallModal';
 import { useCicloDiario } from '@/lib/cicloDiario';
 import { C, F } from '@/lib/theme';
 import { useUserStore } from '@/stores/userStore';
@@ -144,7 +143,6 @@ export default function TabsLayout() {
       </Tabs>
       <FalaFlutuante fundo={ALTURA_BARRA + 14} />
       <BotaoDespejo />
-      <PaywallModal />
     </View>
   );
 }
