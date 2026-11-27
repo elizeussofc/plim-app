@@ -72,6 +72,14 @@
             "kotlinVersion": "2.0.21"
           }
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Plim abre suas fotos só quando você escolhe uma imagem para publicar no Grupo.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {

@@ -1,5 +1,6 @@
 import AvatarPalco from '@/components/AvatarPalco';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
+import GrupoNoPerfil from '@/components/grupo/GrupoNoPerfil';
 import { Balao, useFalaVisivel } from '@/components/Balao';
 import Icone from '@/components/Icone';
 import { Almofada, Barra, Botao, Numero, Peca, PecaBotao, Secao, Selo, Tela } from '@/components/plim';
@@ -8,13 +9,16 @@ import { Text } from '@/components/Texto';
 import {
   chaveAvatar, normalizarAvatar, OPCOES_CABELO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE,
 } from '@/lib/avatar';
+import { avisar } from '@/lib/avisar';
 import { dataLocal, hojeLocal } from '@/lib/dia';
+import { limparInstagram } from '@/lib/grupo';
 import { somToque } from '@/lib/sons';
 import { supabase } from '@/lib/supabase';
 import { C, F, R } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { dizer } from '@/stores/falaStore';
+import { useGrupoStore } from '@/stores/grupoStore';
 import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
 import { usePaywallStore } from '@/stores/paywallStore';
 import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
@@ -159,13 +163,20 @@ export default function PerfilScreen() {
   }
 
   function salvarPerfil() {
+    const instagram = limparInstagram(editInstagram);
+    if (editInstagram.trim() && !instagram) {
+      avisar('Confira o Instagram', 'Escreva só o seu usuário, como @seu.nome. Vale letra, número, ponto e sublinhado.');
+      return;
+    }
     updateProfile({
       nome: editNome.trim() || null,
-      apelido: editApelido.trim() || null,
-      bio: editBio.trim() || null,
-      instagram: editInstagram.trim().replace('@', '') || null,
+      apelido: editApelido.trim().slice(0, 30) || null,
+      bio: editBio.trim().slice(0, 160) || null,
+      instagram,
     });
     setModalPerfil(false);
+    // Quem está no Grupo tem o cartão público atualizado na hora.
+    void useGrupoStore.getState().sincronizarCartao();
   }
 
   function abrirEdicao() {
@@ -221,6 +232,9 @@ export default function PerfilScreen() {
           </View>
           <Barra valor={xpPct} />
         </Peca>
+
+        {/* Grupo: stories, visitas e privacidade */}
+        <GrupoNoPerfil />
 
         {/* Histórico */}
         <Secao titulo="Seus últimos 35 dias" />
