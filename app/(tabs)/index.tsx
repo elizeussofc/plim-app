@@ -1,383 +1,238 @@
 import AvatarPersonagem from '@/components/AvatarPersonagem';
+import Icone from '@/components/Icone';
+import { Almofada, Barra, Botao, Numero, Peca, PecaBotao, Secao, Selo, Tela } from '@/components/plim';
 import TermometroRotina, { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
-import { C } from '@/lib/theme';
-import { useDesafiosStore } from '@/stores/desafiosStore';
-import { useRotinaStore } from '@/stores/rotinaStore';
-import { loadOnboardingProfile, type Chronotype, type PlimUserProfile } from '@/stores/onboardingStore';
+import { Text } from '@/components/Texto';
+import { concluirTarefa } from '@/lib/cicloDiario';
+import { FERRAMENTAS, useAbrirFerramenta, type Ferramenta } from '@/lib/ferramentas';
 import { getMensagemDoDia } from '@/lib/mensagensDoDia';
+import { C, F } from '@/lib/theme';
+import { useDesafiosStore } from '@/stores/desafiosStore';
+import { loadOnboardingProfile, type Chronotype, type PlimUserProfile } from '@/stores/onboardingStore';
+import { useRotinaStore, type Tarefa } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-} from 'react-native-reanimated';
+import { Image, Pressable, View } from 'react-native';
 
-const atalhos = [
-  { icone: '🧠', label: 'Despejo',  sub: 'mental',   route: '/despejo-mental', color: '#9B59F5' },
-  { icone: '🎯', label: 'Sessão',   sub: 'de foco',  route: '/sessao-foco',    color: '#F59E0B' },
-  { icone: '😌', label: 'Modo',     sub: 'calma',    route: '/modo-calma',     color: '#10B981' },
-  { icone: '🤖', label: 'Plim',     sub: 'IA',       route: '/ia-tdah',        color: '#3B82F6' },
-];
+const ATALHOS: Ferramenta[] = [FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
 
 const SUGESTAO_FOCO: Record<Chronotype, { texto: string; horario: string }> = {
-  morning:   { texto: 'Seu pico é pela manhã',    horario: '8h'  },
-  afternoon: { texto: 'Seu pico é à tarde',       horario: '14h' },
-  night:     { texto: 'Seu pico é à noite',       horario: '20h' },
-  dawn:      { texto: 'Madrugada produtiva',      horario: '1h'  },
+  morning:   { texto: 'Seu pico de foco é de manhã',  horario: '8h'  },
+  afternoon: { texto: 'Seu pico de foco é à tarde',   horario: '14h' },
+  night:     { texto: 'Seu pico de foco é à noite',   horario: '20h' },
+  dawn:      { texto: 'Você rende de madrugada',      horario: '1h'  },
 };
 
-function SectionLabel({ label }: { label: string }) {
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-      <View style={{ width: 3, height: 14, backgroundColor: C.primaryLight, borderRadius: 2 }} />
-      <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-        {label}
-      </Text>
-    </View>
-  );
+/** A próxima tarefa pendente, na ordem do horário (as sem horário ficam por último). */
+function proximaTarefa(tarefas: Tarefa[]): Tarefa | null {
+  const pendentes = tarefas.filter((t) => t.status === 'pendente');
+  if (pendentes.length === 0) return null;
+  const hora = (t: Tarefa) => (/^\d{1,2}:\d{2}$/.test(t.horario) ? t.horario.padStart(5, '0') : '99:99');
+  return [...pendentes].sort((a, b) => hora(a).localeCompare(hora(b)))[0];
 }
 
-function StatCard({ value, label, color, delay }: { value: string | number; label: string; color: string; delay: number }) {
-  return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={{ flex: 1 }}>
-      <View style={{
-        backgroundColor: C.glass,
-        borderRadius: 16,
-        padding: 16,
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: C.borderPrimary,
-      }}>
-        <Text style={{ fontSize: 26, fontWeight: '800', color, letterSpacing: -0.5 }}>{value}</Text>
-        <Text style={{ fontSize: 11, color: C.textSub, marginTop: 3, fontWeight: '500' }}>{label}</Text>
-      </View>
-    </Animated.View>
-  );
-}
-
-function AtalhoCard({ icone, label, sub, route, color, delay }: typeof atalhos[0] & { delay: number }) {
+/** Um passo só, bem grande: é o que a pessoa precisa ver ao abrir o app. */
+function ProximoPasso() {
   const router = useRouter();
-  const scale = useSharedValue(1);
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const tarefas = useRotinaStore((s) => s.tarefas);
+  const proxima = proximaTarefa(tarefas);
+  const feitas = tarefas.filter((t) => t.status === 'feita').length;
 
-  function onPress() {
-    scale.value = withSpring(0.92, { damping: 15 }, () => { scale.value = withSpring(1); });
-    router.push(route as any);
+  if (tarefas.length === 0) {
+    return (
+      <Peca tinta="roxo" estilo={{ marginBottom: 16 }}>
+        <Text style={{ fontFamily: F.display, fontSize: 20, color: C.text }}>Monte sua rotina</Text>
+        <Text style={{ fontSize: 14, color: C.textSub, marginTop: 4, marginBottom: 14, lineHeight: 20 }}>Comece com uma tarefa só. Pode ser beber água.</Text>
+        <Botao rotulo="Criar primeira tarefa" icone="rotina" onPress={() => router.push('/(tabs)/rotina')} />
+      </Peca>
+    );
+  }
+
+  if (!proxima) {
+    return (
+      <Peca tinta="verde" padding={0} estilo={{ marginBottom: 16, overflow: 'hidden' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <View style={{ flex: 1, padding: 18, paddingRight: 0 }}>
+            <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 22, color: C.text, lineHeight: 26 }}>
+              {feitas === tarefas.length ? 'Rotina de hoje completa!' : 'Nada pendente por hoje'}
+            </Text>
+            <Text style={{ fontSize: 14, color: C.textSub, marginTop: 6, lineHeight: 20 }}>
+              {feitas === tarefas.length ? 'Você fez tudo o que planejou. Descanse sem culpa.' : 'O que ficou para trás não some: amanhã é outro dia.'}
+            </Text>
+          </View>
+          <Image source={require('../../assets/cenas/vitoria.webp')} style={{ width: 118, height: 136, marginRight: 8, marginVertical: 8 }} resizeMode="contain" accessible={false} />
+        </View>
+      </Peca>
+    );
   }
 
   return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()} style={[animStyle, { flex: 1 }]}>
-      <Pressable
-        onPress={onPress}
-        accessibilityLabel={`${label} ${sub}`}
-        accessibilityRole="button"
-        android_ripple={{ color: color + '33', borderless: false }}
-        style={{
-          backgroundColor: C.surface,
-          borderRadius: 16,
-          padding: 16,
-          alignItems: 'center',
-          borderWidth: 1,
-          borderColor: C.border,
-        }}
-      >
-        <View style={{
-          width: 48,
-          height: 48,
-          borderRadius: 14,
-          backgroundColor: color + '20',
-          alignItems: 'center',
-          justifyContent: 'center',
-          marginBottom: 10,
-          borderWidth: 1,
-          borderColor: color + '50',
-        }}>
-          <Text style={{ fontSize: 22 }}>{icone}</Text>
+    <Peca tinta="roxo" estilo={{ marginBottom: 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <Text style={{ fontFamily: F.bold, fontSize: 14, color: C.primaryLight }}>Seu próximo passo</Text>
+        <Selo texto={`${feitas} de ${tarefas.length} feitas`} />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 14 }}>
+        <View style={{ width: 66, height: 66, borderRadius: 22, backgroundColor: C.surface, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 34 }}>{proxima.icone}</Text>
         </View>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: C.text }}>{label}</Text>
-        <Text style={{ fontSize: 10, color: C.textSub, marginTop: 1 }}>{sub}</Text>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
-function DesafioCard({ desafio, delay }: { desafio: any; delay: number }) {
-  const progPct = Math.round((desafio.progresso / desafio.meta) * 100);
-  const barWidth = useSharedValue(0);
-
-  useEffect(() => {
-    barWidth.value = withTiming(progPct, { duration: 900 });
-  }, []);
-
-  const barStyle = useAnimatedStyle(() => ({
-    width: `${barWidth.value}%` as any,
-  }));
-
-  return (
-    <Animated.View entering={FadeInDown.delay(delay).springify()}>
-      <View style={{
-        backgroundColor: C.surface,
-        borderRadius: 16,
-        padding: 16,
-        borderWidth: 1,
-        borderColor: C.border,
-        marginBottom: 10,
-      }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-          <View style={{
-            width: 40,
-            height: 40,
-            borderRadius: 12,
-            backgroundColor: C.glassStrong,
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderWidth: 1,
-            borderColor: C.borderPrimary,
-          }}>
-            <Text style={{ fontSize: 18 }}>{desafio.icone}</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: C.text }}>{desafio.titulo}</Text>
-            <Text style={{ fontSize: 10, color: C.textSub, marginTop: 2 }}>{desafio.progresso}/{desafio.meta} concluídos</Text>
-          </View>
-          <View style={{
-            backgroundColor: C.glassStrong,
-            borderRadius: 20,
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            borderWidth: 1,
-            borderColor: C.borderPrimary,
-          }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight }}>+{desafio.xp} XP</Text>
-          </View>
-        </View>
-        <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 5, overflow: 'hidden' }}>
-          <Animated.View style={[{ height: 5, borderRadius: 4, backgroundColor: C.primaryLight, shadowColor: C.primary, shadowOpacity: 0.8, shadowRadius: 4, elevation: 4 }, barStyle]} />
+        <View style={{ flex: 1 }}>
+          <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 23, color: C.text, lineHeight: 27 }} numberOfLines={2}>{proxima.titulo}</Text>
+          <Text style={{ fontSize: 14, color: C.textSub, marginTop: 2 }}>
+            {proxima.categoria}{/^\d{1,2}:\d{2}$/.test(proxima.horario) ? ` · ${proxima.horario}` : ''}
+          </Text>
         </View>
       </View>
-    </Animated.View>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
+        <Botao rotulo="Feito!" cor="verde" icone="check" onPress={() => concluirTarefa(proxima.id)} estilo={{ flex: 2 }} accessibilityLabel={`Marcar ${proxima.titulo} como feita`} />
+        <Botao rotulo="Rotina" cor="claro" onPress={() => router.push("/(tabs)/rotina")} estilo={{ flex: 1 }} accessibilityLabel="Ver a rotina inteira" />
+      </View>
+    </Peca>
   );
 }
 
 export default function InicioScreen() {
-  const router  = useRouter();
-  const profile = useUserStore((s) => s.profile);
-  const tarefas = useRotinaStore((s) => s.tarefas);
+  const router   = useRouter();
+  const abrir    = useAbrirFerramenta();
+  const profile  = useUserStore((s) => s.profile);
+  const tarefas  = useRotinaStore((s) => s.tarefas);
   const desafios = useDesafiosStore((s) => s.desafios);
 
   const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
   useEffect(() => { loadOnboardingProfile().then(setPlimProfile); }, []);
 
-  const apelido     = plimProfile?.profileType.name ?? profile?.apelido ?? profile?.nome ?? 'Viajante';
-  const perfilEmoji = plimProfile?.profileType.emoji ?? '✨';
-  const hora        = new Date().getHours();
-  const saudacao    = hora < 12 ? 'bom dia' : hora < 18 ? 'boa tarde' : 'boa noite';
+  const apelido  = profile?.apelido ?? profile?.nome ?? plimProfile?.profileType.name ?? 'Viajante';
+  const hora     = new Date().getHours();
+  const saudacao = hora < 5 ? 'Boa madrugada' : hora < 12 ? 'Bom dia' : hora < 18 ? 'Boa tarde' : 'Boa noite';
   const mensagemDoDia = getMensagemDoDia(plimProfile?.profileType.id ?? 'explorador');
-  const cronotipo   = plimProfile?.answers.chronotype ?? null;
+  const cronotipo    = plimProfile?.answers.chronotype ?? null;
   const sugestaoFoco = cronotipo ? SUGESTAO_FOCO[cronotipo] : null;
+  const ehPro = profile.plano === 'pro';
 
   const xpProxNivel = profile.nivel * 100;
   const xpPct       = Math.min(profile.xp_total / xpProxNivel, 1);
 
   const desafiosAtivos    = desafios.filter((d) => !d.completo);
-  const desafiosCompletos = desafios.filter((d) => d.completo).length;
+  const desafiosCompletos = desafios.length - desafiosAtivos.length;
 
-  const score     = calcularScoreRotina(tarefas, profile.streak, profile.xp_total);
-  const expressao = expressaoDoScore(score);
-
-  const xpBarWidth = useSharedValue(0);
-  useEffect(() => {
-    xpBarWidth.value = withTiming(xpPct * 100, { duration: 1000 });
-  }, [xpPct]);
-  const xpBarStyle = useAnimatedStyle(() => ({ width: `${xpBarWidth.value}%` as any }));
+  const expressao = expressaoDoScore(calcularScoreRotina(tarefas, profile.streak, profile.xp_total));
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <ScrollView
-        style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 130 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <View style={{ flex: 1, marginRight: 12 }}>
-            <Text style={{ fontSize: 13, color: C.textSub, fontWeight: '500' }}>{saudacao} {perfilEmoji}</Text>
-            <Text style={{ fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 }} numberOfLines={1} adjustsFontSizeToFit>
-              {apelido}!
-            </Text>
+    <Tela espacoFinal={130}>
+      {/* Saudação */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 15, color: C.textSub }}>{saudacao},</Text>
+          <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: apelido.length > 12 ? 23 : 30, color: C.text, lineHeight: apelido.length > 12 ? 27 : 34 }} numberOfLines={2}>
+            {apelido}!
+          </Text>
+        </View>
+        <Pressable onPress={() => router.push('/(tabs)/perfil')} accessibilityLabel="Abrir meu perfil" accessibilityRole="button" hitSlop={8}>
+          <View style={{ borderRadius: 36, borderWidth: 3, borderColor: C.primary, borderBottomWidth: 6 }}>
+            <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={62} />
           </View>
-          <Pressable
-            onPress={() => router.push('/(tabs)/perfil')}
-            accessibilityLabel="Ver meu perfil"
-            accessibilityRole="button"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        </Pressable>
+      </View>
+
+      <ProximoPasso />
+
+      {/* Números */}
+      <View style={{ flexDirection: 'row', gap: 10, marginBottom: 10 }}>
+        <Numero valor={profile.streak} legenda={profile.streak === 1 ? 'dia seguido' : 'dias seguidos'} icone="chama" tinta="laranja" />
+        <Numero valor={profile.xp_total} legenda="XP" icone="estrela" tinta="roxo" />
+        <Numero valor={profile.moedas} legenda="moedas" icone="moeda" tinta="ouro" />
+      </View>
+      <Peca padding={14} estilo={{ marginBottom: 22 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Icone nome="escudo" tamanho={32} />
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+              <Text style={{ fontFamily: F.bold, fontSize: 14, color: C.text }}>Nível {profile.nivel}</Text>
+              <Text style={{ fontSize: 13, color: C.textSub }}>{profile.xp_total}/{xpProxNivel} XP</Text>
+            </View>
+            <Barra valor={xpPct} altura={10} />
+          </View>
+        </View>
+      </Peca>
+
+      {/* Rotina de hoje */}
+      <View style={{ marginBottom: 22 }}>
+        <TermometroRotina />
+      </View>
+
+      {/* Atalhos */}
+      <Secao titulo="Precisa de ajuda agora?" />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 22 }}>
+        {ATALHOS.map((f) => (
+          <PecaBotao
+            key={f.rota}
+            onPress={() => abrir(f)}
+            accessibilityLabel={`${f.titulo}. ${f.desc}${f.pro && !ehPro ? ' Faz parte do Plim Pro.' : ''}`}
+            estilo={{ flexBasis: '47%', flexGrow: 1 }}
+            padding={14}
           >
-            <View style={{
-              width: 54,
-              height: 54,
-              borderRadius: 27,
-              overflow: 'hidden',
-              borderWidth: 2,
-              borderColor: C.borderPrimary,
-              shadowColor: C.primary,
-              shadowOpacity: 0.4,
-              shadowRadius: 10,
-              elevation: 6,
-            }}>
-              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={54} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Almofada icone={f.icone} tinta={f.tinta} tamanho={52} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, lineHeight: 19 }}>{f.titulo}</Text>
+                {f.pro && !ehPro && <Text style={{ fontFamily: F.bold, fontSize: 12, color: C.gold }}>Pro</Text>}
+              </View>
             </View>
-          </Pressable>
-        </Animated.View>
-
-        {/* Mensagem do dia — glass card */}
-        <Animated.View entering={FadeInDown.delay(80).springify()} style={{
-          backgroundColor: C.glass,
-          borderRadius: 18,
-          padding: 18,
-          marginBottom: 20,
-          borderWidth: 1,
-          borderColor: C.borderPrimary,
-          overflow: 'hidden',
-        }}>
-          <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 3, backgroundColor: C.primaryLight, borderTopLeftRadius: 18, borderBottomLeftRadius: 18 }} />
-          <Text style={{ position: 'absolute', right: -8, bottom: -16, fontSize: 72, opacity: 0.08 }}>{perfilEmoji}</Text>
-          <View style={{ paddingLeft: 12 }}>
-            <Text style={{ color: C.textMuted, fontSize: 10, fontWeight: '700', letterSpacing: 1.5, marginBottom: 7, textTransform: 'uppercase' }}>
-              💬 mensagem do dia
-            </Text>
-            <Text style={{ color: C.text, fontSize: 14, lineHeight: 22, fontStyle: 'italic', fontWeight: '400' }}>
-              {mensagemDoDia}
-            </Text>
-          </View>
-        </Animated.View>
-
-        {/* Stats */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-          <StatCard value={profile.xp_total} label="XP total"  color={C.primaryLight} delay={120} />
-          <StatCard value={profile.streak}   label="streak 🔥" color={C.accent}       delay={160} />
-          <StatCard value={profile.moedas}   label="moedas 🪙" color={C.gold}         delay={200} />
-        </View>
-
-        {/* XP Bar */}
-        <Animated.View entering={FadeInDown.delay(220).springify()} style={{
-          backgroundColor: C.surface,
-          borderRadius: 16,
-          padding: 14,
-          marginBottom: 20,
-          borderWidth: 1,
-          borderColor: C.border,
-        }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '500' }}>nível {profile.nivel}</Text>
-            <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{profile.xp_total}/{xpProxNivel} XP</Text>
-          </View>
-          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 6, height: 6, overflow: 'hidden' }}>
-            <Animated.View style={[{
-              height: 6,
-              borderRadius: 6,
-              backgroundColor: C.primaryLight,
-              shadowColor: C.primary,
-              shadowOpacity: 0.8,
-              shadowRadius: 6,
-              elevation: 4,
-            }, xpBarStyle]} />
-          </View>
-        </Animated.View>
-
-        {/* Termômetro */}
-        <Animated.View entering={FadeInDown.delay(260).springify()} style={{ marginBottom: 20 }}>
-          <TermometroRotina />
-        </Animated.View>
-
-        {/* Sugestão cronotipo */}
-        {sugestaoFoco && (
-          <Animated.View entering={FadeInDown.delay(280).springify()} style={{
-            backgroundColor: C.surface,
-            borderRadius: 16,
-            padding: 16,
-            marginBottom: 24,
-            borderWidth: 1,
-            borderColor: C.accent + '30',
-            flexDirection: 'row',
-            alignItems: 'center',
-          }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: C.accent }}>💡 {sugestaoFoco.texto}</Text>
-              <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>Que tal agendar foco às {sugestaoFoco.horario}?</Text>
-            </View>
-            <Pressable
-              onPress={() => router.push('/sessao-foco')}
-              accessibilityLabel="Iniciar sessão de foco"
-              accessibilityRole="button"
-              android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-              style={{
-                backgroundColor: C.accent,
-                borderRadius: 12,
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                marginLeft: 12,
-                minHeight: 44,
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>Iniciar</Text>
-            </Pressable>
-          </Animated.View>
-        )}
-
-        {/* Atalhos rápidos */}
-        <Animated.View entering={FadeInDown.delay(300).springify()} style={{ marginBottom: 14 }}>
-          <SectionLabel label="atalhos rápidos" />
-        </Animated.View>
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 24 }}>
-          {atalhos.map((a, i) => (
-            <AtalhoCard key={a.route} {...a} delay={320 + i * 40} />
-          ))}
-        </View>
-
-        {/* Desafios da semana */}
-        <Animated.View entering={FadeInDown.delay(440).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-          <SectionLabel label="desafios da semana" />
-          <View style={{
-            backgroundColor: desafiosCompletos === 5 ? C.success + '20' : C.glassStrong,
-            borderRadius: 20,
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            borderWidth: 1,
-            borderColor: desafiosCompletos === 5 ? C.success + '44' : C.borderPrimary,
-          }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: desafiosCompletos === 5 ? C.success : C.primaryLight }}>
-              {desafiosCompletos}/5
-            </Text>
-          </View>
-        </Animated.View>
-
-        {desafiosAtivos.slice(0, 2).map((d, i) => (
-          <DesafioCard key={d.id} desafio={d} delay={480 + i * 60} />
+          </PecaBotao>
         ))}
+      </View>
 
+      {/* Sugestão pelo cronotipo */}
+      {sugestaoFoco && (
+        <Peca tinta="laranja" padding={14} estilo={{ marginBottom: 22 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Icone nome="lampada" tamanho={40} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: F.display, fontSize: 16, color: C.text }}>{sugestaoFoco.texto}</Text>
+              <Text style={{ fontSize: 14, color: C.textSub, marginTop: 1 }}>Que tal uma sessão de foco às {sugestaoFoco.horario}?</Text>
+            </View>
+            <Botao rotulo="Focar" cor="laranja" pequeno onPress={() => router.push('/sessao-foco')} accessibilityLabel="Iniciar sessão de foco" />
+          </View>
+        </Peca>
+      )}
+
+      {/* Mensagem do dia */}
+      <Peca padding={16} estilo={{ marginBottom: 22 }}>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <Icone nome="conversa" tamanho={36} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.primaryLight, marginBottom: 3 }}>Mensagem do dia</Text>
+            <Text style={{ fontSize: 16, color: C.text, lineHeight: 24 }}>{mensagemDoDia}</Text>
+          </View>
+        </View>
+      </Peca>
+
+      {/* Desafios da semana */}
+      <Secao titulo="Desafios da semana" direita={<Selo texto={`${desafiosCompletos} de ${desafios.length}`} tinta={desafiosAtivos.length === 0 ? 'verde' : 'roxo'} />} />
+      <View style={{ gap: 10 }}>
+        {desafiosAtivos.slice(0, 2).map((d) => (
+          <Peca key={d.id} padding={14}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Text style={{ fontSize: 28 }}>{d.icone}</Text>
+              <View style={{ flex: 1 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+                  <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.text, flex: 1 }} numberOfLines={1}>{d.titulo}</Text>
+                  <Text style={{ fontSize: 13, color: C.textSub }}>{d.progresso}/{d.meta}</Text>
+                </View>
+                <Barra valor={d.progresso / d.meta} altura={9} />
+              </View>
+              <Selo texto={`+${d.xp} XP`} />
+            </View>
+          </Peca>
+        ))}
         {desafiosAtivos.length === 0 && (
-          <Animated.View entering={FadeInDown.delay(480).springify()} style={{
-            backgroundColor: C.surface,
-            borderRadius: 16,
-            padding: 20,
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: C.success + '33',
-          }}>
-            <Text style={{ fontSize: 28, marginBottom: 6 }}>🏆</Text>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: C.success }}>Todos os desafios completos!</Text>
-          </Animated.View>
+          <Peca tinta="ouro" estilo={{ alignItems: 'center' }}>
+            <Icone nome="trofeu" tamanho={54} />
+            <Text style={{ fontFamily: F.display, fontSize: 17, color: C.text, marginTop: 6 }}>Todos os desafios da semana feitos!</Text>
+          </Peca>
         )}
-
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </Tela>
   );
 }

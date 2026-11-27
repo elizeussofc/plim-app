@@ -1,69 +1,51 @@
-import { createAvatar } from '@dicebear/core';
-import { adventurer } from '@dicebear/collection';
-import { SvgXml } from 'react-native-svg';
+import { useEffect, useMemo, useState } from 'react';
+import { Image, View } from 'react-native';
+import { chaveAvatar, normalizarAvatar, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import { retratoAvatar, retratoEmCache } from '@/lib/avatar3d';
 
-export type Expressao = 'feliz' | 'neutro' | 'triste' | 'animado';
+export { avatarConfigPadrao } from '@/lib/avatar';
+export type { AvatarConfig, Expressao } from '@/lib/avatar';
 
-export interface AvatarConfig {
-  genero: 'masculino' | 'feminino';
-  skinColor: string;       // hex sem # ex: 'f2d3b1'
-  hairStyle: string;       // ex: 'short05' ou 'long12'
-  hairColor: string;       // hex sem #
-  eyebrowsStyle: string;   // ex: 'variant01'
-  features: string[];      // 'freckles' | 'blush' | 'birthmark' | 'mustache'
-  earrings: boolean;
-  glassesStyle: string;    // '' para nenhum, ou 'variant01'-'variant05'
-  backgroundColor: string; // hex sem #
-}
-
-export const avatarConfigPadrao: AvatarConfig = {
-  genero: 'masculino',
-  skinColor: 'f2d3b1',
-  hairStyle: 'short05',
-  hairColor: '1a1a2e',
-  eyebrowsStyle: 'variant01',
-  features: [],
-  earrings: false,
-  glassesStyle: '',
-  backgroundColor: 'ede9fe',
-};
-
-const EYES_MAP: Record<Expressao, string> = {
-  neutro:  'variant01',
-  feliz:   'variant18',
-  animado: 'variant23',
-  triste:  'variant08',
-};
-
-const MOUTH_MAP: Record<Expressao, string> = {
-  neutro:  'variant01',
-  feliz:   'variant12',
-  animado: 'variant14',
-  triste:  'variant06',
-};
+const BUSTO_FIXO = {
+  curto: require('../assets/avatar/busto-curto.webp'),
+  coque: require('../assets/avatar/busto-coque.webp'),
+} as const;
 
 interface Props {
-  config: AvatarConfig;
+  config: AvatarConfig | unknown;
   expressao?: Expressao;
   size?: number;
 }
 
-export default function AvatarPersonagem({ config, expressao = 'neutro', size = 120 }: Props) {
-  const svg = createAvatar(adventurer, {
-    seed: `plim-${config.genero}-${config.hairStyle}-${config.skinColor}`,
-    skinColor: [config.skinColor] as any,
-    hair: config.hairStyle ? ([config.hairStyle] as any) : undefined,
-    hairColor: [config.hairColor] as any,
-    eyes: [EYES_MAP[expressao]] as any,
-    eyebrows: config.eyebrowsStyle ? ([config.eyebrowsStyle] as any) : undefined,
-    mouth: [MOUTH_MAP[expressao]] as any,
-    features: config.features.length > 0 ? (config.features as any) : undefined,
-    earringsProbability: config.earrings ? 100 : 0,
-    glasses: config.glassesStyle ? ([config.glassesStyle] as any) : undefined,
-    glassesProbability: config.glassesStyle ? 100 : 0,
-    backgroundColor: [config.backgroundColor] as any,
-    backgroundType: ['solid'],
-  }).toString();
+/**
+ * Retrato redondo do avatar 3D. Na web é desenhado a partir do boneco 3D com as cores e
+ * peças escolhidas; enquanto o 3D carrega (ou no celular) mostra o retrato fixo do cabelo.
+ */
+export default function AvatarPersonagem({ config, expressao = 'feliz', size = 120 }: Props) {
+  const cfg = useMemo(() => normalizarAvatar(config), [config]);
+  const chave = chaveAvatar(cfg, expressao);
+  const [retrato, setRetrato] = useState<string | undefined>(() => retratoEmCache(cfg, expressao, 'busto'));
 
-  return <SvgXml xml={svg} width={size} height={size} />;
+  useEffect(() => {
+    let vivo = true;
+    retratoAvatar(cfg, expressao, 'busto')
+      .then((url) => { if (vivo) setRetrato(url); })
+      .catch(() => {}); // sem 3D: fica o retrato fixo
+    return () => { vivo = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chave]);
+
+  return (
+    <View
+      style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden', backgroundColor: `#${cfg.fundo}` }}
+      accessibilityRole="image"
+      accessibilityLabel="Seu avatar"
+    >
+      <Image
+        source={retrato ? { uri: retrato } : BUSTO_FIXO[cfg.cabelo]}
+        style={{ width: size, height: size }}
+        resizeMode="cover"
+      />
+    </View>
+  );
 }

@@ -1,537 +1,394 @@
+import AvatarPalco from '@/components/AvatarPalco';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
+import Icone from '@/components/Icone';
+import { Almofada, Barra, Botao, Numero, Peca, PecaBotao, Secao, Selo, Tela } from '@/components/plim';
 import { calcularScoreRotina, expressaoDoScore } from '@/components/TermometroRotina';
+import { Text } from '@/components/Texto';
+import {
+  normalizarAvatar, OPCOES_CABELO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE,
+} from '@/lib/avatar';
+import { dataLocal, hojeLocal } from '@/lib/dia';
 import { supabase } from '@/lib/supabase';
-import { C } from '@/lib/theme';
+import { C, F, R } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
 import { useDesafiosStore } from '@/stores/desafiosStore';
-import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
-import { useUserStore } from '@/stores/userStore';
 import { loadOnboardingProfile, type PlimUserProfile } from '@/stores/onboardingStore';
 import { usePaywallStore } from '@/stores/paywallStore';
+import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
+import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  FadeInDown, FadeInUp,
-  useAnimatedStyle, useSharedValue, withTiming,
-} from 'react-native-reanimated';
+import { Modal, Pressable, ScrollView, TextInput, View } from 'react-native';
 
 const CONQUISTA_HINTS: Record<string, string> = {
-  primeiro_passo:  'Complete 1 tarefa na sua Rotina.',
-  despejou:        'Use o Despejo Mental pelo menos uma vez.',
-  foco_total:      'Complete uma Sessão de Foco (Pomodoro).',
-  tres_dias:       'Mantenha um streak de 3 dias seguidos.',
-  comunidade:      'Compartilhe algo na Comunidade.',
-  semana_perfeita: 'Mantenha um streak de 7 dias.',
+  primeiro_passo: 'Complete 1 tarefa na sua Rotina.',
+  despejou: 'Use o Despejo Mental pelo menos uma vez.',
+  foco_total: 'Complete uma Sessão de Foco.',
+  tres_dias: 'Mantenha uma sequência de 3 dias.',
+  comunidade: 'Compartilhe algo no Grupo.',
+  semana_perfeita: 'Mantenha uma sequência de 7 dias.',
 };
 
 const corDia: Record<StatusDia, string> = {
-  vazia:    C.surfaceHigh,
-  parcial:  C.primary + '55',
-  completa: C.primaryLight,
+  vazia: C.track,
+  parcial: C.borderPrimary,
+  completa: C.primary,
 };
 
 function gerarUltimos35Dias(): string[] {
   const dias: string[] = [];
   const hoje = new Date();
-  for (let i = 34; i >= 0; i--) { const d = new Date(hoje); d.setDate(hoje.getDate() - i); dias.push(d.toISOString().slice(0, 10)); }
+  for (let i = 34; i >= 0; i--) {
+    const d = new Date(hoje);
+    d.setDate(hoje.getDate() - i);
+    dias.push(dataLocal(d));
+  }
   return dias;
 }
 
-const SKIN_COLORS = [{ hex: 'ffd3b5', label: 'Rosa claro' },{ hex: 'f5c5a3', label: 'Claro' },{ hex: 'e8a87c', label: 'Médio' },{ hex: 'd4956a', label: 'Moreno' },{ hex: 'c68642', label: 'Canela' },{ hex: '8d5524', label: 'Escuro' }];
-const HAIR_COLORS = [{ hex: '1a1a2e', label: 'Preto' },{ hex: '4a2c0f', label: 'Castanho' },{ hex: 'cc4125', label: 'Ruivo' },{ hex: 'f4c430', label: 'Loiro' },{ hex: 'f5f5f5', label: 'Branco' },{ hex: '7c3aed', label: 'Roxo' },{ hex: '1d4ed8', label: 'Azul' },{ hex: '10b981', label: 'Verde' }];
-const HAIR_MASCULINO = [{ id: 'short01', label: 'Liso' },{ id: 'short02', label: 'Ondulado' },{ id: 'short03', label: 'Desalinch.' },{ id: 'short04', label: 'Pompadour' },{ id: 'short05', label: 'Clássico' },{ id: 'short06', label: 'Vintage' },{ id: 'short07', label: 'Rapado' },{ id: 'short08', label: 'Moderno' },{ id: 'short09', label: 'Crespo' },{ id: 'short10', label: 'Cacheado' },{ id: 'short11', label: 'Lateral' },{ id: 'short12', label: 'Rebelde' }];
-const HAIR_FEMININO = [{ id: 'long01', label: 'Liso' },{ id: 'long02', label: 'Ondas' },{ id: 'long03', label: 'Cacheado' },{ id: 'long04', label: 'Trança' },{ id: 'long05', label: 'Clássico' },{ id: 'long06', label: 'Coque' },{ id: 'long07', label: 'Franja' },{ id: 'long08', label: 'Rabo' },{ id: 'long09', label: 'Curto' },{ id: 'long10', label: 'Pixie' },{ id: 'long11', label: 'Bob' },{ id: 'long12', label: 'Volume' }];
-const EYEBROW_OPCOES = [{ id: 'variant01', label: 'Natural' },{ id: 'variant03', label: 'Arqueada' },{ id: 'variant06', label: 'Fina' },{ id: 'variant10', label: 'Grossa' }];
-const GLASSES_OPCOES = [{ id: '', label: 'Nenhum' },{ id: 'variant01', label: 'Round' },{ id: 'variant02', label: 'Retro' },{ id: 'variant03', label: 'Cat eye' },{ id: 'variant04', label: 'Aviador' },{ id: 'variant05', label: 'Sport' }];
-const BG_COLORS = [{ hex: 'ede9fe', label: 'Lavanda' },{ hex: 'dbeafe', label: 'Azul' },{ hex: 'd1fae5', label: 'Verde' },{ hex: 'fef3c7', label: 'Amarelo' },{ hex: 'fce7f3', label: 'Rosa' },{ hex: '0B0B18', label: 'Dark' }];
-
-function SectionLabel({ label }: { label: string }) {
+/** Fileira de cores para escolher (pele, cabelo, roupa, fundo). */
+function Cores({ titulo, opcoes, atual, aoEscolher }: { titulo: string; opcoes: string[]; atual: string; aoEscolher: (hex: string) => void }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-      <View style={{ width: 3, height: 14, backgroundColor: C.primaryLight, borderRadius: 2 }} />
-      <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-        {label}
-      </Text>
+    <View style={{ marginBottom: 18 }}>
+      <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>{titulo}</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {opcoes.map((hex) => {
+          const ativo = atual.toUpperCase() === hex.toUpperCase();
+          return (
+            <Pressable
+              key={hex}
+              onPress={() => aoEscolher(hex)}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: ativo }}
+              accessibilityLabel={`${titulo}: cor ${hex}`}
+              hitSlop={4}
+              style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: `#${hex}`, borderWidth: ativo ? 4 : 2, borderColor: ativo ? C.primary : C.border, alignItems: 'center', justifyContent: 'center' }}
+            >
+              {ativo && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.surface, borderWidth: 2, borderColor: C.primary }} />}
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
-function ChipSelect({ ativo, onPress, label }: { ativo: boolean; onPress: () => void; label: string }) {
+function Opcao({ ativo, rotulo, aoTocar }: { ativo: boolean; rotulo: string; aoTocar: () => void }) {
   return (
     <Pressable
-      onPress={onPress}
-      style={{
-        paddingHorizontal: 14,
-        paddingVertical: 9,
-        borderRadius: 20,
-        backgroundColor: ativo ? C.primary : C.surfaceHigh,
-        borderWidth: 1,
-        borderColor: ativo ? C.borderPrimary : C.border,
-      }}
+      onPress={aoTocar}
+      accessibilityRole="button"
+      accessibilityState={{ selected: ativo }}
+      style={({ pressed }) => ({
+        flex: 1,
+        minHeight: 48,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: R.md,
+        backgroundColor: ativo ? C.primary : C.surface,
+        borderWidth: 2,
+        borderBottomWidth: pressed ? 2 : 5,
+        marginTop: pressed ? 3 : 0,
+        borderColor: ativo ? C.primaryDim : C.border,
+      })}
     >
-      <Text style={{ fontSize: 12, fontWeight: '700', color: ativo ? '#fff' : C.textSub }}>{label}</Text>
+      <Text style={{ fontFamily: F.display, fontSize: 15, color: ativo ? C.onPrimary : C.textSub }}>{rotulo}</Text>
     </Pressable>
   );
 }
 
 export default function PerfilScreen() {
   const session = useAuthStore((s) => s.session);
-  const router  = useRouter();
+  const router = useRouter();
   const { profile, updateProfile, updateAvatarConfig } = useUserStore();
   const historicoDias = useRotinaStore((s) => s.historicoDias);
-  const tarefas       = useRotinaStore((s) => s.tarefas);
-  const desafios      = useDesafiosStore((s) => s.desafios);
-
-  const dias35  = gerarUltimos35Dias();
+  const tarefas = useRotinaStore((s) => s.tarefas);
+  const desafios = useDesafiosStore((s) => s.desafios);
+  const dias35 = gerarUltimos35Dias();
   const semanas = Array.from({ length: 5 }, (_, i) => dias35.slice(i * 7, i * 7 + 7));
-
   const isPro = profile.plano === 'pro';
   const abrirPaywall = usePaywallStore((s) => s.abrir);
 
   const [plimProfile, setPlimProfile] = useState<PlimUserProfile | null>(null);
   const [modalAvatar, setModalAvatar] = useState(false);
   const [modalPerfil, setModalPerfil] = useState(false);
-  const [hintAberto,  setHintAberto]  = useState<string | null>(null);
-
+  const [hintAberto, setHintAberto] = useState<string | null>(null);
   useEffect(() => { loadOnboardingProfile().then(setPlimProfile); }, []);
 
-  const [editNome,      setEditNome]      = useState(profile.nome      ?? '');
-  const [editApelido,   setEditApelido]   = useState(profile.apelido   ?? '');
-  const [editBio,       setEditBio]       = useState(profile.bio       ?? '');
+  const [editNome, setEditNome] = useState(profile.nome ?? '');
+  const [editApelido, setEditApelido] = useState(profile.apelido ?? '');
+  const [editBio, setEditBio] = useState(profile.bio ?? '');
   const [editInstagram, setEditInstagram] = useState(profile.instagram ?? '');
 
-  const nivel       = profile.nivel;
-  const xp          = profile.xp_total;
+  const nivel = profile.nivel;
+  const xp = profile.xp_total;
   const xpProxNivel = nivel * 100;
-  const xpPct       = Math.min(xp / xpProxNivel, 1);
-
-  const score     = calcularScoreRotina(tarefas, profile.streak, xp);
+  const xpPct = Math.min(xp / xpProxNivel, 1);
+  const score = calcularScoreRotina(tarefas, profile.streak, xp);
   const expressao = expressaoDoScore(score);
   const nomeExibido = profile.apelido ?? profile.nome ?? plimProfile?.profileType.name ?? 'Explorador';
-  const hairOptions = profile.avatar_config.genero === 'feminino' ? HAIR_FEMININO : HAIR_MASCULINO;
+  const avatar = normalizarAvatar(profile.avatar_config);
+  const parado = profile.preferencias?.reduzir_animacoes === true;
+  const hoje = hojeLocal();
 
-  const xpBarW = useSharedValue(0);
-  useEffect(() => { xpBarW.value = withTiming(xpPct * 100, { duration: 1000 }); }, [xpPct]);
-  const xpBarStyle = useAnimatedStyle(() => ({ width: `${xpBarW.value}%` as any }));
-
-  function toggleFeature(f: string) {
-    const cur = profile.avatar_config.features ?? [];
-    updateAvatarConfig({ features: cur.includes(f) ? cur.filter((x) => x !== f) : [...cur, f] });
-  }
-  function setGenero(genero: 'masculino' | 'feminino') {
-    const mIds = HAIR_MASCULINO.map((h) => h.id); const fIds = HAIR_FEMININO.map((h) => h.id);
-    let hairStyle = profile.avatar_config.hairStyle;
-    if (genero === 'masculino' && !mIds.includes(hairStyle)) hairStyle = 'short05';
-    if (genero === 'feminino'  && !fIds.includes(hairStyle)) hairStyle = 'long05';
-    updateAvatarConfig({ genero, hairStyle });
-  }
   function salvarPerfil() {
-    updateProfile({ nome: editNome.trim() || null, apelido: editApelido.trim() || null, bio: editBio.trim() || null, instagram: editInstagram.trim().replace('@', '') || null });
+    updateProfile({
+      nome: editNome.trim() || null,
+      apelido: editApelido.trim() || null,
+      bio: editBio.trim() || null,
+      instagram: editInstagram.trim().replace('@', '') || null,
+    });
     setModalPerfil(false);
   }
+
+  function abrirEdicao() {
+    setEditNome(profile.nome ?? '');
+    setEditApelido(profile.apelido ?? '');
+    setEditBio(profile.bio ?? '');
+    setEditInstagram(profile.instagram ?? '');
+    setModalPerfil(true);
+  }
+
   async function sair() { await supabase.auth.signOut(); }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <ScrollView style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }} contentContainerStyle={{ padding: 20, paddingBottom: 110 }} showsVerticalScrollIndicator={false}>
-
-        {/* Avatar */}
-        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ alignItems: 'center', marginBottom: 28 }}>
-          <Pressable onPress={() => setModalAvatar(true)} accessibilityLabel="Personalizar avatar" accessibilityRole="button" style={{ marginBottom: 14 }}>
-            <View style={{
-              width: 130,
-              height: 130,
-              borderRadius: 65,
-              overflow: 'hidden',
-              borderWidth: 2.5,
-              borderColor: C.borderPrimary,
-              shadowColor: C.primary,
-              shadowOpacity: 0.5,
-              shadowRadius: 24,
-              elevation: 14,
-            }}>
-              <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={130} />
+    <>
+      <Tela>
+        {/* Avatar 3D */}
+        <Peca tinta="roxo" padding={0} estilo={{ marginBottom: 16, overflow: 'hidden' }}>
+          {modalAvatar
+            ? <View style={{ height: 270 }} />
+            : <AvatarPalco config={avatar} expressao={expressao} altura={270} parado={parado} />}
+          <View style={{ backgroundColor: C.surface, borderTopWidth: 2, borderColor: C.borderPrimary, padding: 16, alignItems: 'center' }}>
+            <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 24, color: C.text }} numberOfLines={1}>{nomeExibido}</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <Selo texto={`nível ${nivel}`} icone="escudo" />
+              {plimProfile && <Selo texto={`${plimProfile.profileType.emoji} ${plimProfile.profileType.name}`} tinta="laranja" />}
+              {isPro && <Selo texto="Pro" icone="coroa" tinta="ouro" />}
             </View>
-            <View style={{
-              backgroundColor: C.glassStrong,
-              paddingHorizontal: 14,
-              paddingVertical: 6,
-              borderRadius: 20,
-              alignSelf: 'center',
-              marginTop: 10,
-              borderWidth: 1,
-              borderColor: C.borderPrimary,
-            }}>
-              <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>✏️ personalizar</Text>
+            {!!profile.bio && <Text style={{ fontSize: 14, color: C.textSub, textAlign: 'center', marginTop: 10, lineHeight: 21 }}>{profile.bio}</Text>}
+            {!!profile.instagram && <Text style={{ fontSize: 13, color: C.primaryLight, marginTop: 4 }}>@{profile.instagram}</Text>}
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 14, alignSelf: 'stretch' }}>
+              <Botao rotulo="Mudar visual" icone="paleta" cor="roxo" pequeno onPress={() => setModalAvatar(true)} estilo={{ flex: 1 }} />
+              <Botao rotulo="Editar perfil" icone="lapis" cor="claro" pequeno onPress={abrirEdicao} estilo={{ flex: 1 }} />
             </View>
-          </Pressable>
-
-          <Text style={{ fontSize: 22, fontWeight: '800', color: C.text, letterSpacing: -0.3 }}>{nomeExibido}</Text>
-          {plimProfile && (
-            <View style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              backgroundColor: C.glassStrong,
-              paddingHorizontal: 12,
-              paddingVertical: 4,
-              borderRadius: 20,
-              marginTop: 6,
-              borderWidth: 1,
-              borderColor: C.borderPrimary,
-            }}>
-              <Text style={{ fontSize: 14 }}>{plimProfile.profileType.emoji} </Text>
-              <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{plimProfile.profileType.name}</Text>
-            </View>
-          )}
-          {profile.bio && <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', marginTop: 8, paddingHorizontal: 20, lineHeight: 20 }}>{profile.bio}</Text>}
-          {profile.instagram && <Text style={{ fontSize: 12, color: C.primaryLight, marginTop: 4 }}>@{profile.instagram}</Text>}
-
-          <View style={{ backgroundColor: C.glassStrong, paddingHorizontal: 14, paddingVertical: 5, borderRadius: 20, marginTop: 10, borderWidth: 1, borderColor: C.borderPrimary }}>
-            <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>nível {nivel}</Text>
           </View>
+        </Peca>
 
-          <Pressable
-            onPress={() => { setEditNome(profile.nome ?? ''); setEditApelido(profile.apelido ?? ''); setEditBio(profile.bio ?? ''); setEditInstagram(profile.instagram ?? ''); setModalPerfil(true); }}
-            accessibilityLabel="Editar perfil"
-            accessibilityRole="button"
-            hitSlop={{ top: 8, bottom: 8, left: 16, right: 16 }}
-            style={{ marginTop: 12 }}
-          >
-            <Text style={{ fontSize: 12, color: C.textSub, textDecorationLine: 'underline' }}>editar perfil</Text>
-          </Pressable>
-        </Animated.View>
-
-        {/* Stats */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
-          {[
-            { val: xp,                    label: 'XP total', color: C.primaryLight },
-            { val: `🪙 ${profile.moedas}`, label: 'moedas',  color: C.gold         },
-            { val: `${profile.streak} 🔥`, label: 'streak',  color: C.accent       },
-          ].map((s, i) => (
-            <Animated.View key={i} entering={FadeInDown.delay(80 + i * 40).springify()} style={{ flex: 1 }}>
-              <View style={{ backgroundColor: C.glass, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.borderPrimary }}>
-                <Text style={{ fontSize: 20, fontWeight: '800', color: s.color }}>{s.val}</Text>
-                <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>{s.label}</Text>
-              </View>
-            </Animated.View>
-          ))}
+        {/* Números */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 12 }}>
+          <Numero valor={xp} legenda="XP" icone="estrela" tinta="roxo" />
+          <Numero valor={profile.streak} legenda={profile.streak === 1 ? 'dia seguido' : 'dias seguidos'} icone="chama" tinta="laranja" />
+          <Numero valor={profile.moedas} legenda="moedas" icone="moeda" tinta="ouro" />
         </View>
 
-        {/* XP Bar */}
-        <Animated.View entering={FadeInDown.delay(200).springify()} style={{ backgroundColor: C.surface, borderRadius: 16, padding: 16, marginBottom: 24, borderWidth: 1, borderColor: C.border }}>
+        <Peca estilo={{ marginBottom: 22 }} padding={16}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
-            <Text style={{ fontSize: 12, color: C.textSub }}>próximo nível ({nivel + 1})</Text>
-            <Text style={{ fontSize: 12, color: C.primaryLight, fontWeight: '700' }}>{xp}/{xpProxNivel} XP</Text>
+            <Text style={{ fontSize: 14, color: C.textSub }}>Rumo ao nível {nivel + 1}</Text>
+            <Text style={{ fontFamily: F.bold, fontSize: 14, color: C.primaryLight }}>{xp}/{xpProxNivel} XP</Text>
           </View>
-          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 6, height: 6, overflow: 'hidden' }}>
-            <Animated.View style={[{ height: 6, borderRadius: 6, backgroundColor: C.primaryLight, shadowColor: C.primary, shadowOpacity: 0.8, shadowRadius: 6, elevation: 4 }, xpBarStyle]} />
-          </View>
-        </Animated.View>
+          <Barra valor={xpPct} />
+        </Peca>
 
-        {/* Heatmap */}
-        <Animated.View entering={FadeInDown.delay(240).springify()} style={{ marginBottom: 24 }}>
-          <Pressable onPress={() => router.push('/historico')} style={{ backgroundColor: C.surface, borderRadius: 18, padding: 18, borderWidth: 1, borderColor: C.border }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: C.text }}>📊 histórico</Text>
-              <Text style={{ fontSize: 12, color: C.primaryLight }}>ver tudo →</Text>
+        {/* Histórico */}
+        <Secao titulo="Seus últimos 35 dias" />
+        <PecaBotao onPress={() => router.push('/historico')} accessibilityLabel="Abrir histórico completo" estilo={{ marginBottom: 22 }}>
+          {semanas.map((semana, si) => (
+            <View key={si} style={{ flexDirection: 'row', gap: 5, marginBottom: 5 }}>
+              {semana.map((dia) => {
+                const status: StatusDia = historicoDias[dia] ?? 'vazia';
+                return <View key={dia} style={{ flex: 1, aspectRatio: 1, borderRadius: 8, backgroundColor: corDia[status], borderWidth: dia === hoje ? 3 : 0, borderColor: C.accent }} />;
+              })}
             </View>
-            {semanas.map((semana, si) => (
-              <View key={si} style={{ flexDirection: 'row', gap: 4, marginBottom: 4 }}>
-                {semana.map((dia) => {
-                  const status: StatusDia = historicoDias[dia] ?? 'vazia';
-                  const ehHoje = dia === new Date().toISOString().slice(0, 10);
-                  return <View key={dia} style={{ flex: 1, aspectRatio: 1, borderRadius: 5, backgroundColor: corDia[status], borderWidth: ehHoje ? 2 : 0, borderColor: C.primaryLight }} />;
-                })}
-              </View>
-            ))}
-          </Pressable>
-        </Animated.View>
+          ))}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              {([['vazia', 'nada'], ['parcial', 'um pouco'], ['completa', 'tudo']] as const).map(([k, l]) => (
+                <View key={k} style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                  <View style={{ width: 12, height: 12, borderRadius: 4, backgroundColor: corDia[k] }} />
+                  <Text style={{ fontSize: 12, color: C.textSub }}>{l}</Text>
+                </View>
+              ))}
+            </View>
+            <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.primaryLight }}>ver tudo ›</Text>
+          </View>
+        </PecaBotao>
 
         {/* Desafios */}
-        <Animated.View entering={FadeInDown.delay(280).springify()} style={{ marginBottom: 20 }}>
-          <SectionLabel label="desafios da semana" />
-          <View style={{ gap: 8 }}>
-            {desafios.map((d, i) => (
-              <Animated.View key={d.id} entering={FadeInDown.delay(300 + i * 40).springify()} style={{
-                backgroundColor: C.surface,
-                borderRadius: 16,
-                padding: 14,
-                borderWidth: 1,
-                borderColor: C.border,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 12,
-              }}>
-                <Text style={{ fontSize: 20 }}>{d.icone}</Text>
+        <Secao titulo="Desafios da semana" />
+        <View style={{ gap: 10, marginBottom: 22 }}>
+          {desafios.map((d) => (
+            <Peca key={d.id} padding={14} tinta={d.completo ? 'verde' : undefined}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <Text style={{ fontSize: 26 }}>{d.icone}</Text>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: C.text, marginBottom: 6 }}>{d.titulo}</Text>
-                  <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 5, overflow: 'hidden' }}>
-                    <View style={{ height: 5, borderRadius: 4, backgroundColor: d.completo ? C.success : C.primaryLight, width: `${Math.round((d.progresso / d.meta) * 100)}%` as any }} />
-                  </View>
+                  <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.text, marginBottom: 7 }}>{d.titulo}</Text>
+                  <Barra valor={d.progresso / d.meta} cor={d.completo ? C.success : C.primary} altura={9} />
                 </View>
                 {d.completo
-                  ? <Text style={{ color: C.success, fontWeight: '800', fontSize: 16 }}>✓</Text>
-                  : <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight }}>+{d.xp}XP</Text>
-                }
-              </Animated.View>
-            ))}
-          </View>
-        </Animated.View>
-
-        {/* Conquistas */}
-        <Animated.View entering={FadeInDown.delay(400).springify()} style={{ marginBottom: 20 }}>
-          <SectionLabel label="conquistas" />
-          <View style={{ gap: 10 }}>
-            {profile.conquistas.map((c, i) => {
-              const pStreak = c.id === 'tres_dias' ? Math.min(profile.streak / 3, 1) : c.id === 'semana_perfeita' ? Math.min(profile.streak / 7, 1) : 0;
-              const temBarra = !c.desbloqueada && pStreak > 0;
-              const hintVis  = hintAberto === c.id;
-              return (
-                <Animated.View key={c.id} entering={FadeInDown.delay(420 + i * 30).springify()}>
-                  <Pressable
-                    onPress={() => !c.desbloqueada && setHintAberto(hintVis ? null : c.id)}
-                    disabled={c.desbloqueada}
-                    accessibilityRole="button"
-                    style={{
-                      backgroundColor: C.surface,
-                      borderRadius: 16,
-                      padding: 16,
-                      borderWidth: 1,
-                      borderColor: c.desbloqueada ? C.borderPrimary : C.border,
-                      opacity: c.desbloqueada ? 1 : 0.65,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 14,
-                    }}
-                  >
-                    <View style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: 13,
-                      backgroundColor: c.desbloqueada ? C.glassStrong : C.surfaceHigh,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor: c.desbloqueada ? C.borderPrimary : C.border,
-                    }}>
-                      <Text style={{ fontSize: 22 }}>{c.desbloqueada ? c.icone : '🔒'}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: C.text }}>{c.nome}</Text>
-                      <Text style={{ fontSize: 11, color: C.textSub, marginTop: 2 }}>{c.desc}</Text>
-                      {temBarra && (
-                        <View style={{ marginTop: 8 }}>
-                          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 4, overflow: 'hidden' }}>
-                            <View style={{ height: 4, borderRadius: 4, backgroundColor: C.primaryLight, width: `${Math.round(pStreak * 100)}%` as any }} />
-                          </View>
-                          <Text style={{ fontSize: 10, color: C.textMuted, marginTop: 3 }}>{c.id === 'tres_dias' ? `${profile.streak}/3 dias` : `${profile.streak}/7 dias`}</Text>
-                        </View>
-                      )}
-                      {hintVis && (
-                        <View style={{ marginTop: 8, backgroundColor: C.glassStrong, borderRadius: 10, padding: 8, borderWidth: 1, borderColor: C.borderPrimary }}>
-                          <Text style={{ fontSize: 11, color: C.primaryLight }}>💡 {CONQUISTA_HINTS[c.id] ?? 'Continue usando o app.'}</Text>
-                        </View>
-                      )}
-                    </View>
-                    {c.desbloqueada && <Text style={{ color: C.success, fontWeight: '800', fontSize: 16 }}>✓</Text>}
-                  </Pressable>
-                </Animated.View>
-              );
-            })}
-          </View>
-        </Animated.View>
-
-        {/* Atalhos */}
-        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-          {[{ r: '/medicacao', i: '💊', l: 'Medicação' }, { r: '/parceiro', i: '👫', l: 'Parceiro' }, { r: '/ranking', i: '🏆', l: 'Ranking' }].map((a) => (
-            <Pressable key={a.r} onPress={() => router.push(a.r as any)} accessibilityRole="button" style={{ flex: 1 }}>
-              <View style={{ backgroundColor: C.surface, borderRadius: 16, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>
-                <Text style={{ fontSize: 24, marginBottom: 4 }}>{a.i}</Text>
-                <Text style={{ fontSize: 11, color: C.textSub }}>{a.l}</Text>
+                  ? <Icone nome="check" tamanho={30} decorativo={false} rotulo="Completo" />
+                  : <Selo texto={`+${d.xp} XP`} />}
               </View>
-            </Pressable>
+            </Peca>
           ))}
         </View>
 
-        {/* Pro card */}
+        {/* Conquistas */}
+        <Secao
+          titulo="Conquistas"
+          direita={<Text style={{ fontSize: 13, color: C.textSub }}>{profile.conquistas.filter((c) => c.desbloqueada).length} de {profile.conquistas.length}</Text>}
+        />
+        <View style={{ gap: 10, marginBottom: 22 }}>
+          {profile.conquistas.map((c) => {
+            const pStreak = c.id === 'tres_dias' ? Math.min(profile.streak / 3, 1) : c.id === 'semana_perfeita' ? Math.min(profile.streak / 7, 1) : 0;
+            const temBarra = !c.desbloqueada && pStreak > 0;
+            const hintVis = hintAberto === c.id;
+            return (
+              <PecaBotao
+                key={c.id}
+                onPress={() => !c.desbloqueada && setHintAberto(hintVis ? null : c.id)}
+                disabled={c.desbloqueada}
+                tinta={c.desbloqueada ? 'ouro' : undefined}
+                padding={14}
+                accessibilityLabel={`${c.nome}. ${c.desbloqueada ? 'Conquistada' : 'Ainda não. Toque para ver como conseguir'}`}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+                  <View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: c.desbloqueada ? C.surface : C.surfaceHigh, alignItems: 'center', justifyContent: 'center', opacity: c.desbloqueada ? 1 : 0.75 }}>
+                    <Text style={{ fontSize: 28 }}>{c.desbloqueada ? c.icone : '🔒'}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.text }}>{c.nome}</Text>
+                    <Text style={{ fontSize: 13, color: C.textSub, marginTop: 2 }}>{c.desc}</Text>
+                    {temBarra && (
+                      <View style={{ marginTop: 8 }}>
+                        <Barra valor={pStreak} altura={8} />
+                        <Text style={{ fontSize: 12, color: C.textMuted, marginTop: 3 }}>{c.id === 'tres_dias' ? `${profile.streak}/3 dias` : `${profile.streak}/7 dias`}</Text>
+                      </View>
+                    )}
+                    {hintVis && (
+                      <View style={{ marginTop: 8, backgroundColor: C.glass, borderRadius: 12, padding: 10 }}>
+                        <Text style={{ fontSize: 13, color: C.primaryLight }}>💡 {CONQUISTA_HINTS[c.id] ?? 'Continue usando o app.'}</Text>
+                      </View>
+                    )}
+                  </View>
+                  {c.desbloqueada && <Icone nome="check" tamanho={26} />}
+                </View>
+              </PecaBotao>
+            );
+          })}
+        </View>
+
+        {/* Atalhos */}
+        <View style={{ flexDirection: 'row', gap: 10, marginBottom: 22 }}>
+          {([['/medicacao', 'pilula', 'Medicação', 'rosa'], ['/parceiro', 'parceria', 'Parceiro', 'azul'], ['/ranking', 'trofeu', 'Ranking', 'ouro']] as const).map(([rota, icone, rotulo, tinta]) => (
+            <PecaBotao key={rota} onPress={() => router.push(rota as any)} accessibilityLabel={rotulo} estilo={{ flex: 1, alignItems: 'center' }} padding={12}>
+              <Almofada icone={icone} tinta={tinta} tamanho={50} />
+              <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.text, marginTop: 6 }}>{rotulo}</Text>
+            </PecaBotao>
+          ))}
+        </View>
+
+        {/* Plim Pro */}
         {isPro ? (
-          <View style={{ backgroundColor: C.primary, borderRadius: 18, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.borderPrimary }}>
-            <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16, marginBottom: 4 }}>👑 Plim Pro ativo</Text>
-            <Text style={{ color: 'rgba(255,255,255,0.75)', fontSize: 13 }}>Você tem acesso a todas as features premium. Obrigado!</Text>
-          </View>
+          <Peca tinta="ouro" estilo={{ marginBottom: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Icone nome="coroa" tamanho={44} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: F.display, fontSize: 18, color: C.text }}>Plim Pro ativo</Text>
+                <Text style={{ fontSize: 14, color: C.textSub, marginTop: 2 }}>Você tem tudo liberado. Obrigado por apoiar o Plim!</Text>
+              </View>
+            </View>
+          </Peca>
         ) : (
-          <Pressable
-            onPress={() => abrirPaywall('Plim Pro')}
-            accessibilityLabel="Ver planos Plim Pro"
-            accessibilityRole="button"
-            android_ripple={{ color: C.primaryLight + '22', borderless: false }}
-            style={{
-              backgroundColor: C.glass,
-              borderRadius: 18,
-              padding: 20,
-              marginBottom: 14,
-              borderWidth: 1.5,
-              borderColor: C.borderPrimary,
-            }}
-          >
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <Text style={{ fontSize: 22 }}>👑</Text>
-              <Text style={{ color: C.primaryLight, fontWeight: '800', fontSize: 17 }}>Plim Pro</Text>
+          <Peca tinta="roxo" estilo={{ marginBottom: 14 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <Icone nome="coroa" tamanho={46} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: F.display, fontSize: 19, color: C.text }}>Plim Pro</Text>
+                <Text style={{ fontSize: 14, color: C.textSub, marginTop: 2, lineHeight: 20 }}>Plim IA, modo parceiro e seu progresso salvo na nuvem.</Text>
+              </View>
             </View>
-            <Text style={{ color: C.textSub, fontSize: 13, lineHeight: 20, marginBottom: 14 }}>IA Coach · Foco ilimitado · Avatar premium · Backup na nuvem e muito mais.</Text>
-            <View style={{
-              backgroundColor: C.primary,
-              borderRadius: 14,
-              paddingVertical: 13,
-              alignItems: 'center',
-              shadowColor: C.primary,
-              shadowOpacity: 0.5,
-              shadowRadius: 12,
-              elevation: 8,
-            }}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>🚀 Ver planos Pro</Text>
-            </View>
-          </Pressable>
+            <Botao rotulo="Ver planos" icone="foguete" onPress={() => abrirPaywall('Plim Pro')} />
+          </Peca>
         )}
 
         {!session ? (
-          <Pressable
-            onPress={() => router.push('/(auth)/login')}
-            accessibilityLabel="Criar conta ou entrar"
-            accessibilityRole="button"
-            android_ripple={{ color: C.primaryLight + '22', borderless: false }}
-            style={{ backgroundColor: C.surface, borderRadius: 18, padding: 20, marginBottom: 14, borderWidth: 1, borderColor: C.border }}
-          >
-            <Text style={{ color: C.text, fontWeight: '700', fontSize: 15, marginBottom: 4 }}>Crie sua conta grátis ✨</Text>
-            <Text style={{ color: C.textSub, fontSize: 13, marginBottom: 14 }}>Salve seu progresso na nuvem</Text>
-            <View style={{ backgroundColor: C.primaryLight, borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: '700' }}>Criar conta / Entrar</Text>
-            </View>
-          </Pressable>
+          <Peca estilo={{ marginBottom: 14 }}>
+            <Text style={{ fontFamily: F.display, fontSize: 18, color: C.text }}>Guarde seu progresso</Text>
+            <Text style={{ fontSize: 14, color: C.textSub, marginTop: 4, marginBottom: 14, lineHeight: 20 }}>Hoje ele fica só neste aparelho. Com uma conta grátis, ele vai com você.</Text>
+            <Botao rotulo="Criar conta ou entrar" cor="suave" onPress={() => router.push('/(auth)/login')} />
+          </Peca>
         ) : (
-          <Pressable
-            onPress={sair}
-            accessibilityLabel="Sair da conta"
-            accessibilityRole="button"
-            android_ripple={{ color: C.danger + '22', borderless: false }}
-            style={{ borderRadius: 16, paddingVertical: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border, marginBottom: 10, minHeight: 48 }}
-          >
-            <Text style={{ color: C.danger, fontWeight: '600', fontSize: 14 }}>Sair da conta</Text>
-          </Pressable>
+          <Botao rotulo="Sair da conta" cor="claro" onPress={sair} estilo={{ marginBottom: 10 }} />
         )}
-      </ScrollView>
+      </Tela>
 
-      {/* Modal Avatar */}
+      {/* Mudar visual do avatar */}
       <Modal visible={modalAvatar} animationType="slide" transparent onRequestClose={() => setModalAvatar(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.75)' }} onPress={() => setModalAvatar(false)} />
-        <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', borderTopWidth: 1, borderColor: C.borderPrimary }}>
-          <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
-            <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginTop: 14, marginBottom: 20 }} />
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(43,29,78,0.55)' }} onPress={() => setModalAvatar(false)} accessibilityLabel="Fechar" />
+        <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '94%', width: '100%', maxWidth: 480, alignSelf: 'center' }}>
+          <View style={{ width: 44, height: 5, backgroundColor: C.borderBright, borderRadius: 3, alignSelf: 'center', marginTop: 10 }} />
+          {modalAvatar && <AvatarPalco config={avatar} expressao="feliz" altura={230} parado={parado} />}
+          <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 28, paddingTop: 8 }} showsVerticalScrollIndicator={false}>
+            <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', marginBottom: 16 }}>Arraste o boneco para girar. Toque nele e ele acena.</Text>
 
-            <View style={{ alignItems: 'center', marginBottom: 24 }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: C.text, marginBottom: 16 }}>personalizar personagem</Text>
-              <View style={{ width: 120, height: 120, borderRadius: 60, overflow: 'hidden', borderWidth: 2, borderColor: C.borderPrimary }}>
-                <AvatarPersonagem config={profile.avatar_config} expressao={expressao} size={120} />
-              </View>
-            </View>
-
-            <SectionLabel label="Gênero" />
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 20 }}>
-              {(['masculino', 'feminino'] as const).map((g) => (
-                <Pressable key={g} onPress={() => setGenero(g)} style={{ flex: 1, paddingVertical: 12, borderRadius: 14, alignItems: 'center', backgroundColor: profile.avatar_config.genero === g ? C.primary : C.surfaceHigh, borderWidth: 1.5, borderColor: profile.avatar_config.genero === g ? C.borderPrimary : C.border }}>
-                  <Text style={{ fontSize: 20, marginBottom: 4 }}>{g === 'masculino' ? '👦' : '👧'}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: profile.avatar_config.genero === g ? '#fff' : C.textSub }}>{g === 'masculino' ? 'Masculino' : 'Feminino'}</Text>
-                </Pressable>
+            <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>Cabelo</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
+              {OPCOES_CABELO.map((op) => (
+                <Opcao key={op.id} ativo={avatar.cabelo === op.id} rotulo={op.label} aoTocar={() => updateAvatarConfig({ ...avatar, cabelo: op.id })} />
               ))}
             </View>
 
-            <SectionLabel label="Tom de pele" />
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
-              {SKIN_COLORS.map((op) => {
-                const ativo = profile.avatar_config.skinColor === op.hex;
-                return <Pressable key={op.hex} onPress={() => updateAvatarConfig({ skinColor: op.hex })} style={{ flex: 1, aspectRatio: 1, borderRadius: 12, backgroundColor: `#${op.hex}`, borderWidth: ativo ? 3 : 1.5, borderColor: ativo ? C.primaryLight : 'transparent', alignItems: 'center', justifyContent: 'center' }}>{ativo && <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✓</Text>}</Pressable>;
-              })}
+            <Cores titulo="Cor do cabelo" opcoes={OPCOES_COR_CABELO} atual={avatar.corCabelo} aoEscolher={(h) => updateAvatarConfig({ ...avatar, corCabelo: h })} />
+            <Cores titulo="Tom de pele" opcoes={OPCOES_PELE} atual={avatar.pele} aoEscolher={(h) => updateAvatarConfig({ ...avatar, pele: h })} />
+            <Cores titulo="Moletom" opcoes={OPCOES_MOLETOM} atual={avatar.corMoletom} aoEscolher={(h) => updateAvatarConfig({ ...avatar, corMoletom: h })} />
+            <Cores titulo="Calça" opcoes={OPCOES_CALCA} atual={avatar.corCalca} aoEscolher={(h) => updateAvatarConfig({ ...avatar, corCalca: h })} />
+
+            <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>Acessórios</Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
+              <Opcao ativo={avatar.oculos} rotulo="Óculos" aoTocar={() => updateAvatarConfig({ ...avatar, oculos: !avatar.oculos })} />
+              <Opcao ativo={avatar.fone} rotulo="Fone" aoTocar={() => updateAvatarConfig({ ...avatar, fone: !avatar.fone })} />
             </View>
 
-            <SectionLabel label={`Cabelo ${profile.avatar_config.genero === 'feminino' ? '(feminino)' : '(masculino)'}`} />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-              {hairOptions.map((op) => {
-                const ativo = profile.avatar_config.hairStyle === op.id;
-                return <Pressable key={op.id} onPress={() => updateAvatarConfig({ hairStyle: op.id })} style={{ width: '30%', paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: ativo ? C.glassStrong : C.surfaceHigh, borderWidth: 1.5, borderColor: ativo ? C.borderPrimary : C.border }}><Text style={{ fontSize: 11, color: ativo ? C.primaryLight : C.textSub, fontWeight: ativo ? '700' : '400' }}>{op.label}</Text></Pressable>;
-              })}
+            <Cores titulo="Fundo do retrato" opcoes={OPCOES_FUNDO} atual={avatar.fundo} aoEscolher={(h) => updateAvatarConfig({ ...avatar, fundo: h })} />
+
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 }}>
+              <AvatarPersonagem config={avatar} size={56} />
+              <Text style={{ flex: 1, fontSize: 13, color: C.textSub, lineHeight: 19 }}>É assim que seu retrato aparece no início e na barra de baixo.</Text>
             </View>
 
-            <SectionLabel label="Cor do cabelo" />
-            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 20 }}>
-              {HAIR_COLORS.map((op) => {
-                const ativo = profile.avatar_config.hairColor === op.hex;
-                return <Pressable key={op.hex} onPress={() => updateAvatarConfig({ hairColor: op.hex })} style={{ flex: 1, height: 32, borderRadius: 8, backgroundColor: `#${op.hex}`, borderWidth: ativo ? 3 : 1, borderColor: ativo ? C.primaryLight : 'rgba(255,255,255,0.1)', alignItems: 'center', justifyContent: 'center' }}>{ativo && <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>✓</Text>}</Pressable>;
-              })}
-            </View>
-
-            <SectionLabel label="Sobrancelhas" />
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
-              {EYEBROW_OPCOES.map((op) => <ChipSelect key={op.id} ativo={profile.avatar_config.eyebrowsStyle === op.id} onPress={() => updateAvatarConfig({ eyebrowsStyle: op.id })} label={op.label} />)}
-            </View>
-
-            <SectionLabel label="Características" />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-              {[{ id: 'freckles', label: 'Sardas' }, { id: 'blush', label: 'Blush' }, { id: 'birthmark', label: 'Sinal' }, ...(profile.avatar_config.genero === 'masculino' ? [{ id: 'mustache', label: 'Bigode' }] : [])].map((f) => (
-                <ChipSelect key={f.id} ativo={(profile.avatar_config.features ?? []).includes(f.id)} onPress={() => toggleFeature(f.id)} label={f.label} />
-              ))}
-              {profile.avatar_config.genero === 'feminino' && <ChipSelect ativo={!!profile.avatar_config.earrings} onPress={() => updateAvatarConfig({ earrings: !profile.avatar_config.earrings })} label="Brincos" />}
-            </View>
-
-            <SectionLabel label="Óculos" />
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
-              {GLASSES_OPCOES.map((op) => <ChipSelect key={op.id} ativo={profile.avatar_config.glassesStyle === op.id} onPress={() => updateAvatarConfig({ glassesStyle: op.id })} label={op.label} />)}
-            </View>
-
-            <SectionLabel label="Cor de fundo" />
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
-              {BG_COLORS.map((op) => {
-                const ativo = profile.avatar_config.backgroundColor === op.hex;
-                return <Pressable key={op.hex} onPress={() => updateAvatarConfig({ backgroundColor: op.hex })} style={{ flex: 1, aspectRatio: 1, borderRadius: 10, backgroundColor: `#${op.hex}`, borderWidth: ativo ? 3 : 1, borderColor: ativo ? C.primaryLight : C.border, alignItems: 'center', justifyContent: 'center' }}>{ativo && <Text style={{ color: C.primaryLight, fontSize: 12, fontWeight: '800' }}>✓</Text>}</Pressable>;
-              })}
-            </View>
-
-            <Pressable onPress={() => setModalAvatar(false)} style={{ backgroundColor: C.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', shadowColor: C.primary, shadowOpacity: 0.5, shadowRadius: 12, elevation: 8, marginBottom: 10 }}>
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Salvar personagem</Text>
-            </Pressable>
+            <Botao rotulo="Pronto" onPress={() => setModalAvatar(false)} />
           </ScrollView>
         </View>
       </Modal>
 
-      {/* Modal Editar Perfil */}
+      {/* Editar perfil */}
       <Modal visible={modalPerfil} animationType="slide" transparent onRequestClose={() => setModalPerfil(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' }} onPress={() => setModalPerfil(false)} />
-        <View style={{ backgroundColor: C.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 24, paddingTop: 20, paddingBottom: 40, borderTopWidth: 1, borderColor: C.borderPrimary }}>
-          <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
-          <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>editar perfil</Text>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(43,29,78,0.55)' }} onPress={() => setModalPerfil(false)} accessibilityLabel="Fechar" />
+        <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 10, paddingBottom: 30, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
+          <View style={{ width: 44, height: 5, backgroundColor: C.borderBright, borderRadius: 3, alignSelf: 'center', marginBottom: 16 }} />
+          <Text accessibilityRole="header" style={{ fontFamily: F.display, fontSize: 22, color: C.text, marginBottom: 16 }}>Editar perfil</Text>
           {[
-            { label: 'Nome', val: editNome, set: setEditNome, ph: 'Seu nome completo' },
+            { label: 'Nome', val: editNome, set: setEditNome, ph: 'Seu nome' },
             { label: 'Apelido', val: editApelido, set: setEditApelido, ph: 'Como quer ser chamado?' },
-            { label: 'Bio', val: editBio, set: setEditBio, ph: 'Uma frase sobre você 🌟' },
+            { label: 'Bio', val: editBio, set: setEditBio, ph: 'Uma frase sobre você' },
             { label: 'Instagram', val: editInstagram, set: setEditInstagram, ph: '@seu_instagram' },
-          ].map((f) => (
-            <View key={f.label} style={{ marginBottom: 14 }}>
-              <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' }}>{f.label}</Text>
+          ].map((campo) => (
+            <View key={campo.label} style={{ marginBottom: 12 }}>
+              <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.textSub, marginBottom: 6 }}>{campo.label}</Text>
               <TextInput
-                placeholder={f.ph}
+                placeholder={campo.ph}
                 placeholderTextColor={C.textMuted}
-                value={f.val}
-                onChangeText={f.set}
-                style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 14 }}
+                value={campo.val}
+                onChangeText={campo.set}
+                accessibilityLabel={campo.label}
+                style={{ backgroundColor: C.surface, borderWidth: 2, borderColor: C.border, borderRadius: R.md, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 16, fontFamily: F.regular }}
               />
             </View>
           ))}
-          <Pressable onPress={salvarPerfil} style={{ backgroundColor: C.primary, borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginTop: 6, shadowColor: C.primary, shadowOpacity: 0.5, shadowRadius: 12, elevation: 8 }}>
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Salvar</Text>
-          </Pressable>
+          <Botao rotulo="Salvar" onPress={salvarPerfil} estilo={{ marginTop: 6 }} />
         </View>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 }

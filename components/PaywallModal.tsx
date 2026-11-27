@@ -1,316 +1,154 @@
-import { usePaywallStore } from '@/stores/paywallStore';
-import { useAuthStore } from '@/stores/authStore';
-import { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
-
-function mostrarAlerta(titulo: string, msg: string) {
-  if (Platform.OS === 'web') {
-    window.alert(`${titulo}\n${msg}`);
-  } else {
-    Alert.alert(titulo, msg);
-  }
-}
-import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-import { Text } from '@/components/ui';
+import Icone, { type NomeIcone } from '@/components/Icone';
+import { Botao } from '@/components/plim';
+import { Text } from '@/components/Texto';
+import { avisar } from '@/lib/avisar';
 import { iniciarAssinatura, restaurarCompra, type PlanoId } from '@/lib/payments';
+import { C, F, R } from '@/lib/theme';
+import { useAuthStore } from '@/stores/authStore';
+import { usePaywallStore } from '@/stores/paywallStore';
+import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import { ActivityIndicator, Image, Modal, Platform, Pressable, ScrollView, View } from 'react-native';
 
-const BENEFICIOS = [
-  { icone: '🤖', titulo: 'Plim IA Coach', desc: 'Análise semanal do seu padrão e sugestões personalizadas' },
-  { icone: '🎯', titulo: 'Foco ilimitado', desc: 'Sessões Pomodoro sem limite diário + sons binaurais' },
-  { icone: '📊', titulo: 'Relatório semanal', desc: 'Insights detalhados sobre sua produtividade em PDF' },
-  { icone: '🤝', titulo: 'Parceiro de foco', desc: 'Conecte com alguém e se responsabilizem juntos' },
-  { icone: '🎨', titulo: 'Avatar premium', desc: '15+ roupas e acessórios exclusivos para seu personagem' },
-  { icone: '☁️', titulo: 'Backup na nuvem', desc: 'Progresso salvo automaticamente, nunca perde nada' },
+/** Só o que o Pro realmente libera hoje. O que ainda não existe fica em "em breve". */
+const BENEFICIOS: { icone: NomeIcone; titulo: string; desc: string }[] = [
+  { icone: 'robo', titulo: 'Plim IA', desc: 'Um assistente que entende TDAH para destravar, organizar a cabeça ou só conversar.' },
+  { icone: 'parceria', titulo: 'Modo Parceiro', desc: 'Convide alguém de confiança para acompanhar sua rotina de perto.' },
 ];
 
-const PLANOS = [
-  {
-    id: 'mensal',
-    label: 'Mensal',
-    preco: 'R$ 19,90',
-    sub: 'por mês',
-    destaque: false,
-    badge: null,
-  },
-  {
-    id: 'anual',
-    label: 'Anual',
-    preco: 'R$ 149',
-    sub: 'por ano  ·  R$ 12,40/mês',
-    destaque: true,
-    badge: 'ECONOMIZE 38%',
-  },
+const EM_BREVE = 'Em breve no Pro: roupas e acessórios para o avatar e resumo semanal da sua rotina.';
+
+const PLANOS: { id: PlanoId; label: string; preco: string; sub: string; selo?: string }[] = [
+  { id: 'anual', label: 'Anual', preco: 'R$ 149', sub: 'por ano · sai a R$ 12,40 por mês', selo: 'economize 38%' },
+  { id: 'mensal', label: 'Mensal', preco: 'R$ 19,90', sub: 'por mês' },
 ];
 
 export default function PaywallModal() {
   const { visivel, origem, fechar } = usePaywallStore();
   const { session } = useAuthStore();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [plano, setPlano] = useState<PlanoId>('anual');
 
-  const translateY = useSharedValue(600);
-
-  useEffect(() => {
-    if (visivel) {
-      translateY.value = withSpring(0, { damping: 18, stiffness: 200 });
-    } else {
-      translateY.value = 600;
-    }
-  }, [visivel]);
-
-  const sheetStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  async function handleAssinar(planoId: PlanoId) {
+  async function assinar() {
     if (!session?.user?.id) {
-      mostrarAlerta('Conta necessária', 'Faça login para assinar o Plim Pro.');
+      fechar();
+      avisar('Entre na sua conta primeiro', 'A assinatura fica ligada à sua conta do Plim.');
+      router.push('/(auth)/login');
       return;
     }
     setLoading(true);
-    const sucesso = await iniciarAssinatura(planoId, session.user.id);
+    const sucesso = await iniciarAssinatura(plano, session.user.id);
     setLoading(false);
     if (sucesso) {
       fechar();
-      mostrarAlerta('👑 Bem-vindo ao Plim Pro!', 'Todas as features premium estão desbloqueadas.');
+      // Na web o pagamento continua na página do Stripe; o Pro só vale depois de confirmado.
+      if (Platform.OS !== 'web') avisar('👑 Bem-vindo ao Plim Pro!', 'Tudo liberado. Obrigado por apoiar o Plim.');
     } else {
-      mostrarAlerta('Ops', 'Não foi possível concluir a assinatura. Tente novamente.');
+      avisar('Não deu para concluir', 'Nada foi cobrado. Tente de novo em instantes.');
     }
   }
 
-  async function handleRestaurar() {
+  async function restaurar() {
     setLoading(true);
     const sucesso = await restaurarCompra();
     setLoading(false);
     if (sucesso) {
       fechar();
-      mostrarAlerta('✅ Compra restaurada!', 'Seu plano Pro foi reativado.');
+      avisar('✅ Compra restaurada', 'Seu plano Pro foi reativado.');
     } else {
-      mostrarAlerta('Nenhuma compra encontrada', 'Não encontramos assinaturas ativas nesta conta.');
+      avisar('Nenhuma compra encontrada', 'Não achamos assinatura ativa nesta conta.');
     }
   }
 
   if (!visivel) return null;
 
   return (
-    <Modal
-      visible={visivel}
-      transparent
-      animationType="none"
-      onRequestClose={fechar}
-      statusBarTranslucent
-    >
-      {/* Backdrop */}
-      <Pressable
-        style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.55)', zIndex: 1 }}
-        onPress={fechar}
-      />
-
-      {/* Sheet */}
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            maxWidth: 480,
-            alignSelf: 'center',
-            width: '100%',
-            backgroundColor: '#FFFFFF',
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
-            maxHeight: '90%',
-            overflow: 'hidden',
-            zIndex: 2,
-          },
-          sheetStyle,
-        ]}
-      >
-        {/* Header roxo com coroa */}
-        <View
-          style={{
-            backgroundColor: '#7C3AED',
-            paddingTop: 28,
-            paddingBottom: 28,
-            paddingHorizontal: 24,
-            alignItems: 'center',
-            position: 'relative',
-          }}
-        >
-          {/* Fechar */}
-          <Pressable
-            onPress={fechar}
-            style={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              width: 32,
-              height: 32,
-              borderRadius: 16,
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>✕</Text>
-          </Pressable>
-
-          {/* Decoração de pontos */}
-          <View style={{ position: 'absolute', top: 12, left: 20, opacity: 0.15 }}>
-            <Text style={{ fontSize: 60 }}>✦</Text>
-          </View>
-
-          <View
-            style={{
-              width: 64,
-              height: 64,
-              borderRadius: 32,
-              backgroundColor: 'rgba(255,255,255,0.2)',
-              alignItems: 'center',
-              justifyContent: 'center',
-              marginBottom: 12,
-              borderWidth: 2,
-              borderColor: 'rgba(255,255,255,0.35)',
-            }}
-          >
-            <Text style={{ fontSize: 30 }}>👑</Text>
-          </View>
-
-          <Text style={{ color: '#fff', fontSize: 22, fontWeight: '800', marginBottom: 4 }}>
-            Plim Pro
-          </Text>
-
-          {origem ? (
-            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, textAlign: 'center' }}>
-              "{origem}" é exclusivo para assinantes
-            </Text>
-          ) : (
-            <Text style={{ color: 'rgba(255,255,255,0.8)', fontSize: 13, textAlign: 'center' }}>
-              Desbloqueie seu potencial completo
-            </Text>
-          )}
-        </View>
-
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 32 }}
-        >
-          {/* Benefícios */}
-          <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 14 }}>
-            {BENEFICIOS.map((b) => (
-              <View key={b.titulo} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-                <View
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 12,
-                    backgroundColor: '#EDE9FE',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}
-                >
-                  <Text style={{ fontSize: 20 }}>{b.icone}</Text>
-                </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontWeight: '700', fontSize: 14, color: '#1E293B' }}>{b.titulo}</Text>
-                  <Text style={{ fontSize: 12, color: '#64748B', marginTop: 1, lineHeight: 17 }}>{b.desc}</Text>
-                </View>
-                <Text style={{ color: '#7C3AED', fontSize: 16, fontWeight: '800' }}>✓</Text>
-              </View>
-            ))}
-          </View>
-
-          {/* Divisor */}
-          <View style={{ height: 1, backgroundColor: '#F1F5F9', marginHorizontal: 20, marginTop: 22, marginBottom: 20 }} />
-
-          {/* Planos */}
-          <View style={{ paddingHorizontal: 20, flexDirection: 'row', gap: 12 }}>
-            {PLANOS.map((plano) => (
-              <Pressable
-                key={plano.id}
-                onPress={() => handleAssinar(plano.id as PlanoId)}
-                style={{
-                  flex: 1,
-                  borderRadius: 16,
-                  borderWidth: plano.destaque ? 2.5 : 1.5,
-                  borderColor: plano.destaque ? '#7C3AED' : '#E2E8F0',
-                  backgroundColor: plano.destaque ? '#F5F3FF' : '#FAFAFA',
-                  padding: 16,
-                  alignItems: 'center',
-                  position: 'relative',
-                  overflow: 'visible',
-                }}
-              >
-                {plano.badge && (
-                  <View
-                    style={{
-                      position: 'absolute',
-                      top: -12,
-                      backgroundColor: '#F97316',
-                      paddingHorizontal: 10,
-                      paddingVertical: 3,
-                      borderRadius: 20,
-                    }}
-                  >
-                    <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>{plano.badge}</Text>
-                  </View>
-                )}
-                <Text style={{ fontSize: 12, fontWeight: '600', color: plano.destaque ? '#7C3AED' : '#64748B', marginBottom: 4 }}>
-                  {plano.label}
-                </Text>
-                <Text style={{ fontSize: plano.destaque ? 24 : 22, fontWeight: '800', color: plano.destaque ? '#5B21B6' : '#1E293B' }}>
-                  {plano.preco}
-                </Text>
-                <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 2, textAlign: 'center' }}>
-                  {plano.sub}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-
-          {/* CTA principal */}
-          <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+    <Modal visible={visivel} transparent animationType="slide" onRequestClose={fechar} statusBarTranslucent>
+      <Pressable style={{ flex: 1, backgroundColor: 'rgba(43,29,78,0.55)' }} onPress={fechar} accessibilityLabel="Fechar" />
+      <View style={{ width: '100%', maxWidth: 480, alignSelf: 'center', backgroundColor: C.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, maxHeight: '92%', overflow: 'hidden' }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 28 }}>
+          {/* Topo */}
+          <View style={{ backgroundColor: C.glass, alignItems: 'center', paddingTop: 18, paddingHorizontal: 20, borderBottomWidth: 2, borderColor: C.borderPrimary }}>
             <Pressable
-              onPress={() => handleAssinar('anual')}
-              disabled={loading}
-              style={{
-                backgroundColor: loading ? '#A78BFA' : '#7C3AED',
-                borderRadius: 18,
-                paddingVertical: 17,
-                alignItems: 'center',
-                shadowColor: '#7C3AED',
-                shadowOffset: { width: 0, height: 6 },
-                shadowOpacity: 0.38,
-                shadowRadius: 12,
-                elevation: 8,
-              }}
+              onPress={fechar}
+              accessibilityRole="button"
+              accessibilityLabel="Fechar"
+              hitSlop={8}
+              style={{ position: 'absolute', top: 14, right: 14, width: 44, height: 44, borderRadius: 16, backgroundColor: C.surface, borderWidth: 2, borderColor: C.border, alignItems: 'center', justifyContent: 'center', zIndex: 2 }}
             >
-              {loading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>
-                  🚀 Experimentar 7 dias grátis
-                </Text>
-              )}
+              <Text style={{ fontFamily: F.displayX, fontSize: 16, color: C.textSub }}>✕</Text>
             </Pressable>
-            <Text style={{ textAlign: 'center', fontSize: 11, color: '#94A3B8', marginTop: 8 }}>
-              Sem compromisso · Cancele quando quiser
-            </Text>
+            <Image source={require('../assets/cenas/vitoria.webp')} style={{ width: 190, height: 218 }} resizeMode="contain" accessible={false} />
           </View>
 
-          {/* Restaurar compra */}
-          <Pressable
-            onPress={handleRestaurar}
-            disabled={loading}
-            style={{ paddingTop: 16, alignItems: 'center' }}
-          >
-            <Text style={{ fontSize: 12, color: '#94A3B8', textDecorationLine: 'underline' }}>
-              Já sou assinante? Restaurar compra
+          <View style={{ paddingHorizontal: 20, paddingTop: 18 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Icone nome="coroa" tamanho={34} />
+              <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 26, color: C.text }}>Plim Pro</Text>
+            </View>
+            <Text style={{ fontSize: 15, color: C.textSub, marginTop: 4, lineHeight: 22 }}>
+              {origem && origem !== 'Plim Pro' ? `${origem} faz parte do Pro.` : 'O Plim continua grátis. O Pro libera o que vai além.'}
             </Text>
-          </Pressable>
+
+            {/* O que libera */}
+            <View style={{ gap: 12, marginTop: 18 }}>
+              {BENEFICIOS.map((b) => (
+                <View key={b.titulo} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: C.surface, borderRadius: R.md, borderWidth: 2, borderBottomWidth: 4, borderColor: C.border, padding: 12 }}>
+                  <Icone nome={b.icone} tamanho={44} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: F.display, fontSize: 16, color: C.text }}>{b.titulo}</Text>
+                    <Text style={{ fontSize: 14, color: C.textSub, marginTop: 2, lineHeight: 20 }}>{b.desc}</Text>
+                  </View>
+                </View>
+              ))}
+            </View>
+            <Text style={{ fontSize: 13, color: C.textMuted, marginTop: 10, lineHeight: 19 }}>{EM_BREVE}</Text>
+
+            {/* Planos */}
+            <View style={{ gap: 10, marginTop: 20 }} accessibilityRole="radiogroup">
+              {PLANOS.map((p) => {
+                const ativo = plano === p.id;
+                return (
+                  <Pressable
+                    key={p.id}
+                    onPress={() => setPlano(p.id)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: ativo }}
+                    accessibilityLabel={`Plano ${p.label}, ${p.preco} ${p.sub}`}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: ativo ? C.glass : C.surface, borderRadius: R.md, borderWidth: ativo ? 3 : 2, borderBottomWidth: 5, borderColor: ativo ? C.primary : C.border, padding: 14 }}
+                  >
+                    <View style={{ width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: ativo ? C.primary : C.borderBright, alignItems: 'center', justifyContent: 'center' }}>
+                      {ativo && <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.primary }} />}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontFamily: F.display, fontSize: 16, color: C.text }}>{p.label}</Text>
+                      <Text style={{ fontSize: 13, color: C.textSub }}>{p.sub}</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-end' }}>
+                      <Text style={{ fontFamily: F.displayX, fontSize: 20, color: ativo ? C.primaryLight : C.text }}>{p.preco}</Text>
+                      {p.selo && <Text style={{ fontFamily: F.bold, fontSize: 12, color: C.accent }}>{p.selo}</Text>}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View style={{ marginTop: 18 }}>
+              {loading
+                ? <View style={{ minHeight: 54, alignItems: 'center', justifyContent: 'center' }}><ActivityIndicator color={C.primary} /></View>
+                : <Botao rotulo={plano === 'anual' ? 'Assinar o plano anual' : 'Assinar o plano mensal'} icone="foguete" onPress={assinar} />}
+              <Text style={{ textAlign: 'center', fontSize: 13, color: C.textMuted, marginTop: 8 }}>Cancele quando quiser.</Text>
+            </View>
+
+            {Platform.OS !== 'web' && (
+              <Pressable onPress={restaurar} disabled={loading} accessibilityRole="button" hitSlop={10} style={{ paddingTop: 14, alignItems: 'center', minHeight: 44, justifyContent: 'center' }}>
+                <Text style={{ fontSize: 14, color: C.textSub, textDecorationLine: 'underline' }}>Já assino. Restaurar compra</Text>
+              </Pressable>
+            )}
+          </View>
         </ScrollView>
-      </Animated.View>
+      </View>
     </Modal>
   );
 }

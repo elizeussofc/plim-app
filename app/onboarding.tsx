@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -18,6 +19,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Botao } from '@/components/plim';
 import { Text } from '@/components/ui';
 import { useUserStore } from '@/stores/userStore';
 import {
@@ -64,8 +66,8 @@ function OptionCard({
         padding: 16,
         borderRadius: 16,
         borderWidth: selected ? 2 : 1.5,
-        borderColor: selected ? '#7C3AED' : '#E2E8F0',
-        backgroundColor: selected ? '#EDE9FE' : '#FAFAFA',
+        borderColor: selected ? '#7C3AED' : '#EADFCF',
+        backgroundColor: selected ? '#F3ECFF' : '#FFFFFF',
         marginBottom: 10,
         gap: 14,
         shadowColor: selected ? '#7C3AED' : '#000',
@@ -81,7 +83,7 @@ function OptionCard({
           width: 44,
           height: 44,
           borderRadius: 12,
-          backgroundColor: selected ? '#DDD6FE' : '#F1F5F9',
+          backgroundColor: selected ? '#E7DBFF' : '#F4EDE1',
           alignItems: 'center',
           justifyContent: 'center',
         }}
@@ -91,7 +93,7 @@ function OptionCard({
       <Text
         style={{
           flex: 1,
-          color: selected ? '#5B21B6' : '#334155',
+          color: selected ? '#5B21B6' : '#3C2F5E',
           fontWeight: selected ? '700' : '400',
           fontSize: 15,
           lineHeight: 20,
@@ -104,11 +106,11 @@ function OptionCard({
           width: 24,
           height: 24,
           borderRadius: 12,
-          backgroundColor: selected ? '#7C3AED' : '#E2E8F0',
+          backgroundColor: selected ? '#7C3AED' : '#EADFCF',
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: selected ? 0 : 1.5,
-          borderColor: '#CBD5E1',
+          borderColor: '#DCCDB6',
         }}
       >
         {selected && (
@@ -122,53 +124,16 @@ function OptionCard({
 // ─── Tela 0: Boas-vindas ──────────────────────────────────────────────────────
 
 function StepWelcome() {
-  const scale = useSharedValue(1);
-
-  useEffect(() => {
-    scale.value = withRepeat(
-      withSequence(
-        withTiming(1.12, { duration: 900 }),
-        withTiming(0.95, { duration: 900 }),
-      ),
-      -1,
-    );
-  }, []);
-
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-      <Animated.View
-        style={[
-          {
-            width: 108,
-            height: 108,
-            borderRadius: 54,
-            backgroundColor: '#7C3AED',
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginBottom: 36,
-            shadowColor: '#7C3AED',
-            shadowOffset: { width: 0, height: 10 },
-            shadowOpacity: 0.4,
-            shadowRadius: 20,
-            elevation: 14,
-          },
-          pulseStyle,
-        ]}
-      >
-        <Text style={{ fontSize: 50 }}>⚡</Text>
-      </Animated.View>
-
-      <Text variant="h1" style={{ textAlign: 'center', marginBottom: 14, color: '#1E293B' }}>
-        Oi! Eu sou o Plim 👋
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
+      <Image source={require('../assets/cenas/ola.webp')} style={{ width: 250, height: 261, marginBottom: 20 }} resizeMode="contain" accessible={false} />
+      <Text variant="h1" style={{ textAlign: 'center', marginBottom: 10, color: '#2B1D4E' }}>
+        Oi! A gente é o Plim
       </Text>
-      <Text style={{ textAlign: 'center', color: '#64748B', fontSize: 16, lineHeight: 26 }}>
-        Vou te conhecer em 1 minutinho pra deixar tudo do seu jeito.
+      <Text style={{ textAlign: 'center', color: '#64577F', fontSize: 17, lineHeight: 26 }}>
+        Sete perguntas rápidas para deixar o app do seu jeito. Leva um minuto.
       </Text>
-      <Text style={{ textAlign: 'center', color: '#94A3B8', fontSize: 13, marginTop: 36, lineHeight: 20 }}>
+      <Text style={{ textAlign: 'center', color: '#8A7FA3', fontSize: 14, marginTop: 24, lineHeight: 20 }}>
         Suas respostas ficam só no seu aparelho.
       </Text>
     </View>
@@ -195,10 +160,10 @@ function StepChallenges({
 }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-      <Text variant="h2" style={{ color: '#1E293B', marginBottom: 6 }}>
+      <Text variant="h2" style={{ color: '#2B1D4E', marginBottom: 6 }}>
         O que mais te trava no dia a dia?
       </Text>
-      <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 20 }}>
+      <Text style={{ color: '#64577F', fontSize: 14, marginBottom: 20 }}>
         Selecione até 2 opções
       </Text>
       {CHALLENGE_OPTIONS.map((opt) => (
@@ -231,10 +196,10 @@ function StepAdhd({
 }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text variant="h2" style={{ color: '#1E293B', marginBottom: 6 }}>
+      <Text variant="h2" style={{ color: '#2B1D4E', marginBottom: 6 }}>
         Sobre TDAH...
       </Text>
-      <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 20 }}>
+      <Text style={{ color: '#64577F', fontSize: 14, marginBottom: 20 }}>
         Isso ajuda a ajustar a linguagem do app.
       </Text>
       {ADHD_OPTIONS.map((opt) => (
@@ -268,7 +233,7 @@ function StepChronotype({
 }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text variant="h2" style={{ color: '#1E293B', marginBottom: 20 }}>
+      <Text variant="h2" style={{ color: '#2B1D4E', marginBottom: 20 }}>
         Quando seu cérebro fica mais ligado?
       </Text>
       {CHRONO_OPTIONS.map((opt) => (
@@ -281,8 +246,8 @@ function StepChronotype({
             padding: 18,
             borderRadius: 16,
             borderWidth: 2,
-            borderColor: selected === opt.id ? '#7C3AED' : '#E2E8F0',
-            backgroundColor: selected === opt.id ? '#EDE9FE' : '#FFFFFF',
+            borderColor: selected === opt.id ? '#7C3AED' : '#EADFCF',
+            backgroundColor: selected === opt.id ? '#F3ECFF' : '#FFFFFF',
             marginBottom: 12,
             gap: 16,
           }}
@@ -293,12 +258,12 @@ function StepChronotype({
               style={{
                 fontWeight: '600',
                 fontSize: 16,
-                color: selected === opt.id ? '#6D28D9' : '#1E293B',
+                color: selected === opt.id ? '#6D28D9' : '#2B1D4E',
               }}
             >
               {opt.label}
             </Text>
-            <Text style={{ fontSize: 13, color: '#94A3B8' }}>{opt.time}</Text>
+            <Text style={{ fontSize: 13, color: '#8A7FA3' }}>{opt.time}</Text>
           </View>
           {selected === opt.id && (
             <View style={{ marginLeft: 'auto' }}>
@@ -333,32 +298,32 @@ function StepGoal({ value, onChange }: { value: string; onChange: (v: string) =>
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={{ flex: 1 }}
     >
-      <Text variant="h2" style={{ color: '#1E293B', marginBottom: 8 }}>
+      <Text variant="h2" style={{ color: '#2B1D4E', marginBottom: 8 }}>
         Qual seu maior objetivo nos próximos 30 dias?
       </Text>
-      <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 20 }}>
+      <Text style={{ color: '#64577F', fontSize: 14, marginBottom: 20 }}>
         Escreva em suas próprias palavras — ou pule se preferir.
       </Text>
       <TextInput
         value={value}
         onChangeText={(t) => onChange(t.slice(0, 80))}
         placeholder={GOAL_PLACEHOLDERS[phIdx]}
-        placeholderTextColor="#94A3B8"
+        placeholderTextColor="#8A7FA3"
         maxLength={80}
         multiline
         style={{
           borderWidth: 2,
-          borderColor: value ? '#7C3AED' : '#E2E8F0',
+          borderColor: value ? '#7C3AED' : '#EADFCF',
           borderRadius: 16,
           padding: 16,
           fontSize: 15,
-          color: '#1E293B',
+          color: '#2B1D4E',
           backgroundColor: '#FFFFFF',
           minHeight: 110,
           textAlignVertical: 'top',
         }}
       />
-      <Text style={{ textAlign: 'right', fontSize: 12, color: '#94A3B8', marginTop: 6 }}>
+      <Text style={{ textAlign: 'right', fontSize: 12, color: '#8A7FA3', marginTop: 6 }}>
         {value.length}/80
       </Text>
     </KeyboardAvoidingView>
@@ -385,10 +350,10 @@ function StepDistractions({
 }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-      <Text variant="h2" style={{ color: '#1E293B', marginBottom: 6 }}>
+      <Text variant="h2" style={{ color: '#2B1D4E', marginBottom: 6 }}>
         O que mais te puxa pra fora do foco?
       </Text>
-      <Text style={{ color: '#64748B', fontSize: 14, marginBottom: 20 }}>
+      <Text style={{ color: '#64577F', fontSize: 14, marginBottom: 20 }}>
         Selecione todas que se aplicam
       </Text>
       {DISTRACTION_OPTIONS.map((opt) => (
@@ -423,7 +388,7 @@ function StepMotivation({
 }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-      <Text variant="h2" style={{ color: '#1E293B', marginBottom: 20 }}>
+      <Text variant="h2" style={{ color: '#2B1D4E', marginBottom: 20 }}>
         O que mais te dá vontade de continuar?
       </Text>
       {MOTIVATION_OPTIONS.map((opt) => (
@@ -479,9 +444,9 @@ function StepLoading({ onDone }: { onDone: () => void }) {
       <View style={{ flexDirection: 'row', gap: 14, marginBottom: 44 }}>
         <Animated.View style={[{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#7C3AED' }, d1Style]} />
         <Animated.View style={[{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#A78BFA' }, d2Style]} />
-        <Animated.View style={[{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#F97316' }, d3Style]} />
+        <Animated.View style={[{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#EA580C' }, d3Style]} />
       </View>
-      <Text style={{ fontSize: 16, color: '#64748B', textAlign: 'center' }}>{LOADING_MSGS[msgIdx]}</Text>
+      <Text style={{ fontSize: 16, color: '#64577F', textAlign: 'center' }}>{LOADING_MSGS[msgIdx]}</Text>
     </View>
   );
 }
@@ -507,7 +472,7 @@ function StepProfile({ profile }: { profile: PlimProfileType | null }) {
   return (
     <ScrollView showsVerticalScrollIndicator={false}>
       <Text
-        style={{ color: '#64748B', fontSize: 14, marginBottom: 20, textAlign: 'center' }}
+        style={{ color: '#64577F', fontSize: 14, marginBottom: 20, textAlign: 'center' }}
       >
         ✨ Seu perfil Plim foi criado!
       </Text>
@@ -525,7 +490,7 @@ function StepProfile({ profile }: { profile: PlimProfileType | null }) {
             shadowRadius: 20,
             elevation: 10,
             borderWidth: 2,
-            borderColor: '#EDE9FE',
+            borderColor: '#F3ECFF',
           },
           cardStyle,
         ]}
@@ -537,12 +502,12 @@ function StepProfile({ profile }: { profile: PlimProfileType | null }) {
         >
           {profile.name}
         </Text>
-        <Text style={{ textAlign: 'center', color: '#64748B', fontSize: 15, lineHeight: 24 }}>
+        <Text style={{ textAlign: 'center', color: '#64577F', fontSize: 15, lineHeight: 24 }}>
           {profile.description}
         </Text>
       </Animated.View>
 
-      <Text style={{ fontWeight: '700', color: '#1E293B', fontSize: 14, marginBottom: 14 }}>
+      <Text style={{ fontWeight: '700', color: '#2B1D4E', fontSize: 14, marginBottom: 14 }}>
         O que isso significa:
       </Text>
       {profile.insights.map((insight, i) => (
@@ -555,7 +520,7 @@ function StepProfile({ profile }: { profile: PlimProfileType | null }) {
               width: 26,
               height: 26,
               borderRadius: 13,
-              backgroundColor: '#EDE9FE',
+              backgroundColor: '#F3ECFF',
               alignItems: 'center',
               justifyContent: 'center',
               marginTop: 1,
@@ -564,7 +529,7 @@ function StepProfile({ profile }: { profile: PlimProfileType | null }) {
           >
             <Text style={{ color: '#7C3AED', fontWeight: 'bold', fontSize: 12 }}>{i + 1}</Text>
           </View>
-          <Text style={{ flex: 1, color: '#334155', fontSize: 15, lineHeight: 23 }}>{insight}</Text>
+          <Text style={{ flex: 1, color: '#3C2F5E', fontSize: 15, lineHeight: 23 }}>{insight}</Text>
         </View>
       ))}
     </ScrollView>
@@ -750,21 +715,21 @@ export default function OnboardingScreen() {
   const isOptional = step === 4;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F5F3FF' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FBF6EE' }}>
       {/* Barra de progresso */}
       {showProgressBar && (
-        <View style={{ paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6 }}>
+        <View style={{ paddingHorizontal: 24, paddingTop: 10, paddingBottom: 6, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
           <View
             style={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: '#DDD6FE',
+              height: 12,
+              borderRadius: 6,
+              backgroundColor: '#EFE6D8',
               overflow: 'hidden',
             }}
           >
             <Animated.View
               style={[
-                { height: 6, borderRadius: 3, backgroundColor: '#7C3AED' },
+                { height: 12, borderRadius: 6, backgroundColor: '#7C3AED' },
                 progressStyle,
               ]}
             />
@@ -774,7 +739,7 @@ export default function OnboardingScreen() {
 
       {/* Área de conteúdo */}
       <Animated.View
-        style={[{ flex: 1, paddingHorizontal: 24, paddingTop: 20 }, contentStyle]}
+        style={[{ flex: 1, paddingHorizontal: 24, paddingTop: 20, maxWidth: 480, width: '100%', alignSelf: 'center' }, contentStyle]}
       >
         {renderStep()}
       </Animated.View>
@@ -782,96 +747,17 @@ export default function OnboardingScreen() {
       {/* Navegação */}
       {!isLoader && (
         <View style={{ paddingHorizontal: 24, paddingBottom: 20, paddingTop: 8, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
-          {isStep0 && (
-            <Pressable
-              onPress={handleNext}
-              style={{
-                backgroundColor: '#7C3AED',
-                borderRadius: 18,
-                padding: 19,
-                alignItems: 'center',
-                shadowColor: '#7C3AED',
-                shadowOffset: { width: 0, height: 5 },
-                shadowOpacity: 0.35,
-                shadowRadius: 10,
-                elevation: 8,
-              }}
-            >
-              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 17 }}>
-                Bora começar
-              </Text>
-            </Pressable>
-          )}
+          {isStep0 && <Botao rotulo="Bora começar" onPress={handleNext} />}
 
           {showNextBtn && (
             <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-              {showBackBtn && (
-                <Pressable
-                  onPress={handleBack}
-                  style={{
-                    flex: 1,
-                    borderWidth: 2,
-                    borderColor: '#DDD6FE',
-                    borderRadius: 16,
-                    padding: 16,
-                    alignItems: 'center',
-                  }}
-                >
-                  <Text style={{ color: '#64748B', fontWeight: '600', fontSize: 15 }}>
-                    Voltar
-                  </Text>
-                </Pressable>
-              )}
-
-              {isOptional && (
-                <Pressable
-                  onPress={() => goToStep(step + 1, 1)}
-                  style={{ paddingHorizontal: 12, paddingVertical: 16 }}
-                >
-                  <Text style={{ color: '#94A3B8', fontWeight: '500', fontSize: 14 }}>
-                    Pular
-                  </Text>
-                </Pressable>
-              )}
-
-              <Pressable
-                onPress={handleNext}
-                disabled={!canAdvance()}
-                style={{
-                  flex: 2,
-                  backgroundColor: canAdvance() ? '#7C3AED' : '#C4B5FD',
-                  borderRadius: 16,
-                  padding: 16,
-                  alignItems: 'center',
-                }}
-              >
-                <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 16 }}>
-                  Continuar
-                </Text>
-              </Pressable>
+              {showBackBtn && <Botao rotulo="Voltar" cor="claro" onPress={handleBack} estilo={{ flex: 1 }} />}
+              {isOptional && <Botao rotulo="Pular" cor="claro" onPress={() => goToStep(step + 1, 1)} accessibilityLabel="Pular esta pergunta" />}
+              <Botao rotulo="Continuar" onPress={handleNext} disabled={!canAdvance()} estilo={{ flex: 2 }} />
             </View>
           )}
 
-          {isReveal && (
-            <Pressable
-              onPress={handleEnterApp}
-              style={{
-                backgroundColor: '#7C3AED',
-                borderRadius: 18,
-                padding: 19,
-                alignItems: 'center',
-                shadowColor: '#7C3AED',
-                shadowOffset: { width: 0, height: 5 },
-                shadowOpacity: 0.35,
-                shadowRadius: 10,
-                elevation: 8,
-              }}
-            >
-              <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 17 }}>
-                Entrar no Plim 🚀
-              </Text>
-            </Pressable>
-          )}
+          {isReveal && <Botao rotulo="Entrar no Plim" icone="foguete" onPress={handleEnterApp} />}
         </View>
       )}
     </SafeAreaView>

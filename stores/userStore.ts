@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
-import { avatarConfigPadrao, type AvatarConfig } from '@/components/AvatarPersonagem';
+import { avatarConfigPadrao, normalizarAvatar, type AvatarConfig } from '@/lib/avatar';
 import { supabase } from '@/lib/supabase';
 export type { AvatarConfig };
 
@@ -35,7 +35,7 @@ export interface Profile {
   moedas: number;
   streak: number;
   avatar_emoji: string;
-  avatar_config: import('@/components/AvatarPersonagem').AvatarConfig;
+  avatar_config: AvatarConfig;
   conquistas: Conquista[];
   preferencias: {
     modo_baixo_estimulo: boolean;
@@ -49,10 +49,12 @@ interface UserState {
   profile: Profile;
   setProfile: (profile: Partial<Profile>) => void;
   updateProfile: (partial: Partial<Profile>) => void;
-  updateAvatarConfig: (config: Partial<import('@/components/AvatarPersonagem').AvatarConfig>) => void;
+  updateAvatarConfig: (config: Partial<AvatarConfig>) => void;
   addXp: (quantidade: number) => void;
   addMoedas: (quantidade: number) => void;
   incrementStreak: () => void;
+  /** Define a sequência de dias (calculada pelo histórico da rotina) e libera as conquistas dela. */
+  definirStreak: (dias: number) => void;
   unlockConquista: (id: string) => void;
   loadFromSupabase: (userId: string) => Promise<void>;
   resetProfile: () => void;
@@ -127,6 +129,16 @@ export const useUserStore = create<UserState>((set) => ({
       return { profile: { ...s.profile, streak: novoStreak, conquistas } };
     }),
 
+  definirStreak: (dias) =>
+    set((s) => {
+      const agora = new Date().toISOString();
+      const conquistas = s.profile.conquistas.map((c) => {
+        const meta = c.id === 'tres_dias' ? 3 : c.id === 'semana_perfeita' ? 7 : 0;
+        return meta && dias >= meta && !c.desbloqueada ? { ...c, desbloqueada: true, desbloqueadaEm: agora } : c;
+      });
+      return { profile: { ...s.profile, streak: dias, conquistas } };
+    }),
+
   unlockConquista: (id) =>
     set((s) => ({
       profile: {
@@ -161,7 +173,7 @@ export const useUserStore = create<UserState>((set) => ({
         moedas: data.moedas ?? s.profile.moedas,
         streak: data.streak ?? s.profile.streak,
         avatar_emoji: data.avatar_emoji ?? s.profile.avatar_emoji,
-        avatar_config: data.avatar_config ?? s.profile.avatar_config,
+        avatar_config: data.avatar_config ? normalizarAvatar(data.avatar_config) : s.profile.avatar_config,
         conquistas: data.conquistas?.length ? data.conquistas : s.profile.conquistas,
         preferencias: data.preferencias ?? s.profile.preferencias,
       },
@@ -179,12 +191,8 @@ AsyncStorage.getItem(STORAGE_KEY).then((raw) => {
     const saved = JSON.parse(raw);
     if (saved?.profile) {
       const loaded = { ...saved.profile };
-      // Migra avatar_config antigo (skinTom-based) para o novo formato DiceBear
-      if (loaded.avatar_config && 'skinTom' in loaded.avatar_config) {
-        loaded.avatar_config = { ...avatarConfigPadrao };
-      } else if (loaded.avatar_config && !Array.isArray(loaded.avatar_config.features)) {
-        loaded.avatar_config.features = [];
-      }
+      // Converte qualquer avatar salvo antes (2D DiceBear ou o formato skinTom) para o 3D.
+      loaded.avatar_config = normalizarAvatar(loaded.avatar_config);
       useUserStore.setState((s) => ({
         profile: { ...s.profile, ...loaded },
       }));

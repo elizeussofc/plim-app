@@ -1,49 +1,52 @@
-import { Card, Text } from '@/components/ui';
+import Icone, { type NomeIcone } from '@/components/Icone';
+import { PecaBotao } from '@/components/plim';
+import { Text } from '@/components/Texto';
+import { type Expressao } from '@/lib/avatar';
+import { C, F } from '@/lib/theme';
 import { useRotinaStore } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
-import { Pressable, View } from 'react-native';
-import { type Expressao } from './AvatarPersonagem';
+import { View } from 'react-native';
 
 type Nivel = {
   label: string;
   cor: string;
   fundo: string;
+  icone: NomeIcone;
   emoji: string;
   expressao: Expressao;
   dica?: string;
 };
 
+// O Plim não dá bronca: o nível mais baixo é um convite, não um alerta vermelho.
 const NIVEIS: Nivel[] = [
   {
-    label: 'Rotina parada',
-    cor: '#EF4444', fundo: '#FEE2E2',
-    emoji: '😐', expressao: 'neutro',
-    dica: 'Comece com uma tarefa pequena — qualquer passo já conta!',
+    label: 'Dia em branco',
+    cor: C.textSub, fundo: C.surfaceHigh,
+    icone: 'humor-3', emoji: '😐', expressao: 'neutro',
+    dica: 'Uma tarefa pequena já muda o dia. Qual é a mais fácil agora?',
   },
   {
     label: 'Primeiros passos',
-    cor: '#F97316', fundo: '#FFEDD5',
-    emoji: '😐', expressao: 'neutro',
-    dica: 'Você está andando! Continue com mais uma tarefa hoje.',
+    cor: C.accent, fundo: C.accentSoft,
+    icone: 'humor-4', emoji: '🙂', expressao: 'neutro',
+    dica: 'Você já começou. Mais uma e o dia engrena.',
   },
   {
-    label: 'No caminho certo',
-    cor: '#EAB308', fundo: '#FEF9C3',
-    emoji: '🙂', expressao: 'neutro',
-    dica: 'Boa consistência! Mantenha o ritmo.',
+    label: 'No caminho',
+    cor: C.gold, fundo: C.goldSoft,
+    icone: 'humor-4', emoji: '🙂', expressao: 'feliz',
+    dica: 'Bom ritmo. Siga no seu tempo.',
   },
   {
-    label: 'Indo muito bem!',
-    cor: '#10B981', fundo: '#D1FAE5',
-    emoji: '😊', expressao: 'feliz',
-    dica: undefined,
+    label: 'Indo muito bem',
+    cor: C.success, fundo: C.successSoft,
+    icone: 'humor-5', emoji: '😊', expressao: 'feliz',
   },
   {
-    label: 'Em chamas! 🔥',
-    cor: '#7C3AED', fundo: '#EDE9FE',
-    emoji: '🤩', expressao: 'animado',
-    dica: undefined,
+    label: 'Em chamas',
+    cor: C.primaryLight, fundo: C.glass,
+    icone: 'chama', emoji: '🤩', expressao: 'animado',
   },
 ];
 
@@ -74,6 +77,7 @@ export function expressaoDoScore(score: number): Expressao {
 
 const SEGMENTOS = 5;
 
+/** Como está a rotina hoje: cinco gomos, um rosto e uma frase. Leva para a aba Rotina. */
 export default function TermometroRotina() {
   const router  = useRouter();
   const tarefas = useRotinaStore((s) => s.tarefas);
@@ -81,82 +85,38 @@ export default function TermometroRotina() {
 
   const score  = calcularScoreRotina(tarefas, profile.streak, profile.xp_total);
   const nivel  = nivelDoScore(score);
-  const segsAtivos = Math.max(score > 0 ? 1 : 0, Math.ceil((score / 100) * SEGMENTOS));
-
-  const totalTarefas = tarefas.length;
+  const gomos  = Math.max(score > 0 ? 1 : 0, Math.ceil((score / 100) * SEGMENTOS));
+  const total  = tarefas.length;
   const feitas = tarefas.filter((t) => t.status === 'feita').length;
-  const isNewUser = score === 0 && totalTarefas === 0 && profile.xp_total === 0;
 
   return (
-    <Card variant="default" padding="md" className="mb-5">
-      {/* Cabeçalho */}
-      <View className="flex-row items-center justify-between mb-1">
-        <Text variant="small" className="font-semibold text-slate-700">
-          🌡️ Saúde da sua rotina
-        </Text>
-        <Pressable onPress={() => router.push('/(tabs)/rotina')} className="active:opacity-70">
-          <Text style={{ fontSize: 11, color: '#7C3AED' }}>Ver rotina →</Text>
-        </Pressable>
+    <PecaBotao
+      onPress={() => router.push('/(tabs)/rotina')}
+      accessibilityLabel={`Rotina de hoje: ${nivel.label}. ${feitas} de ${total} tarefas feitas. Abrir rotina.`}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+        <Icone nome={nivel.icone} tamanho={44} />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 13, color: C.textSub }}>Sua rotina hoje</Text>
+          <Text style={{ fontFamily: F.display, fontSize: 19, color: C.text }}>{nivel.label}</Text>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontFamily: F.displayX, fontSize: 22, color: C.text }}>{feitas}<Text style={{ fontFamily: F.regular, fontSize: 15, color: C.textSub }}>/{total}</Text></Text>
+          <Text style={{ fontSize: 12, color: C.textSub }}>tarefas</Text>
+        </View>
       </View>
-      <Text style={{ fontSize: 10, color: '#94A3B8', marginBottom: 10 }}>
-        Tarefas · streak · progresso geral
-      </Text>
 
-      {/* Barra termômetro */}
-      <View className="flex-row gap-1.5 mb-2.5">
+      <View style={{ flexDirection: 'row', gap: 6 }} accessibilityRole="progressbar" accessibilityValue={{ min: 0, max: 100, now: score }}>
         {Array.from({ length: SEGMENTOS }).map((_, i) => (
-          <View
-            key={i}
-            style={{
-              flex: 1,
-              height: 10,
-              borderRadius: 5,
-              backgroundColor: i < segsAtivos ? nivel.cor : '#E2E8F0',
-            }}
-          />
+          <View key={i} style={{ flex: 1, height: 12, borderRadius: 6, backgroundColor: i < gomos ? nivel.cor : C.track }} />
         ))}
       </View>
 
-      {/* Status + pontuação */}
-      <View className="flex-row items-center justify-between mb-1">
-        <View
-          style={{
-            backgroundColor: isNewUser ? '#EDE9FE' : nivel.fundo,
-            paddingHorizontal: 10,
-            paddingVertical: 4,
-            borderRadius: 12,
-          }}
-        >
-          <Text style={{ fontSize: 12, color: isNewUser ? '#7C3AED' : nivel.cor, fontWeight: '700' }}>
-            {isNewUser ? '🚀 Dia novo!' : `${nivel.emoji} ${nivel.label}`}
-          </Text>
-        </View>
-        <View className="items-end">
-          <Text style={{ fontSize: 16, fontWeight: '800', color: nivel.cor }}>
-            {score}
-            <Text style={{ fontSize: 11, fontWeight: '400', color: '#94A3B8' }}>/100</Text>
-          </Text>
-          <Text style={{ fontSize: 10, color: '#94A3B8' }}>
-            {feitas}/{totalTarefas} tarefas · {profile.streak}🔥
-          </Text>
-        </View>
-      </View>
-
-      {/* Dica contextual */}
       {nivel.dica && (
-        <View
-          style={{
-            marginTop: 10,
-            backgroundColor: '#F8FAFC',
-            borderRadius: 8,
-            padding: 8,
-            borderLeftWidth: 3,
-            borderLeftColor: nivel.cor,
-          }}
-        >
-          <Text style={{ fontSize: 11, color: '#64748B' }}>💡 {nivel.dica}</Text>
+        <View style={{ marginTop: 12, backgroundColor: nivel.fundo, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 10 }}>
+          <Text style={{ fontSize: 14, color: C.text, lineHeight: 20 }}>{nivel.dica}</Text>
         </View>
       )}
-    </Card>
+    </PecaBotao>
   );
 }

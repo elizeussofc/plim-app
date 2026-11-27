@@ -1,39 +1,54 @@
+import Icone, { type NomeIcone } from '@/components/Icone';
+import { Barra, Botao, Peca, Secao, Tela } from '@/components/plim';
+import { Text } from '@/components/Texto';
+import { avisar, confirmar } from '@/lib/avisar';
 import { adicionarAoCalendario } from '@/lib/calendar';
+import { premiarTarefa, sincronizarDia } from '@/lib/cicloDiario';
 import { agendarLembreteDiario, cancelarLembrete } from '@/lib/notifications';
 import { sincronizarPontuacao } from '@/lib/ranking';
-import { C } from '@/lib/theme';
+import { C, F, R } from '@/lib/theme';
 import { useAuthStore } from '@/stores/authStore';
-import { useDesafiosStore } from '@/stores/desafiosStore';
-import { useRotinaStore } from '@/stores/rotinaStore';
+import { useRotinaStore, type Tarefa } from '@/stores/rotinaStore';
 import { useUserStore } from '@/stores/userStore';
 import { useEffect, useState } from 'react';
-import {
-  Alert, KeyboardAvoidingView, Modal, Platform,
-  Pressable, ScrollView, Text, TextInput, View,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import Animated, {
-  FadeInDown, FadeInUp,
-  useAnimatedStyle, useSharedValue, withTiming,
-} from 'react-native-reanimated';
+import { Image, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 
-const emojis = ['💧','🥗','🏃','😴','📚','🎯','💊','🧘','🚿','☀️','🌙','✅'];
+const emojis = ['✅', '💧', '🥗', '🏃', '😴', '📚', '🎯', '💊', '🧘', '☀️', '🌙', '📱', '🎨', '💬'];
+const NA_WEB = Platform.OS === 'web';
+const HORA_VALIDA = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function SectionLabel({ label }: { label: string }) {
+/** Enquanto a pessoa digita só números, coloca os dois-pontos: 0800 → 08:00. */
+function formatarHora(texto: string): string {
+  const d = texto.replace(/\D/g, '').slice(0, 4);
+  return d.length <= 2 ? d : `${d.slice(0, 2)}:${d.slice(2)}`;
+}
+
+/** Botão pequeno das ações de uma tarefa. */
+function Acao({ rotulo, icone, ativo, aoTocar, desligado, rotuloAcessivel }: { rotulo: string; icone?: NomeIcone; ativo?: boolean; aoTocar: () => void; desligado?: boolean; rotuloAcessivel: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 14 }}>
-      <View style={{ width: 3, height: 14, backgroundColor: C.primaryLight, borderRadius: 2 }} />
-      <Text style={{ fontSize: 11, fontWeight: '700', color: C.primaryLight, letterSpacing: 1.5, textTransform: 'uppercase' }}>
-        {label}
-      </Text>
-    </View>
+    <Pressable
+      onPress={aoTocar}
+      disabled={desligado}
+      accessibilityRole="button"
+      accessibilityLabel={rotuloAcessivel}
+      accessibilityState={{ disabled: !!desligado, selected: !!ativo }}
+      style={{
+        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+        minHeight: 44, borderRadius: 14, paddingHorizontal: 6,
+        backgroundColor: ativo ? C.glass : C.surfaceHigh,
+        borderWidth: 2, borderColor: ativo ? C.borderPrimary : 'transparent',
+        opacity: desligado ? 0.5 : 1,
+      }}
+    >
+      {icone && <Icone nome={icone} tamanho={20} />}
+      <Text style={{ fontFamily: F.bold, fontSize: 13, color: ativo ? C.primaryLight : C.textSub }} numberOfLines={1}>{rotulo}</Text>
+    </Pressable>
   );
 }
 
 export default function RotinaScreen() {
-  const { tarefas, alternarStatus, adicionarTarefa, removerTarefa, marcarLembrete, marcarCalendario } = useRotinaStore();
-  const { addXp, addMoedas, unlockConquista, profile } = useUserStore();
-  const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
+  const { tarefas, definirStatus, adicionarTarefa, removerTarefa, marcarLembrete, marcarCalendario } = useRotinaStore();
+  const profile = useUserStore((s) => s.profile);
   const session = useAuthStore((s) => s.session);
 
   const [modalAberto, setModalAberto] = useState(false);
@@ -45,342 +60,268 @@ export default function RotinaScreen() {
 
   const feitas   = tarefas.filter((t) => t.status === 'feita').length;
   const puladas  = tarefas.filter((t) => t.status === 'pulada').length;
-  const rotinacompleta = tarefas.length > 0 && feitas === tarefas.length;
+  const completa = tarefas.length > 0 && feitas === tarefas.length;
   const progresso = tarefas.length > 0 ? feitas / tarefas.length : 0;
-
-  const barWidth = useSharedValue(0);
-  useEffect(() => { barWidth.value = withTiming(progresso * 100, { duration: 900 }); }, [progresso]);
-  const barStyle = useAnimatedStyle(() => ({ width: `${barWidth.value}%` as any }));
+  const horarioOk = novoHorario === '' || HORA_VALIDA.test(novoHorario);
 
   useEffect(() => {
     if (!session?.user?.id) return;
-    const pontos = Math.max(0, feitas * 10 - puladas * 5 + (rotinacompleta ? 30 : 0) + profile.streak * 5);
+    const pontos = Math.max(0, feitas * 10 - puladas * 5 + (completa ? 30 : 0) + profile.streak * 5);
     sincronizarPontuacao({ userId: session.user.id, nomeExibido: profile.apelido ?? profile.nome ?? 'Guerreiro', avatarEmoji: profile.avatar_emoji, pontos, nivel: profile.nivel, streak: profile.streak, tarefasFeitas: feitas, tarefasPuladas: puladas });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tarefas, session?.user?.id]);
 
-  function tocarTarefa(id: string, statusAtual: string) {
-    if (statusAtual === 'pendente') {
-      addXp(10); addMoedas(5);
-      if (feitas === 0) unlockConquista('primeiro_passo');
-      registrarEvento('tarefas_dia', 1)(addXp, addMoedas);
-      if (feitas + 1 >= 3) registrarEvento('streak_3')(addXp, addMoedas);
+  /** Tocar na tarefa marca ou desmarca. Pular é um botão à parte. */
+  function marcar(t: Tarefa) {
+    if (t.status === 'feita') definirStatus(t.id, 'pendente');
+    else {
+      premiarTarefa(t.id);
+      definirStatus(t.id, 'feita');
     }
-    alternarStatus(id);
+    sincronizarDia();
   }
 
-  async function toggleLembrete(id: string, titulo: string, horario: string, jaAgendado: boolean) {
-    if (Platform.OS === 'web') { Alert.alert('Não disponível na web', 'Os lembretes funcionam apenas no app mobile.'); return; }
-    if (!horario.includes(':') || horario === '--:--') { Alert.alert('Horário inválido', 'Defina um horário antes de agendar.'); return; }
-    setCarregando((s) => ({ ...s, [id]: 'lembrete' }));
+  function pular(t: Tarefa) {
+    definirStatus(t.id, t.status === 'pulada' ? 'pendente' : 'pulada');
+    sincronizarDia();
+  }
+
+  async function alternarLembrete(t: Tarefa) {
+    if (!HORA_VALIDA.test(t.horario)) { avisar('Falta o horário', 'Esta tarefa não tem horário. Crie de novo com um horário para usar o lembrete.'); return; }
+    setCarregando((s) => ({ ...s, [t.id]: 'lembrete' }));
     try {
-      if (jaAgendado) {
-        await cancelarLembrete(id); marcarLembrete(id, false);
-        Alert.alert('Lembrete removido', `Alarme de "${titulo}" cancelado.`);
+      if (t.lembreteAgendado) {
+        await cancelarLembrete(t.id);
+        marcarLembrete(t.id, false);
+        avisar('Lembrete desligado', `"${t.titulo}" não avisa mais.`);
       } else {
-        const ok = await agendarLembreteDiario(id, titulo, horario);
-        if (ok) { marcarLembrete(id, true); Alert.alert('🔔 Lembrete agendado!', `Você será lembrado às ${horario} todo dia.`); }
-        else Alert.alert('Permissão negada', 'Precisamos de permissão para notificações.');
+        const ok = await agendarLembreteDiario(t.id, t.titulo, t.horario);
+        if (ok) { marcarLembrete(t.id, true); avisar('🔔 Lembrete ligado', `Todo dia às ${t.horario}.`); }
+        else avisar('Sem permissão', 'Libere as notificações do Plim nos ajustes do celular.');
       }
-    } finally { setCarregando((s) => ({ ...s, [id]: null })); }
+    } finally { setCarregando((s) => ({ ...s, [t.id]: null })); }
   }
 
-  async function toggleCalendario(id: string, titulo: string, categoria: string, horario: string, jaAdicionado: boolean) {
-    if (jaAdicionado) { Alert.alert('Já adicionado', 'Esta tarefa já está no seu calendário.'); return; }
-    if (!horario.includes(':') || horario === '--:--') { Alert.alert('Horário inválido', 'Defina um horário antes de agendar.'); return; }
-    setCarregando((s) => ({ ...s, [id]: 'calendario' }));
+  async function colocarNaAgenda(t: Tarefa) {
+    if (t.calendarioAdicionado) { avisar('Já está na agenda', 'Esta tarefa já foi para o seu calendário.'); return; }
+    if (!HORA_VALIDA.test(t.horario)) { avisar('Falta o horário', 'Esta tarefa não tem horário. Crie de novo com um horário para pôr na agenda.'); return; }
+    setCarregando((s) => ({ ...s, [t.id]: 'calendario' }));
     try {
-      const ok = await adicionarAoCalendario(titulo, categoria, horario);
-      if (ok) { marcarCalendario(id, true); Alert.alert('📅 Adicionado!', `"${titulo}" criado no calendário.`); }
-    } finally { setCarregando((s) => ({ ...s, [id]: null })); }
+      const ok = await adicionarAoCalendario(t.titulo, t.categoria, t.horario);
+      if (ok) { marcarCalendario(t.id, true); avisar('📅 Foi para a agenda', `"${t.titulo}" está no seu calendário.`); }
+    } finally { setCarregando((s) => ({ ...s, [t.id]: null })); }
+  }
+
+  function fecharModal() {
+    setModalAberto(false);
+    setNovoTitulo(''); setNovaCategoria(''); setNovoHorario(''); setEmojiSelecionado('✅');
   }
 
   function salvarNovaTarefa() {
-    if (!novoTitulo.trim()) return;
-    adicionarTarefa({ icone: emojiSelecionado, titulo: novoTitulo.trim(), categoria: novaCategoria.trim() || 'Geral', horario: novoHorario.trim() || '--:--' });
-    setModalAberto(false); setNovoTitulo(''); setNovaCategoria(''); setNovoHorario(''); setEmojiSelecionado('✅');
+    if (!novoTitulo.trim() || !horarioOk) return;
+    adicionarTarefa({ icone: emojiSelecionado, titulo: novoTitulo.trim(), categoria: novaCategoria.trim() || 'Geral', horario: novoHorario || '--:--' });
+    fecharModal();
   }
 
+  const campo = { backgroundColor: C.surface, borderWidth: 2, borderColor: C.border, borderRadius: R.md, paddingHorizontal: 16, paddingVertical: 13, color: C.text, fontSize: 16, fontFamily: F.regular } as const;
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <ScrollView
-        style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
-          <Text style={{ fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 }}>minha rotina</Text>
-          <Pressable
-            onPress={() => setModalAberto(true)}
-            accessibilityLabel="Adicionar nova tarefa"
-            accessibilityRole="button"
-            android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-            style={{
-              backgroundColor: C.primary,
-              paddingHorizontal: 16,
-              paddingVertical: 9,
-              borderRadius: 20,
-              shadowColor: C.primary,
-              shadowOpacity: 0.5,
-              shadowRadius: 10,
-              elevation: 8,
-              minHeight: 44,
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>+ nova</Text>
-          </Pressable>
-        </Animated.View>
+    <>
+      <Tela>
+        {/* Cabeçalho */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 30, color: C.text }}>Minha rotina</Text>
+          <Botao rotulo="+ Nova" pequeno onPress={() => setModalAberto(true)} accessibilityLabel="Adicionar nova tarefa" />
+        </View>
 
         {/* Progresso */}
-        <Animated.View entering={FadeInDown.delay(80).springify()} style={{
-          backgroundColor: C.surface,
-          borderRadius: 18,
-          padding: 18,
-          marginBottom: 24,
-          borderWidth: 1,
-          borderColor: rotinacompleta ? C.success + '44' : C.border,
-        }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-            <Text style={{ fontSize: 12, color: C.textSub, fontWeight: '500' }}>progresso de hoje</Text>
-            <Text style={{ fontSize: 12, color: rotinacompleta ? C.success : C.primaryLight, fontWeight: '700' }}>{feitas}/{tarefas.length}</Text>
-          </View>
-          <View style={{ backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 6, height: 8, overflow: 'hidden' }}>
-            <Animated.View style={[{
-              height: 8,
-              borderRadius: 6,
-              backgroundColor: rotinacompleta ? C.success : C.primaryLight,
-              shadowColor: rotinacompleta ? C.success : C.primary,
-              shadowOpacity: 0.7,
-              shadowRadius: 6,
-              elevation: 4,
-            }, barStyle]} />
-          </View>
-          {rotinacompleta && tarefas.length > 0 && (
-            <Text style={{ color: C.success, fontWeight: '700', fontSize: 13, textAlign: 'center', marginTop: 12 }}>🎉 Rotina completa! Incrível!</Text>
-          )}
-        </Animated.View>
+        {completa ? (
+          <Peca tinta="verde" padding={0} estilo={{ marginBottom: 22, overflow: 'hidden' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{ flex: 1, padding: 18, paddingRight: 0 }}>
+                <Text style={{ fontFamily: F.displayX, fontSize: 22, color: C.text, lineHeight: 26 }}>Rotina completa!</Text>
+                <Text style={{ fontSize: 14, color: C.textSub, marginTop: 4, lineHeight: 20 }}>{feitas} de {tarefas.length} feitas. Hoje você cuidou de você.</Text>
+              </View>
+              <Image source={require('../../assets/cenas/vitoria.webp')} style={{ width: 104, height: 120, margin: 8 }} resizeMode="contain" accessible={false} />
+            </View>
+          </Peca>
+        ) : (
+          <Peca padding={16} estilo={{ marginBottom: 22 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }}>
+              <Text style={{ fontSize: 15, color: C.textSub }}>Hoje</Text>
+              <Text style={{ fontFamily: F.display, fontSize: 18, color: C.text }}>{feitas} de {tarefas.length} feitas</Text>
+            </View>
+            <Barra valor={progresso} altura={14} />
+          </Peca>
+        )}
 
-        <SectionLabel label="tarefas de hoje" />
+        {tarefas.length > 0 && <Secao titulo="Tarefas de hoje" />}
 
-        <View style={{ gap: 10 }}>
-          {tarefas.map((tarefa, i) => {
-            const feita  = tarefa.status === 'feita';
-            const pulada = tarefa.status === 'pulada';
-            const load   = carregando[tarefa.id];
+        <View style={{ gap: 12 }}>
+          {tarefas.map((t) => {
+            const feita  = t.status === 'feita';
+            const pulada = t.status === 'pulada';
+            const load   = carregando[t.id];
+            const temHora = HORA_VALIDA.test(t.horario);
             return (
-              <Animated.View key={tarefa.id} entering={FadeInDown.delay(140 + i * 50).springify()}>
-                <View style={{
-                  backgroundColor: C.surface,
-                  borderRadius: 16,
-                  borderWidth: 1,
-                  borderColor: feita ? C.success + '40' : C.border,
-                  opacity: pulada ? 0.5 : 1,
+              <View
+                key={t.id}
+                style={{
+                  backgroundColor: feita ? C.successSoft : C.surface,
+                  borderRadius: R.lg,
+                  borderWidth: 2,
+                  borderBottomWidth: 5,
+                  borderColor: feita ? '#B9E8D2' : C.border,
+                  opacity: pulada ? 0.6 : 1,
                   overflow: 'hidden',
-                }}>
-                  <Pressable
-                    onPress={() => tocarTarefa(tarefa.id, tarefa.status)}
-                    onLongPress={() => Alert.alert('Remover', `Remover "${tarefa.titulo}"?`, [
-                      { text: 'Cancelar', style: 'cancel' },
-                      { text: 'Remover', style: 'destructive', onPress: () => removerTarefa(tarefa.id) },
-                    ])}
-                    accessibilityLabel={`${tarefa.titulo}. Status: ${feita ? 'concluída' : pulada ? 'pulada' : 'pendente'}. Toque para marcar, segure para remover.`}
-                    accessibilityRole="checkbox"
-                    accessibilityState={{ checked: feita }}
-                    android_ripple={{ color: C.primaryLight + '22', borderless: false }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16 }}
-                  >
-                    <View style={{
-                      width: 46,
-                      height: 46,
-                      borderRadius: 13,
-                      backgroundColor: feita ? C.success + '20' : C.surfaceHigh,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      borderWidth: 1,
-                      borderColor: feita ? C.success + '40' : C.border,
-                    }}>
-                      <Text style={{ fontSize: 22 }}>{tarefa.icone}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontWeight: '600', fontSize: 14, color: feita ? C.textSub : C.text, textDecorationLine: feita ? 'line-through' : 'none' }}>{tarefa.titulo}</Text>
-                      <Text style={{ fontSize: 11, color: C.textMuted, marginTop: 2 }}>{tarefa.categoria} · {tarefa.horario}</Text>
-                    </View>
-                    <View style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: 16,
-                      backgroundColor: feita ? C.success : 'transparent',
-                      borderWidth: feita ? 0 : 2,
-                      borderColor: C.border,
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                      {feita && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '800' }}>✓</Text>}
-                      {pulada && <Text style={{ color: C.textMuted, fontSize: 14 }}>–</Text>}
-                    </View>
-                  </Pressable>
-
-                  <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, paddingBottom: 14, borderTopWidth: 1, borderTopColor: C.border, paddingTop: 10 }}>
-                    <Pressable
-                      onPress={() => toggleLembrete(tarefa.id, tarefa.titulo, tarefa.horario, tarefa.lembreteAgendado)}
-                      disabled={load === 'lembrete'}
-                      accessibilityLabel={tarefa.lembreteAgendado ? `Cancelar lembrete de ${tarefa.titulo}` : `Agendar lembrete para ${tarefa.titulo}`}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: load === 'lembrete' }}
-                      android_ripple={{ color: C.primaryLight + '22', borderless: false }}
-                      style={{
-                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        paddingVertical: 9, borderRadius: 10, minHeight: 44,
-                        backgroundColor: tarefa.lembreteAgendado ? C.glassStrong : C.surfaceHigh,
-                        borderWidth: 1, borderColor: tarefa.lembreteAgendado ? C.borderPrimary : C.border,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12 }}>{tarefa.lembreteAgendado ? '🔔' : '🔕'}</Text>
-                      <Text style={{ fontSize: 11, color: tarefa.lembreteAgendado ? C.primaryLight : C.textSub, fontWeight: '600' }}>
-                        {load === 'lembrete' ? 'Aguarde...' : tarefa.lembreteAgendado ? 'Ativo' : 'Lembrar'}
-                      </Text>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => toggleCalendario(tarefa.id, tarefa.titulo, tarefa.categoria, tarefa.horario, tarefa.calendarioAdicionado)}
-                      disabled={load === 'calendario'}
-                      accessibilityLabel={tarefa.calendarioAdicionado ? `${tarefa.titulo} já adicionado ao calendário` : `Adicionar ${tarefa.titulo} ao calendário`}
-                      accessibilityRole="button"
-                      accessibilityState={{ disabled: load === 'calendario' }}
-                      android_ripple={{ color: C.success + '22', borderless: false }}
-                      style={{
-                        flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6,
-                        paddingVertical: 9, borderRadius: 10, minHeight: 44,
-                        backgroundColor: tarefa.calendarioAdicionado ? C.success + '20' : C.surfaceHigh,
-                        borderWidth: 1, borderColor: tarefa.calendarioAdicionado ? C.success + '44' : C.border,
-                      }}
-                    >
-                      <Text style={{ fontSize: 12 }}>📅</Text>
-                      <Text style={{ fontSize: 11, color: tarefa.calendarioAdicionado ? C.success : C.textSub, fontWeight: '600' }}>
-                        {load === 'calendario' ? 'Aguarde...' : tarefa.calendarioAdicionado ? 'Agendado' : 'Agendar'}
-                      </Text>
-                    </Pressable>
+                }}
+              >
+                <Pressable
+                  onPress={() => marcar(t)}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: feita }}
+                  accessibilityLabel={`${t.titulo}${temHora ? `, às ${t.horario}` : ''}. ${feita ? 'Feita' : pulada ? 'Pulada hoje' : 'Pendente'}. Toque para ${feita ? 'desmarcar' : 'marcar como feita'}.`}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 }}
+                >
+                  <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: feita ? C.surface : C.surfaceHigh, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 30 }}>{t.icone}</Text>
                   </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: F.display, fontSize: 17, color: C.text, textDecorationLine: feita ? 'line-through' : 'none' }} numberOfLines={2}>{t.titulo}</Text>
+                    <Text style={{ fontSize: 13, color: C.textSub, marginTop: 1 }}>
+                      {t.categoria}{temHora ? ` · ${t.horario}` : ''}{pulada ? ' · pulada hoje' : ''}
+                    </Text>
+                  </View>
+                  {feita
+                    ? <Icone nome="check" tamanho={40} />
+                    : <View style={{ width: 38, height: 38, borderRadius: 19, borderWidth: 3, borderColor: C.borderBright, backgroundColor: C.surface }} />}
+                </Pressable>
+
+                <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 12, paddingBottom: 12 }}>
+                  {!NA_WEB && (
+                    <Acao
+                      rotulo={load === 'lembrete' ? '...' : t.lembreteAgendado ? 'Ligado' : 'Lembrar'}
+                      icone="sino"
+                      ativo={t.lembreteAgendado}
+                      desligado={load === 'lembrete'}
+                      aoTocar={() => alternarLembrete(t)}
+                      rotuloAcessivel={t.lembreteAgendado ? `Desligar lembrete de ${t.titulo}` : `Ligar lembrete de ${t.titulo}`}
+                    />
+                  )}
+                  {!NA_WEB && (
+                    <Acao
+                      rotulo={load === 'calendario' ? '...' : t.calendarioAdicionado ? 'Na agenda' : 'Agenda'}
+                      icone="calendario"
+                      ativo={t.calendarioAdicionado}
+                      desligado={load === 'calendario'}
+                      aoTocar={() => colocarNaAgenda(t)}
+                      rotuloAcessivel={t.calendarioAdicionado ? `${t.titulo} já está na agenda` : `Pôr ${t.titulo} na agenda`}
+                    />
+                  )}
+                  {!feita && (
+                    <Acao
+                      rotulo={pulada ? 'Voltar' : 'Pular hoje'}
+                      ativo={pulada}
+                      aoTocar={() => pular(t)}
+                      rotuloAcessivel={pulada ? `Desfazer: ${t.titulo} volta a ficar pendente` : `Pular ${t.titulo} hoje`}
+                    />
+                  )}
+                  <Acao
+                    rotulo="Remover"
+                    aoTocar={() => confirmar('Remover tarefa', `Tirar "${t.titulo}" da sua rotina?`, 'Remover', () => removerTarefa(t.id))}
+                    rotuloAcessivel={`Remover ${t.titulo} da rotina`}
+                  />
                 </View>
-              </Animated.View>
+              </View>
             );
           })}
         </View>
 
         {tarefas.length === 0 && (
-          <Animated.View entering={FadeInDown.delay(200).springify()} style={{
-            backgroundColor: C.surface,
-            borderRadius: 18,
-            padding: 32,
-            alignItems: 'center',
-            borderWidth: 1,
-            borderColor: C.border,
-            marginTop: 16,
-          }}>
-            <Text style={{ fontSize: 40, marginBottom: 12 }}>🚀</Text>
-            <Text style={{ fontSize: 15, fontWeight: '700', color: C.primaryLight, marginBottom: 6 }}>Vamos começar?</Text>
-            <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center' }}>Adicione sua primeira tarefa!</Text>
-          </Animated.View>
+          <Peca estilo={{ alignItems: 'center', paddingVertical: 26 }}>
+            <Image source={require('../../assets/cenas/ola.webp')} style={{ width: 170, height: 178 }} resizeMode="contain" accessible={false} />
+            <Text style={{ fontFamily: F.display, fontSize: 20, color: C.text, marginTop: 10 }}>Vamos montar sua rotina?</Text>
+            <Text style={{ fontSize: 14, color: C.textSub, textAlign: 'center', marginTop: 4, marginBottom: 16, lineHeight: 20 }}>Comece com uma tarefa só. Pequena já serve.</Text>
+            <Botao rotulo="Criar primeira tarefa" onPress={() => setModalAberto(true)} estilo={{ alignSelf: 'stretch' }} />
+          </Peca>
         )}
 
-        <Text style={{ fontSize: 11, color: C.textMuted, textAlign: 'center', marginTop: 20 }}>toque para marcar · segure para remover</Text>
-      </ScrollView>
+        {tarefas.length > 0 && (
+          <Text style={{ fontSize: 13, color: C.textMuted, textAlign: 'center', marginTop: 18, lineHeight: 19 }}>
+            A rotina recomeça todo dia, do zero e sem dívida.
+          </Text>
+        )}
+      </Tela>
 
-      {/* Modal Nova Tarefa */}
-      <Modal visible={modalAberto} animationType="slide" transparent onRequestClose={() => setModalAberto(false)}>
+      {/* Nova tarefa */}
+      <Modal visible={modalAberto} animationType="slide" transparent onRequestClose={fecharModal}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.65)' }} onPress={() => setModalAberto(false)} />
-          <View style={{
-            backgroundColor: C.surface,
-            borderTopLeftRadius: 28,
-            borderTopRightRadius: 28,
-            paddingHorizontal: 24,
-            paddingTop: 20,
-            paddingBottom: 40,
-            borderTopWidth: 1,
-            borderColor: C.borderPrimary,
-          }}>
-            <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>nova tarefa</Text>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(43,29,78,0.55)' }} onPress={fecharModal} accessibilityLabel="Fechar" />
+          <View style={{ backgroundColor: C.bg, borderTopLeftRadius: 30, borderTopRightRadius: 30, paddingHorizontal: 22, paddingTop: 10, paddingBottom: 30, width: '100%', maxWidth: 480, alignSelf: 'center' }}>
+            <View style={{ width: 44, height: 5, backgroundColor: C.borderBright, borderRadius: 3, alignSelf: 'center', marginBottom: 16 }} />
+            <Text accessibilityRole="header" style={{ fontFamily: F.display, fontSize: 22, color: C.text, marginBottom: 14 }}>Nova tarefa</Text>
 
-            <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>ícone</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {emojis.map((e) => (
-                  <Pressable key={e} onPress={() => setEmojiSelecionado(e)} style={{
-                    width: 44, height: 44, borderRadius: 13, alignItems: 'center', justifyContent: 'center',
-                    backgroundColor: emojiSelecionado === e ? C.primary : C.surfaceHigh,
-                    borderWidth: 1,
-                    borderColor: emojiSelecionado === e ? C.primaryLight + '55' : C.border,
-                  }}>
-                    <Text style={{ fontSize: 20 }}>{e}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            </ScrollView>
-
-            <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' }}>título *</Text>
+            <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.textSub, marginBottom: 6 }}>O que é?</Text>
             <TextInput
-              placeholder="Ex: Beber 2 litros de água"
+              placeholder="Ex.: beber um copo de água"
               placeholderTextColor={C.textMuted}
               value={novoTitulo}
               onChangeText={setNovoTitulo}
+              onSubmitEditing={salvarNovaTarefa}
+              returnKeyType="done"
               autoFocus
-              style={{
-                backgroundColor: C.surfaceHigh,
-                borderWidth: 1,
-                borderColor: C.border,
-                borderRadius: 14,
-                paddingHorizontal: 16,
-                paddingVertical: 13,
-                color: C.text,
-                fontSize: 15,
-                marginBottom: 14,
-              }}
+              maxLength={60}
+              accessibilityLabel="Título da tarefa"
+              style={[campo, { marginBottom: 14 }]}
             />
 
-            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' }}>categoria</Text>
-                <TextInput
-                  placeholder="Ex: Saúde"
-                  placeholderTextColor={C.textMuted}
-                  value={novaCategoria}
-                  onChangeText={setNovaCategoria}
-                  style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, color: C.text, fontSize: 14 }}
-                />
+            <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.textSub, marginBottom: 6 }}>Ícone</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14, marginHorizontal: -22 }} contentContainerStyle={{ paddingHorizontal: 22, gap: 8 }}>
+              {emojis.map((e) => {
+                const ativo = emojiSelecionado === e;
+                return (
+                  <Pressable
+                    key={e}
+                    onPress={() => setEmojiSelecionado(e)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: ativo }}
+                    accessibilityLabel={`Ícone ${e}`}
+                    style={{ width: 52, height: 52, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: ativo ? C.glass : C.surface, borderWidth: ativo ? 3 : 2, borderColor: ativo ? C.primary : C.border }}
+                  >
+                    <Text style={{ fontSize: 26 }}>{e}</Text>
+                  </Pressable>
+                );
+              })}
+            </ScrollView>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 6 }}>
+              <View style={{ flex: 1.4 }}>
+                <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.textSub, marginBottom: 6 }}>Categoria (opcional)</Text>
+                <TextInput placeholder="Ex.: saúde" placeholderTextColor={C.textMuted} value={novaCategoria} onChangeText={setNovaCategoria} maxLength={24} accessibilityLabel="Categoria" style={campo} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 8, letterSpacing: 1, textTransform: 'uppercase' }}>horário</Text>
+                <Text style={{ fontFamily: F.bold, fontSize: 13, color: C.textSub, marginBottom: 6 }}>Horário (opcional)</Text>
                 <TextInput
                   placeholder="08:00"
                   placeholderTextColor={C.textMuted}
                   value={novoHorario}
-                  onChangeText={setNovoHorario}
-                  keyboardType="numbers-and-punctuation"
-                  style={{ backgroundColor: C.surfaceHigh, borderWidth: 1, borderColor: C.border, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, color: C.text, fontSize: 14 }}
+                  onChangeText={(v) => setNovoHorario(formatarHora(v))}
+                  keyboardType="number-pad"
+                  inputMode="numeric"
+                  maxLength={5}
+                  accessibilityLabel="Horário, no formato hora e minuto"
+                  style={[campo, !horarioOk && { borderColor: C.danger }]}
                 />
               </View>
             </View>
+            <Text style={{ fontSize: 13, color: horarioOk ? C.textMuted : C.danger, marginBottom: 16, minHeight: 18 }}>
+              {horarioOk ? '' : 'Use hora e minuto, como 08:00 ou 21:30.'}
+            </Text>
 
-            <Pressable
-              onPress={salvarNovaTarefa}
-              style={{
-                backgroundColor: novoTitulo.trim() ? C.primary : C.primary + '55',
-                borderRadius: 16,
-                paddingVertical: 16,
-                alignItems: 'center',
-                shadowColor: C.primary,
-                shadowOpacity: novoTitulo.trim() ? 0.5 : 0,
-                shadowRadius: 12,
-                elevation: novoTitulo.trim() ? 8 : 0,
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Adicionar tarefa</Text>
-            </Pressable>
+            <Botao rotulo="Adicionar tarefa" onPress={salvarNovaTarefa} disabled={!novoTitulo.trim() || !horarioOk} />
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </>
   );
 }

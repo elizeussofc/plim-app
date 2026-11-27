@@ -1,4 +1,6 @@
 import { Card, Text } from '@/components/ui';
+import { Cabecalho } from '@/components/plim';
+import { dataLocal, hojeLocal } from '@/lib/dia';
 import { StatusDia, useRotinaStore } from '@/stores/rotinaStore';
 import { useRouter } from 'expo-router';
 import { Pressable, ScrollView, View } from 'react-native';
@@ -19,7 +21,7 @@ function gerarGrade(): { data: string; label: string }[] {
     const d = new Date(hoje);
     d.setDate(hoje.getDate() - i);
     dias.push({
-      data: d.toISOString().slice(0, 10),
+      data: dataLocal(d),
       label: d.getDate().toString(),
     });
   }
@@ -34,7 +36,7 @@ export default function HistoricoScreen() {
 
   const completos = grade.filter((d) => historicoDias[d.data] === 'completa').length;
   const parciais  = grade.filter((d) => historicoDias[d.data] === 'parcial').length;
-  const vazios    = grade.filter((d) => historicoDias[d.data] === 'vazia' && d.data <= new Date().toISOString().slice(0, 10)).length;
+  const vazios    = grade.filter((d) => historicoDias[d.data] === 'vazia' && d.data <= hojeLocal()).length;
 
   // Agrupa por semanas (linhas de 7)
   const semanas: typeof grade[] = [];
@@ -44,15 +46,11 @@ export default function HistoricoScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <View className="flex-row items-center px-5 pt-4 pb-3 bg-white border-b border-violet-100">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-          <Text className="text-violet-600 font-semibold">← Voltar</Text>
-        </Pressable>
-        <Text variant="h3" className="flex-1 text-center text-violet-800">📊 Histórico</Text>
-        <View style={{ width: 60 }} />
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+        <Cabecalho titulo="Histórico" icone="grafico" />
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }} contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* Resumo */}
         <View className="flex-row gap-3 mb-6">
@@ -88,7 +86,7 @@ export default function HistoricoScreen() {
             <View key={si} className="flex-row gap-1.5 mb-1.5">
               {semana.map((dia) => {
                 const status: StatusDia = historicoDias[dia.data] ?? 'vazia';
-                const ehHoje = dia.data === new Date().toISOString().slice(0, 10);
+                const ehHoje = dia.data === hojeLocal();
                 return (
                   <View
                     key={dia.data}

@@ -1,4 +1,5 @@
 import { Card, Text } from '@/components/ui';
+import { Cabecalho } from '@/components/plim';
 import { EntradaRanking, assinarRankingRealtime, buscarRanking } from '@/lib/ranking';
 import { useAuthStore } from '@/stores/authStore';
 import { useUserStore } from '@/stores/userStore';
@@ -30,6 +31,7 @@ export default function RankingScreen() {
 
   const [ranking, setRanking] = useState<EntradaRanking[]>([]);
   const [carregando, setCarregando] = useState(true);
+  const [falhou, setFalhou] = useState(false);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
   const [piscou, setPiscou] = useState<string | null>(null);
   const piscouTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -39,10 +41,13 @@ export default function RankingScreen() {
   const minhaPosicao = minhaEntrada?.posicao ?? null;
 
   useEffect(() => {
-    buscarRanking().then((data) => {
-      setRanking(data);
-      setCarregando(false);
-    });
+    // Se a rede falhar ou demorar, a tela sai do "carregando" em vez de girar para sempre.
+    let respondeu = false;
+    const limite = setTimeout(() => { if (!respondeu) { setFalhou(true); setCarregando(false); } }, 9000);
+    buscarRanking()
+      .then((data) => { respondeu = true; setRanking(data); setFalhou(false); })
+      .catch(() => { respondeu = true; setFalhou(true); })
+      .finally(() => { clearTimeout(limite); setCarregando(false); });
 
     const cancelar = assinarRankingRealtime((novoRanking) => {
       // Descobre quem mudou para piscar
@@ -69,24 +74,17 @@ export default function RankingScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      {/* Header */}
-      <View className="flex-row items-center justify-between px-5 pt-4 pb-3 border-b border-violet-100 bg-white">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2">
-          <Text className="text-violet-600 font-semibold">← Voltar</Text>
-        </Pressable>
-        <View className="items-center">
-          <Text variant="h3" className="text-violet-800">🏆 Ranking</Text>
-          {ultimaAtualizacao && (
-            <Text variant="caption" color="muted">
-              ao vivo · {ultimaAtualizacao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-            </Text>
-          )}
-        </View>
-        <View style={{ width: 60 }} />
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+        <Cabecalho
+          titulo="Ranking"
+          icone="trofeu"
+          sub={ultimaAtualizacao ? `ao vivo · ${ultimaAtualizacao.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}` : 'Pontos da semana'}
+        />
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
       >
         {/* Card do usuário atual (se estiver no ranking) */}
@@ -167,12 +165,19 @@ export default function RankingScreen() {
             <ActivityIndicator color="#7C3AED" size="large" />
             <Text variant="small" color="secondary" className="mt-3">Carregando ranking...</Text>
           </View>
+        ) : falhou && ranking.length === 0 ? (
+          <Card variant="flat" padding="lg" className="items-center">
+            <Text className="font-bold text-slate-800 mb-1">Não deu para carregar o ranking</Text>
+            <Text variant="small" color="secondary" className="text-center">
+              Confira sua internet e abra esta tela de novo.
+            </Text>
+          </Card>
         ) : ranking.length === 0 ? (
           <Card variant="flat" padding="lg" className="items-center">
             <Text className="text-4xl mb-3">🏁</Text>
-            <Text className="font-bold text-slate-800 mb-1">Nenhum jogador ainda</Text>
+            <Text className="font-bold text-slate-800 mb-1">Ninguém pontuou ainda</Text>
             <Text variant="small" color="secondary" className="text-center">
-              Complete sua rotina para entrar no ranking!
+              Entre na sua conta e faça uma tarefa da rotina para aparecer aqui.
             </Text>
           </Card>
         ) : (

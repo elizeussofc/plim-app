@@ -1,16 +1,17 @@
 import { View, ViewProps } from 'react-native';
+import { C, peca } from '@/lib/theme';
 
 interface CardProps extends ViewProps {
   variant?: 'default' | 'elevated' | 'flat' | 'primary';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
-const variantClasses: Record<NonNullable<CardProps['variant']>, string> = {
-  default:  'bg-white rounded-3xl shadow-sm border border-slate-100',
-  elevated: 'bg-white rounded-3xl shadow-md',
-  flat:     'bg-slate-50 rounded-3xl',
-  primary:  'bg-violet-600 rounded-3xl shadow-md',
-};
+const variantStyle = {
+  default:  peca(C.border, C.surface),
+  elevated: peca(C.borderBright, C.surface),
+  flat:     { backgroundColor: C.surfaceHigh, borderRadius: 24 },
+  primary:  peca(C.primaryDim, C.primary),
+} as const;
 
 const paddingClasses: Record<NonNullable<CardProps['padding']>, string> = {
   none: '',
@@ -19,10 +20,12 @@ const paddingClasses: Record<NonNullable<CardProps['padding']>, string> = {
   lg:   'p-6',
 };
 
-export function Card({ variant = 'default', padding = 'md', className = '', ...props }: CardProps) {
+/** Peça de massinha: fundo branco, borda creme e a borda de baixo mais grossa. */
+export function Card({ variant = 'default', padding = 'md', className = '', style, ...props }: CardProps) {
   return (
     <View
-      className={`${variantClasses[variant]} ${paddingClasses[padding]} ${className}`}
+      className={`${paddingClasses[padding]} ${className}`}
+      style={[variantStyle[variant], style]}
       {...props}
     />
   );

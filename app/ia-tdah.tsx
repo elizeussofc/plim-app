@@ -1,4 +1,5 @@
 import { MensagemChat, enviarMensagem } from '@/lib/anthropic';
+import { Cabecalho } from '@/components/plim';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
@@ -62,15 +63,8 @@ export default function IATDAHScreen() {
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 24}
       >
         {/* Header */}
-        <View className="flex-row items-center px-5 pt-4 pb-3 bg-white border-b border-violet-100">
-          <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-            <Text className="text-violet-600 font-semibold">← Voltar</Text>
-          </Pressable>
-          <View className="flex-1 items-center">
-            <Text variant="h3" className="text-violet-800">🤖 Plim IA</Text>
-            <Text variant="caption" color="secondary">Assistente especializado em TDAH</Text>
-          </View>
-          <View style={{ width: 60 }} />
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+          <Cabecalho titulo="Plim IA" icone="robo" sub="Assistente que entende TDAH" />
         </View>
 
         {/* Mensagens */}

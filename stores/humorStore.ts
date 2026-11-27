@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { hojeLocal } from '@/lib/dia';
 
 export interface RegistroHumor {
   data: string; // 'YYYY-MM-DD'
@@ -14,7 +15,7 @@ export const humorConfig = {
 } as const;
 
 function hoje(): string {
-  return new Date().toISOString().slice(0, 10);
+  return hojeLocal();
 }
 
 interface HumorState {

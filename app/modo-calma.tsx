@@ -1,126 +1,95 @@
-import { Text } from '@/components/ui';
+import { Botao, Cabecalho } from '@/components/plim';
+import { Text } from '@/components/Texto';
+import { C, F } from '@/lib/theme';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
-import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Pressable, View } from 'react-native';
+import { Animated, Easing, Image, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const frases = [
-  'Inspire devagar...',
-  'Segure...',
-  'Expire devagar...',
-  'Descanse...',
+const FASES = [
+  { frase: 'Inspire devagar', duracao: 4000, escala: 1.28 },
+  { frase: 'Segure',          duracao: 2000, escala: 1.28 },
+  { frase: 'Solte o ar',      duracao: 4000, escala: 1 },
+  { frase: 'Descanse',        duracao: 2000, escala: 1 },
 ];
+const CICLO_MS = FASES.reduce((s, f) => s + f.duracao, 0);
+/** O desafio "Calma 3 vezes" conta depois de 3 ciclos seguidos (36 s), não ao apertar o botão. */
+const CICLOS_PARA_CONTAR = 3;
 
 export default function ModoCalmaScreen() {
-  const router = useRouter();
   const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
   const addXp = useUserStore((s) => s.addXp);
   const addMoedas = useUserStore((s) => s.addMoedas);
   const escala = useRef(new Animated.Value(1)).current;
-  const opacidade = useRef(new Animated.Value(0.6)).current;
-  const [faseIndex, setFaseIndex] = useState(0);
+  const [fase, setFase] = useState(0);
+  const [ciclos, setCiclos] = useState(0);
   const [ativo, setAtivo] = useState(false);
   const animRef = useRef<Animated.CompositeAnimation | null>(null);
+  const contou = useRef(false);
 
   useEffect(() => {
     if (!ativo) {
       animRef.current?.stop();
-      Animated.parallel([
-        Animated.timing(escala, { toValue: 1, duration: 600, useNativeDriver: true, easing: Easing.out(Easing.ease) }),
-        Animated.timing(opacidade, { toValue: 0.6, duration: 600, useNativeDriver: true }),
-      ]).start();
+      Animated.timing(escala, { toValue: 1, duration: 600, useNativeDriver: true, easing: Easing.out(Easing.ease) }).start();
       return;
     }
-
-    let fase = 0;
-    const duracoes = [4000, 2000, 4000, 2000]; // inspira, segura, expira, descansa
-    const escalas = [1.35, 1.35, 1, 1];
-    const opacidades = [1, 1, 0.6, 0.6];
-
-    function proximaFase() {
-      setFaseIndex(fase);
-      const anim = Animated.parallel([
-        Animated.timing(escala, { toValue: escalas[fase], duration: duracoes[fase], useNativeDriver: true, easing: Easing.inOut(Easing.ease) }),
-        Animated.timing(opacidade, { toValue: opacidades[fase], duration: duracoes[fase], useNativeDriver: true }),
-      ]);
+    let atual = 0;
+    let feitos = 0;
+    function proxima() {
+      setFase(atual);
+      const anim = Animated.timing(escala, { toValue: FASES[atual].escala, duration: FASES[atual].duracao, useNativeDriver: true, easing: Easing.inOut(Easing.ease) });
       animRef.current = anim;
       anim.start(({ finished }) => {
         if (!finished) return;
-        fase = (fase + 1) % 4;
-        proximaFase();
+        atual = (atual + 1) % FASES.length;
+        if (atual === 0) {
+          feitos += 1;
+          setCiclos(feitos);
+          if (feitos >= CICLOS_PARA_CONTAR && !contou.current) {
+            contou.current = true;
+            registrarEvento('calma_3x')(addXp, addMoedas);
+          }
+        }
+        proxima();
       });
     }
-
-    proximaFase();
+    proxima();
     return () => animRef.current?.stop();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ativo]);
 
-  return (
-    <SafeAreaView className="flex-1 bg-violet-50">
-      <View className="flex-1 px-6 pt-4 pb-6">
-        {/* Header */}
-        <View className="flex-row items-center justify-between mb-6">
-          <Pressable onPress={() => router.back()} className="p-2 -ml-2">
-            <Text className="text-violet-600 text-base font-semibold">← Voltar</Text>
-          </Pressable>
-          <Text variant="h3" className="text-violet-800">😌 Modo Calma</Text>
-          <View style={{ width: 70 }} />
-        </View>
+  function alternar() {
+    if (ativo) setCiclos(0);
+    setAtivo((v) => !v);
+  }
 
-        <View className="flex-1 items-center justify-center">
-          {/* Círculo de respiração */}
-          <View className="items-center justify-center mb-10">
-            {/* Anel externo estático */}
-            <View className="absolute w-72 h-72 rounded-full border-2 border-violet-200 opacity-40" />
-            {/* Círculo animado */}
-            <Animated.View
-              style={{
-                width: 200,
-                height: 200,
-                borderRadius: 100,
-                backgroundColor: '#7C3AED',
-                transform: [{ scale: escala }],
-                opacity: opacidade,
-                alignItems: 'center',
-                justifyContent: 'center',
-                shadowColor: '#7C3AED',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.4,
-                shadowRadius: 20,
-                elevation: 12,
-              }}
-            >
-              <Text className="text-5xl">😌</Text>
-            </Animated.View>
+  const segundos = Math.round((ciclos * CICLO_MS) / 1000);
+
+  return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: C.successSoft }}>
+      <View style={{ flex: 1, maxWidth: 480, width: '100%', alignSelf: 'center', padding: 20 }}>
+        <Cabecalho titulo="Modo Calma" icone="lotus" />
+
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          {/* Círculo de respiração: cresce ao inspirar, encolhe ao soltar */}
+          <View style={{ width: 300, height: 300, alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+            <Animated.View style={{ position: 'absolute', width: 224, height: 224, borderRadius: 112, backgroundColor: '#BDEBD6', transform: [{ scale: escala }] }} />
+            <Animated.View style={{ position: 'absolute', width: 176, height: 176, borderRadius: 88, backgroundColor: C.surface, transform: [{ scale: escala }] }} />
+            <Image source={require('../assets/cenas/calma.webp')} style={{ width: 150, height: 180 }} resizeMode="contain" accessible={false} />
           </View>
 
-          {/* Instrução */}
-          <Text className="text-violet-800 text-xl font-semibold text-center mb-2">
-            {ativo ? frases[faseIndex] : 'Pronto para respirar?'}
+          <Text accessibilityLiveRegion="polite" style={{ fontFamily: F.displayX, fontSize: 28, color: C.text, textAlign: 'center' }}>
+            {ativo ? FASES[fase].frase : 'Vamos respirar juntos?'}
           </Text>
-          <Text variant="small" color="secondary" className="text-center mb-10 leading-5">
+          <Text style={{ fontSize: 15, color: C.textSub, textAlign: 'center', marginTop: 8, lineHeight: 22, minHeight: 44 }}>
             {ativo
-              ? 'Siga o ritmo do círculo.\nResponda devagar, sem pressa.'
-              : '4 segundos inspira · 2 segura\n4 segundos expira · 2 descansa'}
+              ? (ciclos > 0 ? `${ciclos} ${ciclos === 1 ? 'respiração' : 'respirações'} · ${segundos} segundos de calma` : 'Acompanhe o círculo. Sem pressa.')
+              : 'Inspire em 4 segundos, segure 2,\nsolte em 4, descanse 2.'}
           </Text>
-
-          {/* Botão */}
-          <Pressable
-            onPress={() => {
-              const novoAtivo = !ativo;
-              setAtivo(novoAtivo);
-              if (novoAtivo) registrarEvento('calma_3x')(addXp, addMoedas);
-            }}
-            className={`px-10 py-4 rounded-full ${ativo ? 'bg-orange-500' : 'bg-violet-600'}`}
-            style={{ shadowColor: ativo ? '#F97316' : '#7C3AED', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6 }}
-          >
-            <Text className="text-white font-bold text-base">
-              {ativo ? '⏸ Pausar' : '▶ Começar'}
-            </Text>
-          </Pressable>
         </View>
+
+        <Botao rotulo={ativo ? 'Parar' : 'Começar'} cor={ativo ? 'claro' : 'verde'} onPress={alternar} />
       </View>
     </SafeAreaView>
   );

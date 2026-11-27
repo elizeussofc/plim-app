@@ -14,7 +14,7 @@ export default function Root() {
     });
   }, []);
 
-  if (!ready) return <View style={{ flex: 1, backgroundColor: '#F5F3FF' }} />;
+  if (!ready) return <View style={{ flex: 1, backgroundColor: '#FBF6EE' }} />;
   if (onboardingDone) return <Redirect href="/(tabs)" />;
   return <Redirect href={'/onboarding' as Href} />;
 }

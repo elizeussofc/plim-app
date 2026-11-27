@@ -6,12 +6,12 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "plim",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#F5F3FF"
+      "backgroundColor": "#FBF6EE"
     },
     "ios": {
       "supportsTablet": false,
@@ -24,7 +24,7 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#F5F3FF"
+        "backgroundColor": "#8932ED"
       },
       "package": "com.elizzeuscorp.plim",
       "permissions": [
@@ -37,7 +37,13 @@
     "web": {
       "bundler": "metro",
       "output": "single",
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "lang": "pt-BR",
+      "name": "Plim: foco sem culpa",
+      "shortName": "Plim",
+      "description": "Rotina, foco e calma para quem tem TDAH. Um passo por dia, sem bronca.",
+      "themeColor": "#FBF6EE",
+      "backgroundColor": "#FBF6EE"
     },
     "plugins": [
       "expo-router",
@@ -76,6 +82,7 @@
       "eas": {
         "projectId": "4118b5d4-1ca6-41dd-8a36-88c7135a3da8"
       }
-    }
+    },
+    "backgroundColor": "#FBF6EE"
   }
 }

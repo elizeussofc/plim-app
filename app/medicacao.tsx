@@ -1,4 +1,7 @@
 import { Card, Text } from '@/components/ui';
+import { Botao, Cabecalho } from '@/components/plim';
+import { confirmar } from '@/lib/avisar';
+import { hojeLocal } from '@/lib/dia';
 import { agendarLembreteDiario, cancelarLembrete } from '@/lib/notifications';
 import { COR_OPCOES, useMedicacaoStore } from '@/stores/medicacaoStore';
 import { useRouter } from 'expo-router';
@@ -16,7 +19,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 function hoje(): string {
-  return new Date().toISOString().slice(0, 10);
+  return hojeLocal();
 }
 
 export default function MedicacaoScreen() {
@@ -46,15 +49,10 @@ export default function MedicacaoScreen() {
   }
 
   function confirmarRemover(id: string, nomeM: string) {
-    Alert.alert('Remover medicação', `Remover "${nomeM}"?`, [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Remover', style: 'destructive', onPress: async () => {
-          await cancelarLembrete(id);
-          removerMedicacao(id);
-        },
-      },
-    ]);
+    confirmar('Remover medicação', `Tirar "${nomeM}" da sua lista?`, 'Remover', async () => {
+      await cancelarLembrete(id);
+      removerMedicacao(id);
+    });
   }
 
   function toggleTomada(id: string) {
@@ -67,17 +65,11 @@ export default function MedicacaoScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <View className="flex-row items-center px-5 pt-4 pb-3 bg-white border-b border-violet-100">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-          <Text className="text-violet-600 font-semibold">← Voltar</Text>
-        </Pressable>
-        <Text variant="h3" className="flex-1 text-center text-violet-800">💊 Medicação</Text>
-        <Pressable onPress={() => setModalAberto(true)} className="bg-violet-600 px-3 py-1.5 rounded-full">
-          <Text className="text-white text-sm font-semibold">+ Nova</Text>
-        </Pressable>
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+        <Cabecalho titulo="Medicação" icone="pilula" direita={<Botao rotulo="+ Nova" pequeno onPress={() => setModalAberto(true)} accessibilityLabel="Adicionar medicação" />} />
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }} contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* Resumo do dia */}
         <Card variant="primary" padding="md" className="mb-5">

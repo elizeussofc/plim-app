@@ -1,4 +1,5 @@
 import * as Calendar from 'expo-calendar';
+import { avisar } from '@/lib/avisar';
 import { Alert, Platform } from 'react-native';
 
 export async function pedirPermissaoCalendario(): Promise<boolean> {
@@ -35,19 +36,19 @@ export async function adicionarAoCalendario(
   horario: string
 ): Promise<boolean> {
   if (Platform.OS === 'web') {
-    Alert.alert('Não disponível', 'O calendário só funciona no app mobile (Android/iOS).');
+    avisar('Calendário só no celular', 'No site o Plim não acessa seu calendário. No app do celular, sim.');
     return false;
   }
 
   const ok = await pedirPermissaoCalendario();
   if (!ok) {
-    Alert.alert('Permissão negada', 'Precisamos de acesso ao seu calendário para criar o evento.');
+    avisar('Permissão negada', 'Precisamos de acesso ao seu calendário para criar o evento.');
     return false;
   }
 
   const calId = await obterCalendarioPadrao();
   if (!calId) {
-    Alert.alert('Calendário não encontrado', 'Não encontramos um calendário disponível no seu dispositivo.');
+    avisar('Calendário não encontrado', 'Não encontramos um calendário disponível no seu dispositivo.');
     return false;
   }
 

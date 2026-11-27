@@ -1,9 +1,13 @@
-import { C } from '@/lib/theme';
+import { C, F } from '@/lib/theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Icone from '@/components/Icone';
+import { Botao, Peca, Selo } from '@/components/plim';
 import { useDesafiosStore } from '@/stores/desafiosStore';
 import { useUserStore } from '@/stores/userStore';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Text } from '@/components/Texto';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
@@ -13,12 +17,16 @@ type Reacao   = 'apoio' | 'forca' | 'parabens';
 interface Post {
   id: string; tipo: TipoPost; conteudo: string; apelido: string; tempo: string;
   reacoes: Record<Reacao, number>; minhasReacoes: Record<Reacao, boolean>;
+  /** Mensagem de demonstração (não foi escrita por ninguém de verdade). */
+  exemplo?: boolean;
 }
 
 const postsMock: Post[] = [
-  { id: '1', tipo: 'conquista', conteudo: 'Completei minha rotina matinal por 7 dias seguidos! Parece pequeno mas pra mim é enorme. 🥹', apelido: 'Ana', tempo: 'há 10 min', reacoes: { apoio: 12, forca: 5, parabens: 8 }, minhasReacoes: { apoio: false, forca: false, parabens: false } },
-  { id: '2', tipo: 'desafio',   conteudo: 'Hoje foi difícil. Não consegui nem começar o que tinha planejado. Mas amanhã é outro dia.', apelido: 'Anônimo', tempo: 'há 1h', reacoes: { apoio: 24, forca: 18, parabens: 2 }, minhasReacoes: { apoio: false, forca: false, parabens: false } },
+  { id: '1', tipo: 'conquista', conteudo: 'Completei minha rotina matinal por 7 dias seguidos! Parece pequeno mas pra mim é enorme. 🥹', apelido: 'Ana', tempo: 'exemplo', exemplo: true, reacoes: { apoio: 12, forca: 5, parabens: 8 }, minhasReacoes: { apoio: false, forca: false, parabens: false } },
+  { id: '2', tipo: 'desafio',   conteudo: 'Hoje foi difícil. Não consegui nem começar o que tinha planejado. Mas amanhã é outro dia.', apelido: 'Anônimo', tempo: 'exemplo', exemplo: true, reacoes: { apoio: 24, forca: 18, parabens: 2 }, minhasReacoes: { apoio: false, forca: false, parabens: false } },
 ];
+
+const CHAVE_MURAL = 'plim-mural-proprio';
 
 const tipoCor: Record<TipoPost, string> = {
   conquista: C.success,
@@ -112,7 +120,9 @@ function PostCard({ post, onReagir, delay }: { post: Post; onReagir: (id: string
           </View>
           <Text style={{ fontSize: 13, fontWeight: '700', color: C.text }}>{post.apelido}</Text>
         </View>
-        <Text style={{ fontSize: 11, color: C.textMuted }}>{post.tempo}</Text>
+        {post.exemplo
+          ? <Selo texto="exemplo" tinta="laranja" />
+          : <Text style={{ fontSize: 12, color: C.textMuted }}>{post.tempo}</Text>}
       </View>
 
       <View style={{
@@ -155,6 +165,23 @@ export default function ComunidadeScreen() {
   const registrarEvento = useDesafiosStore((s) => s.registrarEvento);
 
   const [posts, setPosts]             = useState<Post[]>(postsMock);
+  const carregou = useRef(false);
+
+  // O que a pessoa escreve fica guardado no aparelho (antes sumia ao recarregar).
+  useEffect(() => {
+    AsyncStorage.getItem(CHAVE_MURAL)
+      .then((bruto) => {
+        const meus: Post[] = bruto ? JSON.parse(bruto) : [];
+        if (Array.isArray(meus) && meus.length) setPosts([...meus, ...postsMock]);
+      })
+      .catch(() => {})
+      .finally(() => { carregou.current = true; });
+  }, []);
+
+  useEffect(() => {
+    if (!carregou.current) return;
+    AsyncStorage.setItem(CHAVE_MURAL, JSON.stringify(posts.filter((p) => !p.exemplo).slice(0, 50))).catch(() => {});
+  }, [posts]);
   const [modalAberto, setModalAberto] = useState(false);
   const [novoTexto, setNovoTexto]     = useState('');
   const [novoTipo, setNovoTipo]       = useState<TipoPost>('texto');
@@ -184,64 +211,27 @@ export default function ComunidadeScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 110 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <Animated.View entering={FadeInUp.delay(0).springify()} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
-          <Text style={{ fontSize: 28, fontWeight: '800', color: C.text, letterSpacing: -0.8 }}>comunidade</Text>
+        {/* Cabeçalho */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, gap: 8 }}>
+          <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 30, color: C.text }}>Grupo</Text>
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <Pressable
-              onPress={() => router.push('/ranking')}
-              accessibilityLabel="Ver ranking"
-              accessibilityRole="button"
-              android_ripple={{ color: C.gold + '44', borderless: false }}
-              style={{
-                backgroundColor: C.surfaceHigh,
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: C.border,
-                minHeight: 44,
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: C.gold, fontWeight: '700', fontSize: 13 }}>🏆 ranking</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setModalAberto(true)}
-              accessibilityLabel="Criar novo post"
-              accessibilityRole="button"
-              android_ripple={{ color: 'rgba(255,255,255,0.2)', borderless: false }}
-              style={{
-                backgroundColor: C.primary,
-                paddingHorizontal: 14,
-                paddingVertical: 9,
-                borderRadius: 20,
-                shadowColor: C.primary,
-                shadowOpacity: 0.5,
-                shadowRadius: 10,
-                elevation: 8,
-                minHeight: 44,
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>+ post</Text>
-            </Pressable>
+            <Botao rotulo="Ranking" icone="trofeu" cor="claro" pequeno onPress={() => router.push('/ranking')} accessibilityLabel="Ver ranking" />
+            <Botao rotulo="+ Escrever" pequeno onPress={() => setModalAberto(true)} accessibilityLabel="Escrever no mural" />
           </View>
-        </Animated.View>
+        </View>
 
-        {/* Banner de boas-vindas */}
-        <Animated.View entering={FadeInDown.delay(80).springify()} style={{
-          backgroundColor: C.glass,
-          borderRadius: 16,
-          padding: 16,
-          marginBottom: 20,
-          borderWidth: 1,
-          borderColor: C.borderPrimary,
-        }}>
-          <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center', lineHeight: 20 }}>
-            🤝 um lugar seguro. sem julgamentos, sem competição.{'\n'}só apoio de verdade.
-          </Text>
-        </Animated.View>
+        {/* Aviso: isto ainda é uma prévia */}
+        <Peca tinta="laranja" padding={14} estilo={{ marginBottom: 18 }}>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+            <Icone nome="lampada" tamanho={36} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: F.display, fontSize: 16, color: C.text }}>Prévia do Grupo</Text>
+              <Text style={{ fontSize: 14, color: C.textSub, lineHeight: 20, marginTop: 2 }}>
+                O grupo de verdade ainda não está no ar. As mensagens marcadas como exemplo mostram como vai ser, e o que você escrever fica só neste aparelho.
+              </Text>
+            </View>
+          </View>
+        </Peca>
 
         {posts.length === 0 && (
           <Animated.View entering={FadeInDown.delay(140).springify()} style={{
@@ -254,7 +244,7 @@ export default function ComunidadeScreen() {
           }}>
             <Text style={{ fontSize: 36, marginBottom: 12 }}>💬</Text>
             <Text style={{ fontSize: 15, fontWeight: '700', color: C.primaryLight, marginBottom: 6 }}>Ainda silencioso por aqui</Text>
-            <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center' }}>Seja o primeiro a compartilhar algo com a comunidade.</Text>
+            <Text style={{ fontSize: 13, color: C.textSub, textAlign: 'center' }}>Escreva a primeira mensagem do seu mural.</Text>
           </Animated.View>
         )}
 
@@ -277,7 +267,7 @@ export default function ComunidadeScreen() {
             borderColor: C.borderPrimary,
           }}>
             <View style={{ width: 36, height: 4, backgroundColor: C.borderBright, borderRadius: 2, alignSelf: 'center', marginBottom: 20 }} />
-            <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>compartilhar</Text>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: C.text, marginBottom: 20 }}>Escrever no mural</Text>
 
             <Text style={{ fontSize: 11, color: C.textSub, fontWeight: '700', marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' }}>tipo</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 20 }}>
@@ -307,12 +297,12 @@ export default function ComunidadeScreen() {
             <TextInput
               multiline
               numberOfLines={4}
-              placeholder="Conte como está indo... a comunidade te apoia 🤝"
+              placeholder="Conte como está indo. Por enquanto, só você vê."
               placeholderTextColor={C.textMuted}
               value={novoTexto}
               onChangeText={setNovoTexto}
               autoFocus
-              accessibilityLabel="Mensagem para a comunidade"
+              accessibilityLabel="Sua mensagem"
               style={{
                 backgroundColor: C.surfaceHigh,
                 borderWidth: 1,

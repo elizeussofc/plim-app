@@ -1,0 +1,94 @@
+/**
+ * Avatar 3D do Plim: dados e opções. Sem dependência de tela nem de three.js,
+ * para poder ser importado pelo armazenamento (stores) sem pesar o app.
+ *
+ * O boneco é o arquivo public/avatar/plim_avatar.glb, gerado por
+ * tools/avatar/build_avatar.py. As peças e os materiais têm nome; trocar o
+ * visual é mostrar/esconder peças e mudar a cor dos materiais.
+ */
+
+export type Expressao = 'feliz' | 'neutro' | 'triste' | 'animado';
+export type Cabelo = 'curto' | 'coque';
+
+export interface AvatarConfig {
+  cabelo: Cabelo;
+  pele: string;        // hex sem #
+  corCabelo: string;
+  corMoletom: string;
+  corCalca: string;
+  oculos: boolean;
+  fone: boolean;
+  fundo: string;       // cor do círculo atrás do retrato
+}
+
+export const avatarConfigPadrao: AvatarConfig = {
+  cabelo: 'curto',
+  pele: 'C98A5E',
+  corCabelo: '3B2219',
+  corMoletom: '7C3AED',
+  corCalca: '3A4250',
+  oculos: false,
+  fone: false,
+  fundo: 'E7DBFF',
+};
+
+export const OPCOES_CABELO: { id: Cabelo; label: string }[] = [
+  { id: 'curto', label: 'Curto' },
+  { id: 'coque', label: 'Coque' },
+];
+
+export const OPCOES_PELE = ['F6D7BD', 'E8B893', 'C98A5E', 'A66A43', '7B4A2E', '4E2F1E'];
+export const OPCOES_COR_CABELO = ['1F1410', '3B2219', '6B4226', 'B5732E', 'E0B85C', 'C2410C', 'DB4F93', '7C3AED', '2F7FE6', 'B8B5C4'];
+export const OPCOES_MOLETOM = ['7C3AED', 'EA580C', '0E9F6E', '2F7FE6', 'DB4F93', 'D9A106', '2B1D4E', 'F4EDE1'];
+export const OPCOES_CALCA = ['3A4250', '2B1D4E', '1E5FB8', '6B4226', '8A7FA3', 'F4EDE1'];
+export const OPCOES_FUNDO = ['E7DBFF', 'FFE9D6', 'DDF6EA', 'DDECFF', 'FFE1EE', 'FFF1C7', 'F4EDE1', '2B1D4E'];
+
+const HEX = /^[0-9a-fA-F]{6}$/;
+const hex = (v: unknown, padrao: string) => (typeof v === 'string' && HEX.test(v) ? v.toUpperCase() : padrao);
+
+/**
+ * Aceita qualquer coisa que já tenha sido salva como avatar e devolve um avatar 3D válido.
+ * Converte os formatos antigos (o 2D DiceBear, com skinColor/hairStyle, e o primeiro, com
+ * skinTom) aproveitando o que dá: tom de pele, cor do cabelo, óculos e fundo.
+ */
+export function normalizarAvatar(bruto: unknown): AvatarConfig {
+  const p = avatarConfigPadrao;
+  if (!bruto || typeof bruto !== 'object') return { ...p };
+  const b = bruto as Record<string, unknown>;
+
+  if (b.cabelo === 'curto' || b.cabelo === 'coque') {
+    return {
+      cabelo: b.cabelo,
+      pele: hex(b.pele, p.pele),
+      corCabelo: hex(b.corCabelo, p.corCabelo),
+      corMoletom: hex(b.corMoletom, p.corMoletom),
+      corCalca: hex(b.corCalca, p.corCalca),
+      oculos: b.oculos === true,
+      fone: b.fone === true,
+      fundo: hex(b.fundo, p.fundo),
+    };
+  }
+
+  // Formato 2D antigo (DiceBear).
+  const cabeloLongo = typeof b.hairStyle === 'string' && b.hairStyle.startsWith('long');
+  return {
+    ...p,
+    cabelo: b.genero === 'feminino' || cabeloLongo ? 'coque' : 'curto',
+    pele: hex(b.skinColor, p.pele),
+    corCabelo: hex(b.hairColor, p.corCabelo),
+    oculos: typeof b.glassesStyle === 'string' && b.glassesStyle !== '',
+    fundo: hex(b.backgroundColor, p.fundo),
+  };
+}
+
+/** Escurece uma cor (0–1). Usado na barra e no bolso do moletom. */
+export function escurecer(corHex: string, fator = 0.84): string {
+  const n = parseInt(corHex, 16);
+  const c = (v: number) => Math.max(0, Math.min(255, Math.round(v * fator))).toString(16).padStart(2, '0');
+  return (c((n >> 16) & 255) + c((n >> 8) & 255) + c(n & 255)).toUpperCase();
+}
+
+/** Chave estável de um avatar, para cache de imagem. */
+export function chaveAvatar(c: AvatarConfig, expressao: Expressao): string {
+  return [c.cabelo, c.pele, c.corCabelo, c.corMoletom, c.corCalca, c.oculos ? 1 : 0, c.fone ? 1 : 0, expressao].join('-');
+}

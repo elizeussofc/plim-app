@@ -1,6 +1,6 @@
-import { Text as RNText, TextProps } from 'react-native';
+import { Text as Texto, type TextoProps } from '@/components/Texto';
 
-interface PlimTextProps extends TextProps {
+interface PlimTextProps extends TextoProps {
   variant?: 'h1' | 'h2' | 'h3' | 'body' | 'small' | 'caption';
   color?: 'primary' | 'secondary' | 'muted' | 'inverse' | 'energy' | 'success';
 }
@@ -25,7 +25,7 @@ const colorClasses: Record<NonNullable<PlimTextProps['color']>, string> = {
 
 export function Text({ variant = 'body', color = 'primary', className = '', ...props }: PlimTextProps) {
   return (
-    <RNText
+    <Texto
       className={`${variantClasses[variant]} ${colorClasses[color]} ${className}`}
       {...props}
     />

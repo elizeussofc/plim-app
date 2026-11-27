@@ -1,4 +1,6 @@
 import { Card, Text } from '@/components/ui';
+import { Cabecalho } from '@/components/plim';
+import { avisar, confirmar } from '@/lib/avisar';
 import { EntradaRanking, assinarRankingRealtime, buscarRanking } from '@/lib/ranking';
 import { supabase } from '@/lib/supabase';
 import { useAuthStore } from '@/stores/authStore';
@@ -55,7 +57,7 @@ export default function ParceiroScreen() {
   async function vincularParceiro() {
     const codigo = codigoInput.trim().toLowerCase();
     if (codigo.length < 6) {
-      Alert.alert('Código inválido', 'Digite pelo menos 6 caracteres do código do seu parceiro.');
+      avisar('Código inválido', 'Digite pelo menos 6 caracteres do código do seu parceiro.');
       return;
     }
     if (!meuId) return;
@@ -65,13 +67,13 @@ export default function ParceiroScreen() {
     const entrada = ranking.find((r) => r.user_id.startsWith(codigo));
 
     if (!entrada) {
-      Alert.alert('Parceiro não encontrado', 'Nenhum usuário com esse código foi encontrado no ranking. O parceiro precisa ter completado ao menos uma tarefa para aparecer.');
+      avisar('Parceiro não encontrado', 'Nenhum usuário com esse código foi encontrado no ranking. O parceiro precisa ter completado ao menos uma tarefa para aparecer.');
       setSalvando(false);
       return;
     }
 
     if (entrada.user_id === meuId) {
-      Alert.alert('Ops!', 'Você não pode se adicionar como parceiro. Compartilhe seu código com outra pessoa.');
+      avisar('Ops!', 'Você não pode se adicionar como parceiro. Compartilhe seu código com outra pessoa.');
       setSalvando(false);
       return;
     }
@@ -81,32 +83,23 @@ export default function ParceiroScreen() {
     setParceiro(entrada);
     setCodigoInput('');
     setSalvando(false);
-    Alert.alert('✅ Parceiro vinculado!', `Agora você acompanha o progresso de ${entrada.nome_exibido} em tempo real.`);
+    avisar('✅ Parceiro vinculado!', `Agora você acompanha o progresso de ${entrada.nome_exibido} em tempo real.`);
   }
 
   async function desvincular() {
     if (!meuId) return;
-    Alert.alert('Remover parceiro', 'Quer parar de acompanhar este parceiro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Remover', style: 'destructive', onPress: async () => {
-          await supabase.from('parceiros').delete().eq('user_id', meuId);
-          setParceiro(null);
-          setParceiroIdSalvo(null);
-        },
-      },
-    ]);
+    confirmar('Remover parceiro', 'Quer parar de acompanhar este parceiro?', 'Remover', async () => {
+      await supabase.from('parceiros').delete().eq('user_id', meuId);
+      setParceiro(null);
+      setParceiroIdSalvo(null);
+    });
   }
 
   if (!session) {
     return (
       <SafeAreaView className="flex-1 bg-violet-50">
-        <View className="flex-row items-center px-5 pt-4 pb-3 bg-white border-b border-violet-100">
-          <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-            <Text className="text-violet-600 font-semibold">← Voltar</Text>
-          </Pressable>
-          <Text variant="h3" className="flex-1 text-center text-violet-800">👫 Modo Parceiro</Text>
-          <View style={{ width: 60 }} />
+        <View style={{ paddingHorizontal: 20, paddingTop: 16, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+          <Cabecalho titulo="Modo Parceiro" icone="parceria" />
         </View>
         <View className="flex-1 items-center justify-center px-8">
           <Text className="text-5xl mb-4">👫</Text>
@@ -124,15 +117,11 @@ export default function ParceiroScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-violet-50">
-      <View className="flex-row items-center px-5 pt-4 pb-3 bg-white border-b border-violet-100">
-        <Pressable onPress={() => router.back()} className="p-2 -ml-2 mr-2">
-          <Text className="text-violet-600 font-semibold">← Voltar</Text>
-        </Pressable>
-        <Text variant="h3" className="flex-1 text-center text-violet-800">👫 Modo Parceiro</Text>
-        <View style={{ width: 60 }} />
+      <View style={{ paddingHorizontal: 20, paddingTop: 16, maxWidth: 480, width: '100%', alignSelf: 'center' }}>
+        <Cabecalho titulo="Modo Parceiro" icone="parceria" />
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }} contentContainerStyle={{ padding: 20, paddingTop: 4, paddingBottom: 100 }} showsVerticalScrollIndicator={false}>
 
         {/* Meu código */}
         <Card variant="primary" padding="lg" className="mb-5">
