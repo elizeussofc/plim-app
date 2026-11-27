@@ -343,10 +343,13 @@ useGrupoStore.subscribe((s) => {
 });
 
 // Entrou ou saiu da conta: o Grupo muda de modo.
-let ultimoUsuario: string | null | undefined;
+// Começa em "sem conta", como a loja de login. Ao abrir o app direto no Grupo, a sessão guardada
+// chega depois da primeira carga: sem contar essa chegada como troca, o Grupo ficava na prévia
+// local mesmo com a pessoa logada.
+let ultimoUsuario: string | null = null;
 useAuthStore.subscribe((a) => {
   const id = a.session?.user?.id ?? null;
-  if (ultimoUsuario !== undefined && id !== ultimoUsuario && useGrupoStore.getState().modo !== 'carregando') {
+  if (id !== ultimoUsuario && useGrupoStore.getState().modo !== 'carregando') {
     useGrupoStore.setState({ modo: 'carregando', participa: false, posts: [], stories: [], comentarios: {} });
     void useGrupoStore.getState().carregar();
   }
