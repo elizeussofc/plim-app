@@ -1,3 +1,4 @@
+import CenaAnimada from '@/components/CenaAnimada';
 import Icone from '@/components/Icone';
 import { Botao, Peca } from '@/components/plim';
 import { Text } from '@/components/Texto';
@@ -5,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { C, F, R } from '@/lib/theme';
 import { Link, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const campo = { backgroundColor: C.surface, borderWidth: 2, borderColor: C.border, borderRadius: R.md, paddingHorizontal: 16, paddingVertical: 14, color: C.text, fontSize: 16, fontFamily: F.regular } as const;
@@ -54,7 +55,7 @@ export default function CadastroScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
         <View style={{ flex: 1, maxWidth: 480, width: '100%', alignSelf: 'center', justifyContent: 'center', padding: 22 }}>
           <Peca tinta="verde" estilo={{ alignItems: 'center' }} padding={24}>
-            <Image source={require('../../assets/cenas/vitoria.webp')} style={{ width: 170, height: 196 }} resizeMode="contain" accessible={false} />
+            <CenaAnimada cena="vitoria" largura={170} altura={196} />
             <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 26, color: C.text, marginTop: 8 }}>Conta criada!</Text>
             <Text style={{ fontSize: 16, color: C.textSub, textAlign: 'center', marginTop: 6, marginBottom: 18, lineHeight: 23 }}>
               Mandamos um e-mail para {email.trim()}. Abra, toque no link de confirmação e depois volte aqui para entrar.

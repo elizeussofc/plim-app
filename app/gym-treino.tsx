@@ -1,3 +1,4 @@
+import CenaAnimada from '@/components/CenaAnimada';
 import GymImagem from '@/components/GymImagem';
 import Icone from '@/components/Icone';
 import { Barra, Botao, Peca, Selo } from '@/components/plim';
@@ -14,7 +15,7 @@ import { useGymStore } from '@/stores/gymStore';
 import { useUserStore } from '@/stores/userStore';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Image, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -232,7 +233,7 @@ export default function GymTreinoScreen() {
       <SafeAreaView style={{ flex: 1, backgroundColor: premio.completo ? C.successSoft : C.bg }}>
         <ScrollView ref={rolagem} style={{ maxWidth: 480, width: '100%', alignSelf: 'center' }} contentContainerStyle={{ padding: 22, paddingBottom: 48 }} showsVerticalScrollIndicator={false}>
           <View style={{ alignItems: 'center', marginBottom: 18 }}>
-            <Image source={require('../assets/cenas/vitoria.webp')} style={{ width: 170, height: 195 }} resizeMode="contain" accessible={false} />
+            <CenaAnimada cena="vitoria" largura={170} altura={195} />
             <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 30, color: C.text, marginTop: 8, textAlign: 'center' }}>
               {premio.completo ? 'Treino feito!' : 'Treino guardado'}
             </Text>

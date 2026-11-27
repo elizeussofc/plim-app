@@ -1,3 +1,4 @@
+import CenaAnimada from '@/components/CenaAnimada';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
@@ -130,7 +131,7 @@ function OptionCard({
 function StepWelcome() {
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 }}>
-      <Image source={require('../assets/cenas/ola.webp')} style={{ width: 250, height: 261, marginBottom: 20 }} resizeMode="contain" accessible={false} />
+      <CenaAnimada cena="ola" largura={250} altura={261} estilo={{ marginBottom: 20 }} />
       <Text variant="h1" style={{ textAlign: 'center', marginBottom: 10, color: '#2B1D4E' }}>
         Oi! A gente é o Plim
       </Text>

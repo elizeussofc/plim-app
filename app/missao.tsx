@@ -1,3 +1,4 @@
+import CenaAnimada from '@/components/CenaAnimada';
 import Icone, { type NomeIcone } from '@/components/Icone';
 import { Botao, Cabecalho, Peca, Selo } from '@/components/plim';
 import { Text } from '@/components/Texto';
@@ -92,7 +93,7 @@ export default function MissaoScreen() {
         <View style={{ flex: 1, maxWidth: 480, width: '100%', alignSelf: 'center', padding: 22, justifyContent: 'center' }}>
           <View style={{ alignItems: 'center', marginBottom: 20 }}>
             {ultimo.sucesso
-              ? <Image source={require('../assets/cenas/vitoria.webp')} style={{ width: 190, height: 218 }} resizeMode="contain" accessible={false} />
+              ? <CenaAnimada cena="vitoria" largura={190} altura={218} />
               : <Icone nome="desceu" tamanho={110} />}
             <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 30, color: C.text, marginTop: 10, textAlign: 'center' }}>
               {ultimo.sucesso ? 'Missão cumprida!' : 'O relógio ganhou essa'}

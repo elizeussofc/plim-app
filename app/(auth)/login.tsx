@@ -1,3 +1,4 @@
+import CenaAnimada from '@/components/CenaAnimada';
 import { Botao, Peca } from '@/components/plim';
 import { Text } from '@/components/Texto';
 import { avisar } from '@/lib/avisar';
@@ -5,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { C, F, R } from '@/lib/theme';
 import { Link, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const campo = { backgroundColor: C.surface, borderWidth: 2, borderColor: C.border, borderRadius: R.md, paddingHorizontal: 16, paddingVertical: 14, color: C.text, fontSize: 16, fontFamily: F.regular } as const;
@@ -72,7 +73,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={{ alignItems: 'center', marginBottom: 18 }}>
-            <Image source={require('../../assets/cenas/ola.webp')} style={{ width: 200, height: 209 }} resizeMode="contain" accessible={false} />
+            <CenaAnimada cena="ola" largura={200} altura={209} />
             <Text accessibilityRole="header" style={{ fontFamily: F.displayX, fontSize: 34, color: C.text, marginTop: 6 }}>Plim</Text>
             <Text style={{ fontSize: 16, color: C.textSub, marginTop: 2 }}>Foco sem culpa. Um passo por dia.</Text>
           </View>
