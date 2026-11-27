@@ -8,7 +8,7 @@ import { Image, View } from 'react-native';
 
 const PRINCIPAIS: Ferramenta[] = [FERRAMENTAS.trilhas, FERRAMENTAS.despejo, FERRAMENTAS.foco, FERRAMENTAS.calma, FERRAMENTAS.ia];
 /** O que o Pro tem de maior: cada um deixa experimentar antes de pedir a assinatura. */
-const VIDA: Ferramenta[] = [FERRAMENTAS.gym];
+const VIDA: Ferramenta[] = [FERRAMENTAS.gym, FERRAMENTAS.financas];
 const EXTRAS: Ferramenta[] = [FERRAMENTAS.medicacao, FERRAMENTAS.historico, FERRAMENTAS.parceiro, FERRAMENTAS.ranking];
 
 function Cartao({ f, ehPro, aoAbrir }: { f: Ferramenta; ehPro: boolean; aoAbrir: (f: Ferramenta) => void }) {

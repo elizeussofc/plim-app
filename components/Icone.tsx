@@ -67,6 +67,23 @@ export const ICONES = {
   desceu: require('../assets/icones/desceu.webp'),
   gato: require('../assets/icones/gato.webp'),
   balao: require('../assets/icones/balao.webp'),
+  // Finanças
+  'fin-cofre': require('../assets/icones/fin-cofre.webp'),
+  'fin-carteira': require('../assets/icones/fin-carteira.webp'),
+  'fin-conta': require('../assets/icones/fin-conta.webp'),
+  'fin-cartao': require('../assets/icones/fin-cartao.webp'),
+  'fin-casa': require('../assets/icones/fin-casa.webp'),
+  'fin-mercado': require('../assets/icones/fin-mercado.webp'),
+  'fin-transporte': require('../assets/icones/fin-transporte.webp'),
+  'fin-luz': require('../assets/icones/fin-luz.webp'),
+  'fin-saude': require('../assets/icones/fin-saude.webp'),
+  'fin-lazer': require('../assets/icones/fin-lazer.webp'),
+  'fin-educacao': require('../assets/icones/fin-educacao.webp'),
+  'fin-assinatura': require('../assets/icones/fin-assinatura.webp'),
+  'fin-divida': require('../assets/icones/fin-divida.webp'),
+  'fin-investir': require('../assets/icones/fin-investir.webp'),
+  'fin-reserva': require('../assets/icones/fin-reserva.webp'),
+  'fin-extra': require('../assets/icones/fin-extra.webp'),
 } as const;
 
 export type NomeIcone = keyof typeof ICONES;

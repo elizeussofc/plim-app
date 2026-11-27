@@ -401,9 +401,9 @@ export default function GymScreen() {
                           <Text style={{ fontFamily: F.bold, fontSize: 15, color: C.text }}>{a.nome}</Text>
                           <Text style={{ fontSize: 13, color: C.textSub }}>{a.porcao} · {a.proteina} g</Text>
                         </View>
-                        <Botao rotulo="−" cor="claro" pequeno disabled={!qtd} onPress={() => setPrato((p) => ({ ...p, [a.id]: Math.max(0, qtd - 1) }))} accessibilityLabel={`Tirar uma porção de ${a.nome}`} />
+                        <Botao rotulo="−" cor="claro" pequeno disabled={!qtd} onPress={() => setPrato((p) => ({ ...p, [a.id]: Math.max(0, (p[a.id] ?? 0) - 1) }))} accessibilityLabel={`Tirar uma porção de ${a.nome}`} />
                         <Text style={{ fontFamily: F.displayX, fontSize: 18, color: C.text, minWidth: 18, textAlign: 'center' }}>{qtd}</Text>
-                        <Botao rotulo="+" cor="suave" pequeno onPress={() => setPrato((p) => ({ ...p, [a.id]: qtd + 1 }))} accessibilityLabel={`Pôr uma porção de ${a.nome}`} />
+                        <Botao rotulo="+" cor="suave" pequeno onPress={() => setPrato((p) => ({ ...p, [a.id]: (p[a.id] ?? 0) + 1 }))} accessibilityLabel={`Pôr uma porção de ${a.nome}`} />
                       </View>
                     );
                   })}

@@ -26,6 +26,7 @@ export const FERRAMENTAS = {
   foco:      { rota: '/sessao-foco',    icone: 'alvo',     titulo: 'Sessão de Foco', desc: 'Um cronômetro e uma coisa só. Cada minuto conta.', tinta: 'laranja', pro: false },
   calma:     { rota: '/modo-calma',     icone: 'lotus',    titulo: 'Modo Calma',     desc: 'Respire junto com o círculo e desacelere.',    tinta: 'verde',   pro: false },
   gym:       { rota: '/gym',            icone: 'trilha-corpo', titulo: 'Gym Plim',   desc: 'Treino guiado que evolui com você, e o que comer.', tinta: 'verde',   pro: false, selo: 'Pro · 1º treino grátis' },
+  financas:  { rota: '/financas',       icone: 'fin-cofre',    titulo: 'Finanças',   desc: 'Anote o mês, lembre das contas e faça o dinheiro crescer.', tinta: 'ouro', pro: false, selo: 'Planejar é do Pro' },
   ia:        { rota: '/ia-tdah',        icone: 'robo',     titulo: 'Plim IA',        desc: 'Um assistente que entende TDAH.',               tinta: 'azul',    pro: true  },
   medicacao: { rota: '/medicacao',      icone: 'pilula',   titulo: 'Medicação',      desc: 'Lembretes e registro',                          tinta: 'rosa',    pro: false },
   historico: { rota: '/historico',      icone: 'grafico',  titulo: 'Histórico',      desc: 'Seus últimos 35 dias',                          tinta: 'roxo',    pro: false },
