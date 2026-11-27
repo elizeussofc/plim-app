@@ -75,6 +75,7 @@ create table if not exists public.grupo_perfis (
 );
 
 alter table public.grupo_perfis enable row level security;
+revoke all on table public.grupo_perfis from anon, authenticated;
 grant select, insert, update, delete on table public.grupo_perfis to authenticated;
 grant all on table public.grupo_perfis to service_role;
 
@@ -125,6 +126,7 @@ create table if not exists public.grupo_instagram (
 );
 
 alter table public.grupo_instagram enable row level security;
+revoke all on table public.grupo_instagram from anon, authenticated;
 grant select, insert, update, delete on table public.grupo_instagram to authenticated;
 grant all on table public.grupo_instagram to service_role;
 
@@ -179,6 +181,7 @@ end $$;
 create index if not exists posts_comunidade_recentes on public.posts_comunidade (created_at desc);
 create index if not exists posts_comunidade_autor on public.posts_comunidade (user_id, created_at desc);
 
+revoke all on table public.posts_comunidade from anon, authenticated;
 grant select, insert, update, delete on table public.posts_comunidade to authenticated;
 
 drop policy if exists "Todos lêem posts públicos" on public.posts_comunidade;
@@ -230,6 +233,7 @@ create table if not exists public.grupo_reacoes (
 );
 
 alter table public.grupo_reacoes enable row level security;
+revoke all on table public.grupo_reacoes from anon, authenticated;
 grant select, insert, update, delete on table public.grupo_reacoes to authenticated;
 grant all on table public.grupo_reacoes to service_role;
 
@@ -269,6 +273,7 @@ create table if not exists public.grupo_comentarios (
 create index if not exists grupo_comentarios_post on public.grupo_comentarios (post_id, criado_em);
 
 alter table public.grupo_comentarios enable row level security;
+revoke all on table public.grupo_comentarios from anon, authenticated;
 grant select, insert, delete on table public.grupo_comentarios to authenticated;
 grant all on table public.grupo_comentarios to service_role;
 
@@ -340,6 +345,7 @@ create trigger trg_carimbar_story
   for each row execute function private.carimbar_story();
 
 alter table public.grupo_stories enable row level security;
+revoke all on table public.grupo_stories from anon, authenticated;
 grant select, insert, delete on table public.grupo_stories to authenticated;
 grant all on table public.grupo_stories to service_role;
 
@@ -378,6 +384,7 @@ create table if not exists public.grupo_visitas (
 create index if not exists grupo_visitas_recentes on public.grupo_visitas (perfil_id, visto_em desc);
 
 alter table public.grupo_visitas enable row level security;
+revoke all on table public.grupo_visitas from anon, authenticated;
 grant select, insert, delete on table public.grupo_visitas to authenticated;
 grant all on table public.grupo_visitas to service_role;
 
@@ -440,6 +447,7 @@ create table if not exists public.grupo_denuncias (
 );
 
 alter table public.grupo_denuncias enable row level security;
+revoke all on table public.grupo_denuncias from anon, authenticated;
 grant insert on table public.grupo_denuncias to authenticated;
 grant all on table public.grupo_denuncias to service_role;
 

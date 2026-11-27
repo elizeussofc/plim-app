@@ -136,8 +136,8 @@ test('post: só em nome próprio, sem endereço de fora e com imagem na própria
 
 test('quem não está logado não lê o Grupo', async () => {
   await recusa(como(null, `select * from public.grupo_perfis`), /permission denied/);
-  const posts = await como(null, `select * from public.posts_comunidade`);
-  assert.equal(posts.rows.length, 0);
+  // Antes o visitante recebia uma lista vazia (a regra por linha barrava). Agora a tabela nem abre para ele.
+  await recusa(como(null, `select * from public.posts_comunidade`), /permission denied/);
 });
 
 test('comentário: grátis só no próprio post; Pro em qualquer um', async () => {

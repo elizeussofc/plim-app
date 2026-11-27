@@ -1,33 +1,29 @@
 # Plim — ativar a segurança da IA e do plano Pro
 
-O código já está pronto. Faltam 6 passos (do 0 ao 5) que só o dono das contas consegue fazer.
+O código já está pronto. Os passos 0 e 1 já foram feitos; faltam os passos 2 a 5, que dependem das contas do dono.
 Enquanto eles não forem feitos, o app continua funcionando como antes (modo de transição).
 
-## 0. Acordar o projeto do Supabase
+## 0. Projeto do Supabase — FEITO em 27/11/2026
 
-Em 27/11/2026 o endereço do banco que o app usa não existia mais na internet
-(conferido em dois servidores de DNS públicos). Sem ele não há login, cadastro, Grupo,
-ranking nem Plim IA; o resto do app funciona porque guarda os dados no aparelho.
+O projeto antigo foi apagado. O app agora usa o projeto novo `Plim_project`
+(`https://afbwkdqubeffgosxufsc.supabase.co`). O endereço e a chave pública já estão no
+`.env.local` e nas variáveis de produção da Vercel (`EXPO_PUBLIC_SUPABASE_URL` e
+`EXPO_PUBLIC_SUPABASE_ANON_KEY`; a chave é a "publishable", que pode ficar no app).
 
-No painel do Supabase (supabase.com/dashboard), veja como o projeto do Plim aparece:
+## 1. Banco de dados — FEITO em 27/11/2026
 
-- **Pausado** (o plano grátis pausa projetos sem uso): clique em restaurar e espere ficar ativo.
-- **Não aparece** (foi apagado): crie um projeto novo. Nesse caso, no passo 1, cole antes os
-  arquivos `001_initial_schema.sql`, `003_ranking.sql` e `004_features.sql`, nessa ordem, e
-  troque `EXPO_PUBLIC_SUPABASE_URL` e `EXPO_PUBLIC_SUPABASE_ANON_KEY` na Vercel pelos do projeto novo.
+O arquivo `supabase/BANCO-NOVO.sql` (todas as migrations, da 001 à 008) foi rodado no SQL Editor.
+Ele só serve para um projeto vazio e roda uma vez.
 
-## 1. Banco de dados (Supabase)
+Daqui para a frente, mudança de banco entra como migration nova em `supabase/migrations/`,
+é somada em `tools/juntar-sql.mjs` e vai para o SQL Editor pelo arquivo
+`supabase/ATUALIZAR-BANCO.sql` (da 005 em diante; pode rodar mais de uma vez).
 
-No painel do Supabase > SQL Editor, cole e rode o arquivo `supabase/ATUALIZAR-BANCO.sql`
-inteiro. Ele junta as migrations 005, 006 e 007 e pode rodar mais de uma vez.
-
-O que ele faz:
-
-- cria as colunas do perfil que o app grava (sequência, conquistas, bio, Instagram). Sem elas,
-  o perfil de quem está logado não é salvo na nuvem. A versão antiga desse arquivo tinha um
-  comando que o Postgres recusa, então ele nunca rodou por inteiro;
-- impede que o app marque o próprio usuário como Pro e cria o contador diário de mensagens da IA;
-- cria as tabelas, as regras e o balde de imagens do Grupo (detalhes em `docs/GRUPO-SETUP.md`).
+Atenção em tabela nova: desde 30/05/2026 o Supabase não libera mais tabela nova para o app
+sozinho. Toda tabela precisa de três coisas na migration: `grant` para quem vai usar,
+`enable row level security` e as regras (`create policy`). Sem o `grant`, o app recebe o erro
+42501. O que está liberado hoje fica em `008_liberacoes_do_app.sql` e é conferido por
+`npm run test:sql`.
 
 ## 2. Publicar as duas funções do servidor
 
