@@ -1,7 +1,7 @@
 /**
  * Motor 3D do boneco novo (v2) na web: personagem com esqueleto, cabelo em peça e rosto em peças.
- * Só é usado quando EXPO_PUBLIC_BONECO=v2 (quem decide é lib/avatar3d.web.ts); sem isso o app
- * continua com o boneco antigo.
+ * É o boneco padrão do app (BONECO_NOVO em lib/avatar.ts). Quem chama é lib/avatar3d.web.ts;
+ * com EXPO_PUBLIC_BONECO=v1 o app volta para o boneco antigo.
  *
  * Há um arquivo por boneco em public/avatar/v2, gerados por tools/avatar/v2:
  *   plim_v2_m.glb / plim_v2_f.glb       corpo (uma malha, 24 ossos), cabelo e as peças do rosto

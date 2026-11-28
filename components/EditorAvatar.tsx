@@ -2,18 +2,17 @@ import { Image, Platform, Pressable, View } from 'react-native';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { Text } from '@/components/Texto';
 import {
-  OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE, avatarConfigPadrao, type AvatarConfig,
+  BONECO_NOVO, OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE, avatarConfigPadrao, type AvatarConfig,
 } from '@/lib/avatar';
 import { somToque, somVestir } from '@/lib/sons';
 import { C, F, R } from '@/lib/theme';
 
-/** Com o boneco novo em prova (só na web), os cartões mostram o retrato dele em vez da imagem fixa do antigo. */
-const BONECO_NOVO = process.env.EXPO_PUBLIC_BONECO === 'v2' && Platform.OS === 'web';
+/** Na web, com o boneco novo, os cartões mostram o retrato dele em vez da imagem fixa do antigo. */
+const RETRATO_NOVO = BONECO_NOVO && Platform.OS === 'web';
 
-const RETRATO = {
-  curto: require('../assets/avatar/busto-curto.webp'),
-  coque: require('../assets/avatar/busto-coque.webp'),
-} as const;
+const RETRATO = BONECO_NOVO
+  ? { curto: require('../assets/avatar/busto-curto-v2.webp'), coque: require('../assets/avatar/busto-coque-v2.webp') }
+  : { curto: require('../assets/avatar/busto-curto.webp'), coque: require('../assets/avatar/busto-coque.webp') };
 
 /** Fileira de cores para escolher (pele, cabelo, roupa, fundo). */
 export function Cores({ titulo, opcoes, atual, aoEscolher }: { titulo: string; opcoes: string[]; atual: string; aoEscolher: (hex: string) => void }) {
@@ -89,7 +88,7 @@ function CartaoBoneco({ id, rotulo, ativo, fundo, aoTocar }: { id: keyof typeof 
         borderColor: ativo ? C.primary : C.border,
       })}
     >
-      {BONECO_NOVO ? (
+      {RETRATO_NOVO ? (
         <AvatarPersonagem config={{ ...avatarConfigPadrao, cabelo: id, fundo }} size={84} />
       ) : (
         <View style={{ width: 84, height: 84, borderRadius: 42, overflow: 'hidden', backgroundColor: `#${fundo}` }}>

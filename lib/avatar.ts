@@ -12,6 +12,13 @@
  * no antigo cada uma cai na mais parecida (ver expressaoDoBonecoAntigo).
  */
 export type Expressao = 'feliz' | 'neutro' | 'triste' | 'animado' | 'cansado' | 'determinado' | 'orgulhoso';
+
+/**
+ * Qual boneco o app mostra. O novo (v2, personagem com esqueleto e rosto em peças) é o padrão
+ * desde 28/11/2026. Para voltar ao antigo sem mexer no código, criar a variável
+ * EXPO_PUBLIC_BONECO=v1 e publicar de novo.
+ */
+export const BONECO_NOVO = process.env.EXPO_PUBLIC_BONECO !== 'v1';
 export const EXPRESSOES: Expressao[] = ['feliz', 'neutro', 'animado', 'orgulhoso', 'determinado', 'triste', 'cansado'];
 
 /**

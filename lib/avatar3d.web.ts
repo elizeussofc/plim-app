@@ -5,15 +5,12 @@
  *   - criarPalco(): um palco vivo num <canvas>, que gira ao arrastar e acena ao toque.
  * three.js só é baixado quando o primeiro avatar aparece (import dinâmico).
  */
-import { COBRE_O_TOPO, chaveAvatar, escurecer, expressaoDoBonecoAntigo, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import { BONECO_NOVO, COBRE_O_TOPO, chaveAvatar, escurecer, expressaoDoBonecoAntigo, type AvatarConfig, type Expressao } from '@/lib/avatar';
 import * as novo from '@/lib/boneco3dWeb';
 
-/**
- * Boneco novo (v2): personagem com esqueleto e rosto em peças. Fica desligado até a variável
- * EXPO_PUBLIC_BONECO=v2 existir (hoje só no .env.local de quem está testando). Sem ela, tudo
- * neste arquivo continua igual.
- */
-const BONECO_NOVO = process.env.EXPO_PUBLIC_BONECO === 'v2';
+// Com BONECO_NOVO (o padrão), as três funções exportadas aqui passam o trabalho para o motor
+// novo (lib/boneco3dWeb.ts). O resto deste arquivo é o motor do boneco antigo, que só roda
+// quando EXPO_PUBLIC_BONECO=v1.
 
 type Three = typeof import('three');
 type Object3D = import('three').Object3D;

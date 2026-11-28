@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Image, Platform, View } from 'react-native';
-import { chaveAvatar, normalizarAvatar, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import { BONECO_NOVO, chaveAvatar, normalizarAvatar, type AvatarConfig, type Expressao } from '@/lib/avatar';
 import { criarPalco, type Palco } from '@/lib/avatar3d';
 import { C } from '@/lib/theme';
 
-const BUSTO_FIXO = {
-  curto: require('../assets/avatar/busto-curto.webp'),
-  coque: require('../assets/avatar/busto-coque.webp'),
-} as const;
+/** Retrato fixo, usado enquanto o 3D carrega e no celular. Com o boneco novo, é o retrato dele. */
+const BUSTO_FIXO = BONECO_NOVO
+  ? { curto: require('../assets/avatar/busto-curto-v2.webp'), coque: require('../assets/avatar/busto-coque-v2.webp') }
+  : { curto: require('../assets/avatar/busto-curto.webp'), coque: require('../assets/avatar/busto-coque.webp') };
 
 interface Props {
   config: AvatarConfig | unknown;
