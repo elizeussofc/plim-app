@@ -12,7 +12,7 @@
  * A cor do corpo é montada aqui: cor escolhida de cada região vezes a sombra. O rosto troca de
  * expressão mostrando e escondendo peças pelo nome (eye__, lid__, brow__, mouth__).
  */
-import { chaveAvatar, escurecer, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import { chaveAvatar, escurecer, type AvatarConfig, type Expressao, type Rosto } from '@/lib/avatar';
 
 type Three = typeof import('three');
 type Object3D = import('three').Object3D;
@@ -57,6 +57,17 @@ const ROSTO: Record<Expressao, { olho: string; palpebra: string | null }> = {
 /** Chapéus que escondem o alto do cabelo (o coque e os topetes). Coroa e chapéu de festa ficam por cima dele. */
 const COBRE_O_ALTO = ['bone', 'gorro'];
 
+/**
+ * Formatos de rosto: quanto a cabeça estica em largura, altura e profundidade. O que está preso
+ * à cabeça (cabelo, rosto, chapéu, óculos, fone) estica junto.
+ */
+const FORMATOS: Record<Rosto, [number, number, number]> = {
+  padrao: [1, 1, 1],
+  redondo: [1.1, 0.95, 1.06],
+  fino: [0.92, 1.04, 0.97],
+  grande: [1.09, 1.09, 1.09],
+};
+
 interface Mapa { lado: number; sombra: Uint8Array; regiao: Uint8Array }
 interface Base {
   THREE: Three;
@@ -68,11 +79,14 @@ interface Base {
   topo: number;
   /** Altura do ponto mais alto de cada chapéu. */
   topoChapeu: Record<string, number>;
+  /** Altura do pescoço, de onde a cabeça estica nos formatos de rosto. */
+  pivoCabeca: number;
 }
 
-/** Até onde o boneco vai com o chapéu escolhido: é o que a câmera precisa enquadrar. */
+/** Até onde o boneco vai com o chapéu e o formato de rosto escolhidos: é o que a câmera precisa enquadrar. */
 function topoDe(b: Base, cfg: AvatarConfig): number {
-  return Math.max(b.topo, b.topoChapeu[cfg.chapeu] ?? 0);
+  const alto = Math.max(b.topo, b.topoChapeu[cfg.chapeu] ?? 0);
+  return b.pivoCabeca + (alto - b.pivoCabeca) * (FORMATOS[cfg.rosto] ?? FORMATOS.padrao)[1];
 }
 
 const bases: Partial<Record<Modelo, Promise<Base>>> = {};
@@ -119,7 +133,8 @@ function carregarBase(modelo: Modelo): Promise<Base> {
         if (p[0] === 'hat') topoChapeu[p[1]] = Math.max(topoChapeu[p[1]] ?? 0, alto);
         else if (p.length < 3 || p[0] === 'hair' || p[0] === 'hairtop') topo = Math.max(topo, alto);
       });
-      return { THREE, modelo, cena: gltf.scene, clonar: (o: Object3D) => SkeletonUtils.clone(o), mapa, topo, topoChapeu };
+      const pivoCabeca = gltf.scene.getObjectByName('Head')?.getWorldPosition(new THREE.Vector3()).y ?? 1.25;
+      return { THREE, modelo, cena: gltf.scene, clonar: (o: Object3D) => SkeletonUtils.clone(o), mapa, topo, topoChapeu, pivoCabeca };
     })();
     bases[modelo] = p;
     p.catch(() => { delete bases[modelo]; }); // falhou (sem rede?): tenta de novo na próxima vez
@@ -180,6 +195,10 @@ interface Boneco {
   pecas: Peca[];
   mats: Record<string, Material>;
   girar: (osso: string, eixo: Vector3, angulo: number, eixo2?: Vector3, angulo2?: number) => void;
+  /** Formato de rosto: estica a cabeça (largura, altura, profundidade). */
+  formato: (f: [number, number, number]) => void;
+  /** Depois de girar a cabeça, refaz a matriz dela se houver formato de rosto. */
+  acertarCabeca: () => void;
 }
 
 const ANIMADOS = ['Spine01', 'Head', 'LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm'];
@@ -189,7 +208,7 @@ function criarBoneco(b: Base): Boneco {
   const { THREE } = b;
   const raiz = b.clonar(b.cena);
   raiz.updateMatrixWorld(true);
-  const bo: Boneco = { base: b, raiz, corpo: null, ossos: {}, repouso: {}, pai: {}, pecas: [], mats: {}, girar: () => {} };
+  const bo: Boneco = { base: b, raiz, corpo: null, ossos: {}, repouso: {}, pai: {}, pecas: [], mats: {}, girar: () => {}, formato: () => {}, acertarCabeca: () => {} };
   raiz.traverse((o) => {
     if ((o as any).isBone) bo.ossos[o.name] = o;
     const malha = o as Mesh;
@@ -226,6 +245,29 @@ function criarBoneco(b: Base): Boneco {
     r.setFromAxisAngle(eixo, angulo);
     if (eixo2) r.multiply(q.setFromAxisAngle(eixo2, angulo2));
     o.quaternion.copy(pai).invert().multiply(r).multiply(pai).multiply(rep);
+  };
+
+  // Formato de rosto. O osso da cabeça não está alinhado com os eixos do boneco, então a
+  // esticada vai numa matriz própria: gira para os eixos do boneco, estica e gira de volta.
+  const cabeca = bo.ossos.Head;
+  const giroCabeca = cabeca ? new THREE.Matrix4().makeRotationFromQuaternion(cabeca.getWorldQuaternion(new THREE.Quaternion())) : null;
+  const um = new THREE.Vector3(1, 1, 1);
+  let estica: import('three').Matrix4 | null = null;
+  bo.acertarCabeca = () => {
+    if (!cabeca || !estica) return;
+    cabeca.matrix.compose(cabeca.position, cabeca.quaternion, um).multiply(estica);
+    cabeca.matrixWorldNeedsUpdate = true;
+  };
+  bo.formato = (f) => {
+    if (!cabeca || !giroCabeca) return;
+    if (f[0] === 1 && f[1] === 1 && f[2] === 1) {
+      estica = null;
+      cabeca.matrixAutoUpdate = true;
+      return;
+    }
+    estica = giroCabeca.clone().invert().multiply(new THREE.Matrix4().makeScale(f[0], f[1], f[2])).multiply(giroCabeca);
+    cabeca.matrixAutoUpdate = false;
+    bo.acertarCabeca();
   };
   return bo;
 }
@@ -272,6 +314,7 @@ function aplicarVisual(bo: Boneco, cfg: AvatarConfig, expressao: Expressao, pisc
   bo.mats.hat_detail?.color.set('#' + escurecer(cfg.corChapeu));
   bo.mats.extra?.color.set('#' + cfg.corExtra);
   bo.mats.extra_detail?.color.set('#' + escurecer(cfg.corExtra));
+  bo.formato(FORMATOS[cfg.rosto] ?? FORMATOS.padrao);
   aplicarRoupas(bo, cfg);
   aplicarRosto(bo, expressao, piscando);
 }
@@ -432,6 +475,7 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
     boneco.raiz.position.y = Math.sin(t * 2.1) * 0.004 * mexe;
     girar('Spine01', LADO, Math.sin(t * 2.1) * 0.012 * mexe);
     girar('Head', FRENTE, Math.sin(t * 1.3) * 0.035 * mexe, CIMA, Math.sin(t * 0.5) * 0.07 * mexe);
+    boneco.acertarCabeca();
 
     // Braços: em repouso descem para perto do corpo. Ângulo positivo levanta o esquerdo e abaixa o direito.
     const esq = -DESCE_BRACO + Math.sin(t * 1.6) * 0.03 * mexe;

@@ -43,8 +43,18 @@ export const COSTAS: Costas[] = ['mochila', 'capa'];
 /** Chapéus que cobrem o alto da cabeça: com eles o coque e as mechas ficam escondidos. */
 export const COBRE_O_TOPO: Chapeu[] = ['bone', 'gorro', 'festa', 'coroa'];
 
+/** Formato do rosto (só o boneco novo): a cabeça inteira estica ou arredonda, com cabelo e chapéu junto. */
+export type Rosto = 'padrao' | 'redondo' | 'fino' | 'grande';
+export const OPCOES_ROSTO: { id: Rosto; label: string }[] = [
+  { id: 'padrao', label: 'Padrão' },
+  { id: 'redondo', label: 'Redondo' },
+  { id: 'fino', label: 'Fino' },
+  { id: 'grande', label: 'Grande' },
+];
+
 export interface AvatarConfig {
   cabelo: Cabelo;
+  rosto: Rosto;
   pele: string;        // hex sem #
   corCabelo: string;
   corMoletom: string;
@@ -63,6 +73,7 @@ export interface AvatarConfig {
 
 export const avatarConfigPadrao: AvatarConfig = {
   cabelo: 'curto',
+  rosto: 'padrao',
   pele: 'C98A5E',
   corCabelo: '3B2219',
   corMoletom: '7C3AED',
@@ -114,6 +125,7 @@ export function normalizarAvatar(bruto: unknown): AvatarConfig {
   if (b.cabelo === 'curto' || b.cabelo === 'coque') {
     return {
       cabelo: b.cabelo,
+      rosto: OPCOES_ROSTO.some((o) => o.id === b.rosto) ? (b.rosto as Rosto) : 'padrao',
       pele: hex(b.pele, p.pele),
       corCabelo: hex(b.corCabelo, p.corCabelo),
       corMoletom: hex(b.corMoletom, p.corMoletom),
@@ -152,5 +164,5 @@ export function escurecer(corHex: string, fator = 0.84): string {
 
 /** Chave estável de um avatar, para cache de imagem. */
 export function chaveAvatar(c: AvatarConfig, expressao: Expressao): string {
-  return [c.cabelo, c.pele, c.corCabelo, c.corMoletom, c.corCalca, c.oculos ? 1 : 0, c.fone ? 1 : 0, c.chapeu, c.pescoco, c.costas, c.corChapeu, c.corExtra, c.corTenis, c.corRaio, expressao].join('-');
+  return [c.cabelo, c.rosto, c.pele, c.corCabelo, c.corMoletom, c.corCalca, c.oculos ? 1 : 0, c.fone ? 1 : 0, c.chapeu, c.pescoco, c.costas, c.corChapeu, c.corExtra, c.corTenis, c.corRaio, expressao].join('-');
 }

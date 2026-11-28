@@ -2,7 +2,7 @@ import { Image, Platform, Pressable, View } from 'react-native';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { Text } from '@/components/Texto';
 import {
-  BONECO_NOVO, OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE, avatarConfigPadrao, type AvatarConfig,
+  BONECO_NOVO, OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE, OPCOES_ROSTO, avatarConfigPadrao, type AvatarConfig,
 } from '@/lib/avatar';
 import { somToque, somVestir } from '@/lib/sons';
 import { C, F, R } from '@/lib/theme';
@@ -123,6 +123,30 @@ export default function EditorAvatar({ avatar, aoMudar }: { avatar: AvatarConfig
           />
         ))}
       </View>
+
+      {BONECO_NOVO && (
+        <View style={{ marginBottom: 18 }}>
+          <Text style={{ fontFamily: F.display, fontSize: 15, color: C.text, marginBottom: 8 }}>Formato do rosto</Text>
+          <View accessibilityRole="radiogroup" style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {OPCOES_ROSTO.map((op) => {
+              const ativo = avatar.rosto === op.id;
+              return (
+                <Pressable
+                  key={op.id}
+                  onPress={() => { if (!ativo) { aoMudar({ rosto: op.id }); somToque(); } }}
+                  accessibilityRole="radio"
+                  aria-checked={ativo}
+                  accessibilityState={{ checked: ativo }}
+                  accessibilityLabel={`Formato do rosto: ${op.label.toLowerCase()}`}
+                  style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: R.lg, backgroundColor: ativo ? C.glass : C.surface, borderWidth: 2, borderColor: ativo ? C.primary : C.border }}
+                >
+                  <Text style={{ fontFamily: F.display, fontSize: 15, color: ativo ? C.primaryLight : C.textSub }}>{op.label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      )}
 
       <Cores titulo="Cor do cabelo" opcoes={OPCOES_COR_CABELO} atual={avatar.corCabelo} aoEscolher={(h) => cor({ corCabelo: h })} />
       <Cores titulo="Tom de pele" opcoes={OPCOES_PELE} atual={avatar.pele} aoEscolher={(h) => cor({ pele: h })} />

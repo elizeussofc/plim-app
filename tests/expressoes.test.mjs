@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { EXPRESSOES, expressaoDoBonecoAntigo } from '../lib/avatar.ts';
+import { EXPRESSOES, OPCOES_ROSTO, avatarConfigPadrao, chaveAvatar, expressaoDoBonecoAntigo, normalizarAvatar } from '../lib/avatar.ts';
 import { FALAS } from '../lib/falas.ts';
 
 const ANTIGAS = ['feliz', 'neutro', 'triste', 'animado'];
@@ -20,6 +20,19 @@ test('o boneco antigo mostra cada cara nova como a que já mostrava naquelas sit
   assert.equal(expressaoDoBonecoAntigo('orgulhoso'), 'animado');
   for (const e of ANTIGAS) assert.equal(expressaoDoBonecoAntigo(e), e);
   for (const e of EXPRESSOES) assert.ok(ANTIGAS.includes(expressaoDoBonecoAntigo(e)), `${e} virou uma cara que o boneco antigo não tem`);
+});
+
+test('formato do rosto: guarda o que é válido e volta ao padrão no que não conhece', () => {
+  assert.equal(avatarConfigPadrao.rosto, 'padrao');
+  assert.deepEqual(OPCOES_ROSTO.map((o) => o.id), ['padrao', 'redondo', 'fino', 'grande']);
+  for (const { id } of OPCOES_ROSTO) assert.equal(normalizarAvatar({ ...avatarConfigPadrao, rosto: id }).rosto, id);
+  assert.equal(normalizarAvatar({ ...avatarConfigPadrao, rosto: 'quadrado' }).rosto, 'padrao');
+  // avatar salvo antes de existir o formato de rosto
+  const antigo = { ...avatarConfigPadrao };
+  delete antigo.rosto;
+  assert.equal(normalizarAvatar(antigo).rosto, 'padrao');
+  // o retrato guardado em cache não pode ser o mesmo para rostos diferentes
+  assert.notEqual(chaveAvatar({ ...avatarConfigPadrao, rosto: 'redondo' }, 'feliz'), chaveAvatar(avatarConfigPadrao, 'feliz'));
 });
 
 test('toda fala usa uma expressão que existe', () => {

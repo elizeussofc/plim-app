@@ -2,7 +2,7 @@ import AvatarPalco from '@/components/AvatarPalco';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { Text } from '@/components/Texto';
 import {
-  CHAPEUS, COSTAS, EXPRESSOES, OPCOES_BONECO, OPCOES_CALCA, PESCOCOS, OPCOES_COR_CABELO, OPCOES_MOLETOM, OPCOES_PELE, OPCOES_RAIO, OPCOES_TENIS,
+  CHAPEUS, COSTAS, EXPRESSOES, OPCOES_BONECO, OPCOES_CALCA, OPCOES_ROSTO, PESCOCOS, OPCOES_COR_CABELO, OPCOES_MOLETOM, OPCOES_PELE, OPCOES_RAIO, OPCOES_TENIS,
   avatarConfigPadrao, type AvatarConfig, type Expressao,
 } from '@/lib/avatar';
 import { C, F } from '@/lib/theme';
@@ -56,6 +56,16 @@ export default function BonecoProva() {
           <Pressable key={o.id} onPress={() => mudar({ cabelo: o.id })} accessibilityRole="button" accessibilityLabel={`Boneco ${o.label}`}
             style={{ paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999, backgroundColor: o.id === cfg.cabelo ? C.primary : C.surface, borderWidth: 2, borderColor: o.id === cfg.cabelo ? C.primary : C.border }}>
             <Text style={{ fontFamily: F.display, fontSize: 15, color: o.id === cfg.cabelo ? '#FFFFFF' : C.text }}>{o.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={{ fontFamily: F.display, fontSize: 14, color: C.text, marginTop: 10, marginBottom: 6 }}>Formato do rosto</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {OPCOES_ROSTO.map((o) => (
+          <Pressable key={o.id} onPress={() => mudar({ rosto: o.id })} accessibilityRole="button" accessibilityLabel={`Rosto ${o.label}`}
+            style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: cfg.rosto === o.id ? C.primary : C.surface, borderWidth: 2, borderColor: cfg.rosto === o.id ? C.primary : C.border }}>
+            <Text style={{ fontSize: 13, color: cfg.rosto === o.id ? '#FFFFFF' : C.text }}>{o.label}</Text>
           </Pressable>
         ))}
       </View>
