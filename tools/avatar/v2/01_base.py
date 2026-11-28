@@ -98,6 +98,43 @@ for b in esq.data.bones:
     med['ossos'][b.name] = {'cabeca': [round(v, 4) for v in c], 'ponta': [round(v, 4) for v in p], 'pai': b.parent.name if b.parent else None}
     print(f'osso {b.name:14s} pai {str(b.parent.name if b.parent else "-"):14s} início {[round(v, 3) for v in c]}')
 
+
+
+# ── Pesos do esqueleto: o antebraço e a mão só podem puxar o que está perto deles ──
+# No modelo de IA a mão fica perto do quadril, e o peso do antebraço "vaza" para a lateral do
+# tronco. Ao erguer o braço, esses pontos do tronco vão junto e o moletom rasga em pontas.
+def dist_ao_braco(p, a, b, c):
+    """Distância de p à linha quebrada a-b-c (cotovelo, punho, ponta dos dedos)."""
+    def ao_trecho(u, v):
+        d = v - u
+        t = max(0.0, min(1.0, (p - u).dot(d) / max(d.length_squared, 1e-12)))
+        return (p - (u + d * t)).length
+    return min(ao_trecho(a, b), ao_trecho(b, c))
+
+
+grupo = {g.name: g.index for g in corpo.vertex_groups}
+soltos = {}
+for lado in ('Left', 'Right'):
+    cot = esq.matrix_world @ esq.data.bones[lado + 'ForeArm'].head_local
+    pun = esq.matrix_world @ esq.data.bones[lado + 'Hand'].head_local
+    dedos = pun + (pun - cot).normalized() * 0.14
+    alvos = {grupo[lado + 'ForeArm'], grupo[lado + 'Hand']}
+    for v in corpo.data.vertices:
+        if not any(g.group in alvos and g.weight > 0 for g in v.groups):
+            continue
+        if dist_ao_braco(corpo.matrix_world @ v.co, cot, pun, dedos) <= 0.09:
+            continue
+        resto = [(g.group, g.weight) for g in v.groups if g.group not in alvos and g.weight > 0]
+        if not resto:
+            continue                                   # só tinha esse peso: melhor deixar
+        total = sum(w for _g, w in resto)
+        for gi in alvos:
+            corpo.vertex_groups[gi].remove([v.index])
+        for gi, w in resto:
+            corpo.vertex_groups[gi].add([v.index], w / total, 'REPLACE')
+        soltos[lado] = soltos.get(lado, 0) + 1
+print('pontos soltos do antebraço e da mão por estarem longe deles:', soltos or 'nenhum')
+
 med['triangulos'] = sum(len(p.vertices) - 2 for p in corpo.data.polygons)
 print('triângulos:', med['triangulos'], '| vértices sem peso:', sum(1 for v in corpo.data.vertices if not v.groups))
 

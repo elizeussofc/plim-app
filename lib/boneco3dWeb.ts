@@ -31,7 +31,7 @@ export interface Palco {
 
 type Modelo = 'm' | 'f';
 /** Sobe quando um arquivo muda, para o navegador não usar o antigo guardado. */
-const VERSAO = '2';
+const VERSAO = '3';
 const ARQUIVOS: Record<Modelo, { glb: string; mapa: string }> = {
   m: { glb: '/avatar/v2/plim_v2_m.glb?v=' + VERSAO, mapa: '/avatar/v2/corpo_mapa_m.png?v=' + VERSAO },
   f: { glb: '/avatar/v2/plim_v2_f.glb?v=' + VERSAO, mapa: '/avatar/v2/corpo_mapa_f.png?v=' + VERSAO },

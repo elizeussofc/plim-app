@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { Image, Platform, View, type StyleProp, type ViewStyle } from 'react-native';
 
 // As cenas que ganharam vida. "escala" é o tamanho do boneco dentro do arquivo animado em relação
-// ao da ilustração parada: a animação tem mais folga em volta para a mão e o pulo não cortarem.
-// Os números saem de CEREBRO-IA/receitas/plim/cena_animada.py.
+// ao da ilustração parada. Desde 28/11/2026 as duas saem do mesmo enquadramento (os bonecos novos,
+// renderizados por tools/avatar/v2/07_cenas.py), então a escala é 1: a animada troca de lugar com
+// a parada sem mudar de tamanho.
 const CENAS = {
-  ola: { parada: require('../assets/cenas/ola.webp'), viva: require('../assets/cenas/ola-animado.webp'), escala: 0.94 },
-  vitoria: { parada: require('../assets/cenas/vitoria.webp'), viva: require('../assets/cenas/vitoria-animado.webp'), escala: 0.81 },
+  ola: { parada: require('../assets/cenas/ola.webp'), viva: require('../assets/cenas/ola-animado.webp'), escala: 1 },
+  vitoria: { parada: require('../assets/cenas/vitoria.webp'), viva: require('../assets/cenas/vitoria-animado.webp'), escala: 1 },
 } as const;
 
 export type Cena = keyof typeof CENAS;
