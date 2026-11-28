@@ -59,7 +59,7 @@ class Boneco:
         self.esq = next(o for o in self.objs if o.type == 'ARMATURE')
         self.esq.location.x = x
         self.esq.scale = (escala,) * 3
-        self.x, self.escala = x, escala
+        self.x, self.escala, self.qual, self.nome = x, escala, qual, nome
         bpy.context.view_layer.update()
         self.rosto('feliz')
         self.repouso()
@@ -111,6 +111,22 @@ class Boneco:
     def subir(self, dz):
         self.esq.location.z = dz
         bpy.context.view_layer.update()
+
+    def cores(self, pele, moletom, raio, calca, tenis):
+        """Outra combinação de cores para este boneco (a mesma conta que o app faz com o corpo_mapa.png)."""
+        import numpy as np
+        from PIL import Image
+        m = np.array(Image.open(os.path.join(os.path.dirname(BLEND[self.qual]), 'textura2', 'corpo_mapa.png')).convert('RGB'))
+        tab = np.zeros((7, 3), np.float32)
+        for k, h in enumerate(('000000', pele, moletom, raio, calca, tenis, raio)):
+            tab[k] = [int(h[i:i + 2], 16) for i in (0, 2, 4)]
+        reg = np.clip(np.round(m[..., 1] / 36).astype(int), 0, 6)
+        caminho = os.path.join(SAIDA, f'_textura_{self.nome}.png')
+        Image.fromarray((tab[reg] * (m[..., 0:1] / 255.0)).astype(np.uint8), 'RGB').save(caminho)
+        corpo = next(o for o in self.objs if self.nomes[o] == 'corpo')
+        mat = corpo.material_slots[0].material.copy()
+        corpo.material_slots[0].material = mat
+        next(n for n in mat.node_tree.nodes if n.type == 'TEX_IMAGE').image = bpy.data.images.load(caminho)
 
 
 def material(nome, hexa, brilho=0.6, metal=0.0):
@@ -168,6 +184,124 @@ def confete(centro, largura, altura, n, semente, queda=0.0):
         z = centro[2] - altura / 2 + ((z - (centro[2] - altura / 2)) - queda * altura * voltas) % altura
         peca('cube', cores[i % len(cores)], (x, centro[1] + r.uniform(-0.05, 0.05), z), (0.020, 0.005, 0.011),
              (r.uniform(0, 180), r.uniform(0, 180), r.uniform(0, 180) + queda * 360 * voltas))
+
+
+def barra(p0, p1, raio, mat):
+    """Cilindro fino de um ponto a outro (cabo da vassoura, guia do cachorro)."""
+    p0, p1 = Vector(p0), Vector(p1)
+    d = p1 - p0
+    bpy.ops.mesh.primitive_cylinder_add(location=(p0 + p1) / 2, radius=raio, depth=d.length, vertices=14)
+    o = bpy.context.active_object
+    o.rotation_mode = 'QUATERNION'
+    o.rotation_quaternion = d.to_track_quat('Z', 'Y')
+    o.data.materials.append(mat)
+    for p in o.data.polygons:
+        p.use_smooth = True
+    ACESSORIOS.append(o)
+    return o
+
+
+def bola(mat, loc, raio):
+    return peca('uv_sphere', mat, loc, raio if isinstance(raio, tuple) else (raio,) * 3, segments=24, ring_count=14, radius=1.0)
+
+
+def nuvem(centro, tam=1.0):
+    branco = material('nuvem', 'F3EEF7', 0.8)
+    x, y, z = centro
+    for dx, dz, r in ((-0.07, 0.0, 0.05), (0.0, 0.025, 0.07), (0.075, 0.0, 0.052), (0.0, -0.012, 0.055)):
+        bola(branco, (x + dx * tam, y, z + dz * tam), (r * tam * 1.15, r * tam * 0.8, r * tam))
+
+
+def relogio(centro, raio=0.085):
+    roxo, claro, escuro, laranja = material('rel_roxo', '8B6FD6', 0.5), material('rel_claro', 'FBF8F2', 0.5), material('rel_escuro', '3A2A5E', 0.5), material('rel_laranja', 'F97316', 0.5)
+    x, y, z = centro
+    peca('cylinder', roxo, (x, y, z), (raio, raio, 0.03), (90, 0, 0), vertices=40)
+    peca('cylinder', claro, (x, y - 0.031, z), (raio * 0.8, raio * 0.8, 0.004), (90, 0, 0), vertices=40)
+    peca('cylinder', roxo, (x, y, z + raio + 0.012), (0.02, 0.02, 0.016), vertices=16)
+    barra((x, y - 0.037, z), (x, y - 0.037, z + raio * 0.55), 0.006, escuro)
+    barra((x, y - 0.037, z), (x + raio * 0.42, y - 0.037, z + raio * 0.12), 0.006, laranja)
+    for lado in (-1, 1):
+        bola(roxo, (x + lado * raio * 0.6, y, z - raio * 0.93), 0.018)
+
+
+def livro_aberto(centro, larg=0.2, alt=0.14):
+    capa, folha = material('livro_capa', 'F26B1D', 0.55), material('livro_folha', 'FBF6EC', 0.7)
+    x, y, z = centro
+    for lado in (-1, 1):   # quem olha de frente vê a capa; as folhas ficam viradas para quem lê
+        peca('cube', capa, (x + lado * larg * 0.25, y - 0.008, z), (larg * 0.26, 0.007, alt / 2), (-22, 0, lado * 16))
+        peca('cube', folha, (x + lado * larg * 0.24, y + 0.006, z + 0.006), (larg * 0.235, 0.008, alt / 2 - 0.006), (-22, 0, lado * 16))
+
+
+def pilha_de_livros(base):
+    x, y, z = base
+    for i, (cor, larg) in enumerate((('7C5CD6', 0.085), ('0E9F6E', 0.078), ('3B7DDD', 0.082))):
+        peca('cube', material('pilha_' + cor, cor, 0.6), (x + (0.006 if i % 2 else -0.004), y, z + 0.022 + i * 0.044), (larg, 0.06, 0.019))
+        peca('cube', material('pilha_folha', 'FBF6EC', 0.7), (x + 0.012, y - 0.004, z + 0.022 + i * 0.044), (larg - 0.004, 0.058, 0.013))
+
+
+def vassoura(mao, pe):
+    """Cabo passando pela mão até o chão em `pe`, com as cerdas embaixo."""
+    madeira, palha, faixa = material('vas_cabo', 'B9814A', 0.6), material('vas_palha', 'F2C230', 0.75), material('vas_faixa', '7C3AED', 0.6)
+    mao, pe = Vector(mao), Vector(pe)
+    d = (mao - pe).normalized()
+    barra(pe + d * 0.12, mao + d * 0.42, 0.012, madeira)
+    bpy.ops.mesh.primitive_cone_add(location=pe + d * 0.065, radius1=0.085, radius2=0.03, depth=0.13, vertices=24)
+    o = bpy.context.active_object
+    o.rotation_mode = 'QUATERNION'
+    o.rotation_quaternion = d.to_track_quat('Z', 'Y')
+    o.scale = (1.0, 0.45, 1.0)
+    o.data.materials.append(palha)
+    ACESSORIOS.append(o)
+    barra(pe + d * 0.118, pe + d * 0.142, 0.033, faixa)
+
+
+def balde(base):
+    roxo, pano = material('balde', '8B6FD6', 0.5), material('pano', 'FBF6EC', 0.8)
+    x, y, z = base
+    peca('cone', roxo, (x, y, z + 0.075), (1, 1, 1), radius1=0.062, radius2=0.085, depth=0.15, vertices=32)
+    bola(pano, (x + 0.05, y - 0.03, z + 0.15), (0.045, 0.03, 0.022))
+
+
+def brilho(centro, tam=0.03):
+    amarelo = material('brilho', 'FFD23F', 0.4)
+    x, y, z = centro
+    peca('cone', amarelo, (x, y, z + tam / 2), (1, 0.35, 1), radius1=tam * 0.42, radius2=0, depth=tam, vertices=4)
+    peca('cone', amarelo, (x, y, z - tam / 2), (1, 0.35, 1), (180, 0, 0), radius1=tam * 0.42, radius2=0, depth=tam, vertices=4)
+    peca('cone', amarelo, (x + tam / 2, y, z), (1, 0.35, 1), (0, 90, 0), radius1=tam * 0.42, radius2=0, depth=tam, vertices=4)
+    peca('cone', amarelo, (x - tam / 2, y, z), (1, 0.35, 1), (0, -90, 0), radius1=tam * 0.42, radius2=0, depth=tam, vertices=4)
+
+
+def blocos(base):
+    x, y, z = base
+    t = 0.042
+    for i, cor in enumerate(('3B7DDD', '0E9F6E', 'FFD23F', 'E5484D')):
+        peca('cube', material('bloco_' + cor, cor, 0.55), (x + (0.008 if i % 2 else -0.006), y, z + t + i * 2 * t), (t, t, t), (0, 0, 8 * (i % 3 - 1)))
+    peca('cube', material('bloco_F97316', 'F97316', 0.55), (x + 0.16, y - 0.05, z + t), (t, t, t), (0, 0, 20))
+    peca('cube', material('bloco_8B6FD6', '8B6FD6', 0.55), (x - 0.15, y - 0.06, z + t), (t, t, t), (0, 0, -15))
+
+
+def cachorro(base, olha=-1):
+    """Cachorrinho de formas simples, com as patas em `base`. olha = -1: cabeça virada para a esquerda de quem vê."""
+    branco, marrom, preto, coleira = material('cao_branco', 'FBF5EA', 0.75), material('cao_marrom', 'B06A3B', 0.7), material('cao_preto', '2A1A14', 0.35), material('cao_coleira', '7C3AED', 0.5)
+    x, y, z = base
+    bola(branco, (x, y, z + 0.17), (0.15, 0.085, 0.085))                       # corpo
+    bola(marrom, (x - olha * 0.05, y + 0.005, z + 0.215), (0.075, 0.07, 0.05))  # mancha nas costas
+    for dx in (-0.09, 0.09):
+        for dy in (-0.04, 0.04):
+            peca('cylinder', branco, (x + dx, y + dy, z + 0.06), (0.026, 0.026, 0.06), vertices=14)
+            bola(branco, (x + dx + olha * 0.008, y + dy - 0.006, z + 0.016), (0.032, 0.034, 0.018))
+    cx, cz = x + olha * 0.17, z + 0.31
+    bola(branco, (cx, y - 0.01, cz), 0.092)                                    # cabeça
+    bola(branco, (cx + olha * 0.055, y - 0.07, cz - 0.022), (0.05, 0.045, 0.04))  # focinho
+    bola(preto, (cx + olha * 0.075, y - 0.11, cz - 0.008), 0.016)              # nariz
+    bola(marrom, (cx - olha * 0.02, y - 0.05, cz + 0.05), (0.045, 0.05, 0.04))  # mancha no olho
+    for dx in (-0.03, 0.045):
+        bola(preto, (cx + olha * dx, y - 0.083, cz + 0.02), 0.012)             # olhos
+    for dx in (-0.075, 0.07):
+        bola(marrom, (cx + dx, y + 0.0, cz + 0.02), (0.03, 0.022, 0.06))        # orelhas caídas
+    barra((x - olha * 0.14, y, z + 0.22), (x - olha * 0.2, y, z + 0.33), 0.016, branco)  # rabo
+    peca('torus', coleira, (x + olha * 0.105, y, z + 0.235), (1, 1, 1), (0, olha * 62, 0), major_radius=0.072, minor_radius=0.012)
+    return Vector((x + olha * 0.10, y - 0.05, z + 0.25))                       # onde a guia prende
 
 
 # ───────── luz e câmera ─────────
@@ -253,9 +387,11 @@ def esconder_todos():
             o.hide_render = True
 
 
-def mostrar(b):
+def mostrar(b, x=None):
+    """Põe o boneco na cena, em repouso e sorrindo. `x` muda o lugar dele só nesta cena."""
     for o in b.objs:
         o.hide_render = False
+    b.esq.location.x = b.x if x is None else x
     b.rosto('feliz')
     b.subir(0.0)
     b.repouso()
@@ -281,8 +417,7 @@ def cena_ola(fase=0.0):
 def cena_vitoria(fase=0.0):
     """Ele comemorando com o troféu no alto e confete. fase de 0 a 1 = um pulinho."""
     ele = elenco('ele', 'm', -0.34)
-    mostrar(ele)
-    ele.esq.location.x = 0.0
+    mostrar(ele, 0.0)
     ele.rosto('orgulhoso')
     pulo = abs(math.sin(fase * math.pi))
     ele.girar('RightArm', 128 + 6 * pulo)            # braço do troféu
@@ -296,17 +431,107 @@ def cena_vitoria(fase=0.0):
     mao = ele.palma('Right')
     trofeu((mao.x, mao.y - 0.01, mao.z + 0.03))
     confete((0.0, 0.0, 1.0), 1.25, 1.55, 26, 7, queda=fase)
-    ele.esq.location.x = 0.0
+
+
+def cena_calma(fase=0.0):
+    """Ela de olhos fechados, tranquila, com nuvens em volta."""
+    ela = elenco('ela', 'f', 0.34)
+    mostrar(ela, 0.0)
+    ela.rosto('feliz', olho='fechado', sobrancelha='neutro')
+    ela.girar('Head', 4)
+    ela.girar('Head', 5, 'X')
+    nuvem((-0.36, 0.05, 1.50))
+    nuvem((0.40, 0.05, 1.20), 0.85)
+    nuvem((-0.40, 0.05, 0.92), 0.7)
+
+
+def cena_foco(fase=0.0):
+    """Ela determinada, punho erguido, com o relógio da missão ao lado."""
+    ela = elenco('ela', 'f', 0.34)
+    mostrar(ela, -0.10)
+    ela.rosto('determinado')
+    ela.girar('RightArm', 30)
+    ela.girar('RightArm', -20, 'X')
+    ela.girar('RightForeArm', 100)
+    relogio((0.34, -0.02, 0.98), 0.105)
+
+
+def cena_ler(fase=0.0):
+    """Ela lendo um livro aberto, com uma pilha de livros ao lado."""
+    ela = elenco('ela', 'f', 0.34)
+    mostrar(ela, -0.08)
+    for lado, s in (('Left', 1), ('Right', -1)):
+        ela.girar(lado + 'Arm', -32, 'X')
+        ela.girar(lado + 'Arm', -24 * s, 'Z')
+        ela.girar(lado + 'ForeArm', -62, 'X')
+    ela.girar('Head', 12, 'X')
+    a, b = ela.palma('Left'), ela.palma('Right')
+    meio = (a + b) / 2
+    livro_aberto((meio.x, meio.y - 0.02, meio.z + 0.035), larg=max(0.2, (a - b).length + 0.05))
+    pilha_de_livros((0.34, 0.02, 0.0))
+
+
+def cena_limpar(fase=0.0):
+    """Ele varrendo, com o balde ao lado e uns brilhos de coisa limpa."""
+    ele = elenco('ele', 'm', -0.34)
+    mostrar(ele, -0.06)
+    ele.girar('RightArm', -30, 'X')
+    ele.girar('RightArm', 26, 'Z')
+    ele.girar('RightForeArm', -38, 'X')
+    ele.girar('LeftArm', -18, 'X')
+    ele.girar('LeftArm', -34, 'Z')
+    ele.girar('LeftForeArm', -30, 'X')
+    ele.girar('Head', 5)
+    a, b = ele.palma('Left'), ele.palma('Right')
+    meio = (a + b) / 2
+    pe = (0.36, meio.y - 0.06, 0.0)
+    vassoura(meio, pe)
+    balde((-0.48, 0.05, 0.0))
+    brilho((0.56, -0.1, 0.30), 0.05)
+    brilho((0.47, -0.1, 0.45), 0.03)
+
+
+def cena_filhos(fase=0.0):
+    """Ela com uma criança e uma torre de blocos."""
+    ela = elenco('ela', 'f', 0.34)
+    filho = elenco('filho', 'm', 0.42, 0.50)
+    if not getattr(filho, 'pintado', False):
+        filho.cores('C98A5E', 'F4EDE1', 'F97316', '3B7DDD', 'F4F4F5')
+        filho.pintado = True
+    mostrar(ela, -0.30)
+    mostrar(filho)
+    ela.rosto('feliz')
+    ela.girar('Head', 9)
+    ela.girar('Head', 9, 'X')
+    ela.girar('LeftArm', -34)
+    ela.girar('LeftArm', -22, 'X')
+    filho.rosto('animado')
+    filho.girar('RightArm', 96)
+    filho.girar('RightForeArm', 30)
+    filho.girar('LeftArm', -96)
+    filho.girar('LeftForeArm', -30)
+    filho.girar('Head', -6)
+    blocos((0.10, -0.08, 0.0))
+
+
+def cena_pet(fase=0.0):
+    """Ele passeando com o cachorro na guia."""
+    ele = elenco('ele', 'm', -0.34)
+    mostrar(ele, -0.26)
+    ele.girar('LeftArm', -16)
+    ele.girar('LeftArm', -14, 'X')
+    ele.girar('Head', 7)
+    ele.girar('Head', 6, 'X')
+    prende = cachorro((0.44, -0.04, 0.0), olha=-1)
+    barra(ele.palma('Left'), prende, 0.007, material('guia', '7C3AED', 0.5))
 
 
 def depois_da_cena():
     limpar_acessorios()
-    if 'ele' in ELENCO:
-        ELENCO['ele'].esq.location.x = ELENCO['ele'].x
-        bpy.context.view_layer.update()
 
 
-FEITAS = {'ola': cena_ola, 'vitoria': cena_vitoria}
+FEITAS = {'ola': cena_ola, 'vitoria': cena_vitoria, 'calma': cena_calma, 'foco': cena_foco,
+          'ler': cena_ler, 'limpar': cena_limpar, 'filhos': cena_filhos, 'pet': cena_pet}
 
 for nome in CENAS:
     monta = FEITAS[nome]
