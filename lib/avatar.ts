@@ -7,7 +7,24 @@
  * visual é mostrar/esconder peças e mudar a cor dos materiais.
  */
 
-export type Expressao = 'feliz' | 'neutro' | 'triste' | 'animado';
+/**
+ * As quatro primeiras existem nos dois bonecos. As três últimas só o boneco novo (v2) sabe fazer;
+ * no antigo cada uma cai na mais parecida (ver expressaoDoBonecoAntigo).
+ */
+export type Expressao = 'feliz' | 'neutro' | 'triste' | 'animado' | 'cansado' | 'determinado' | 'orgulhoso';
+export const EXPRESSOES: Expressao[] = ['feliz', 'neutro', 'animado', 'orgulhoso', 'determinado', 'triste', 'cansado'];
+
+/**
+ * O boneco antigo só tem quatro rostos. Cada cara nova cai na que ele já mostrava nessas
+ * situações: cansado era neutro (madrugada, noite curta), determinado era feliz e orgulhoso
+ * era animado. Triste continua triste.
+ */
+export function expressaoDoBonecoAntigo(e: Expressao): 'feliz' | 'neutro' | 'triste' | 'animado' {
+  if (e === 'cansado') return 'neutro';
+  if (e === 'determinado') return 'feliz';
+  if (e === 'orgulhoso') return 'animado';
+  return e;
+}
 export type Cabelo = 'curto' | 'coque';
 /** Peças do guarda-roupa. '' = nada naquele lugar. Os nomes são os das peças dentro do .glb. */
 export type Chapeu = '' | 'bone' | 'gorro' | 'laco' | 'festa' | 'orelhas' | 'coroa';

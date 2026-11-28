@@ -9,7 +9,7 @@
     "web": "expo start --web",
     "ts": "tsc --noEmit",
     "postinstall": "patch-package",
-    "test": "node --test tests/regras.test.mjs tests/trilhas-falas.test.mjs tests/gym.test.mjs tests/grupo.test.mjs tests/financas.test.mjs tests/sono.test.mjs tests/estudos.test.mjs tests/casa.test.mjs tests/roupas-resumo.test.mjs",
+    "test": "node --test tests/regras.test.mjs tests/trilhas-falas.test.mjs tests/gym.test.mjs tests/grupo.test.mjs tests/financas.test.mjs tests/sono.test.mjs tests/estudos.test.mjs tests/casa.test.mjs tests/roupas-resumo.test.mjs tests/expressoes.test.mjs",
     "test:sql": "node --test tests/sql/grupo-rls.test.mjs tests/sql/cadeia.test.mjs"
   },
   "dependencies": {

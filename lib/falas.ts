@@ -8,7 +8,15 @@
  * Arquivo sem dependências, para ter teste (tests/regras.test.mjs).
  */
 
-export type Humor = 'feliz' | 'neutro' | 'triste' | 'animado';
+/**
+ * A cara que o avatar faz ao falar. São as mesmas expressões de lib/avatar.ts (repetidas aqui
+ * para este arquivo continuar sem dependências). Quando usar cada uma:
+ *   orgulhoso    conquista grande (rotina completa, sequência longa, nível, meta batida)
+ *   determinado  algo está começando ou falta pouco (missão, treino, estudo, última tarefa)
+ *   cansado      madrugada, noite curta, ou quando a pessoa cutuca o avatar sem parar
+ *   triste       só em perda (sequência quebrada, missão perdida), sempre com fala de acolhimento
+ */
+export type Humor = 'feliz' | 'neutro' | 'triste' | 'animado' | 'cansado' | 'determinado' | 'orgulhoso';
 
 export type Situacao =
   | 'manha_zero' | 'tarde_zero' | 'noite_zero' | 'madrugada'
@@ -45,7 +53,7 @@ export const FALAS: Record<Situacao, Fala[]> = {
   noite_zero: f('neutro',
     'Dia quase no fim. Uma tarefinha e a gente finge que esse era o plano.',
     'Nada marcado hoje. Acontece. Uma só, e eu paro de olhar para você assim.'),
-  madrugada: f('neutro',
+  madrugada: f('cansado',
     'Madrugada. Eu não durmo, mas você devia.',
     'A essa hora só eu devia estar acordado, e eu nem tenho olho que fecha.'),
   em_andamento: f('feliz',
@@ -63,10 +71,10 @@ export const FALAS: Record<Situacao, Fala[]> = {
     'Mais uma! Está ficando perigoso de tão produtivo.',
     'Feito. Eu aplaudiria, mas meus braços só fazem pose.',
     'Marcou e seguiu. É assim que se faz, sem cerimônia.'),
-  falta_uma: f('animado',
+  falta_uma: f('determinado',
     'Falta uma. UMA. Não me deixa nesse suspense.',
     'Só mais uma e a rotina fecha. Eu já estou comemorando por dentro.'),
-  rotina_completa: f('animado',
+  rotina_completa: f('orgulhoso',
     'Tudo feito. Fiquei sem piada. Parabéns de verdade.',
     'Rotina completa. Pode descansar sem culpa, eu assino embaixo.',
     'Cem por cento. Vou precisar de um moletom mais chique para acompanhar.'),
@@ -88,20 +96,20 @@ export const FALAS: Record<Situacao, Fala[]> = {
   sequencia_7: f('animado',
     'Uma semana inteira. Eu estava aqui o tempo todo. Vi tudo.',
     'Sete dias seguidos. Pode contar para alguém, eu deixo.'),
-  sequencia_longa: f('animado',
+  sequencia_longa: f('orgulhoso',
     'Essa sequência já é maior que a minha paciência. E eu tenho muita.',
     'Tantos dias seguidos que eu parei de contar. Mentira, eu conto todos.'),
-  sequencia_quebrou: f('neutro',
+  sequencia_quebrou: f('triste',
     'Ontem não rolou. Acontece. Hoje recomeça do zero, sem dívida.',
     'A sequência zerou. Eu não vou fazer drama. Você faz uma tarefa e a gente esquece.'),
   voltou: f('feliz',
     'Olha quem apareceu! Eu fiquei aqui. Parado. De braços abertos, literalmente.',
     'Você voltou. Sem sermão: escolhe uma coisa pequena e pronto.'),
 
-  nivel: f('animado',
+  nivel: f('orgulhoso',
     'Subiu de nível! Eu continuo com o mesmo moletom, mas feliz por você.',
     'Nível novo. Daqui de baixo a vista já é outra.'),
-  conquista: f('animado',
+  conquista: f('orgulhoso',
     'Conquista nova. Pode se gabar, eu deixo.',
     'Mais uma para a coleção. Eu guardo, você brilha.'),
   desafio: f('feliz',
@@ -125,24 +133,24 @@ export const FALAS: Record<Situacao, Fala[]> = {
     'Oi. Sim, eu aceno. É meu único talento.',
     'Me cutucar não conta como tarefa. Eu perguntei.',
     'Estou aqui. Sempre estou. É meio que o meu trabalho.'),
-  toque_demais: f('neutro',
+  toque_demais: f('cansado',
     'Tá, entendi, você gosta de mim. A rotina também gosta de você.',
     'De tanto me girar eu vou ficar tonto. E a tarefa lá, esperando.'),
   visual: f('feliz',
     'Visual novo! Agora dá para fazer uma tarefa estreando ele.',
     'Gostei. Fiquei bem. Você tem bom gosto, pelo menos para mim.'),
-  missao_inicio: f('feliz',
+  missao_inicio: f('determinado',
     'Valendo! Eu fico de olho no relógio, você fica de olho na missão.',
     'Relógio rodando. Eu torço daqui, bem quietinho.'),
   missao_ok: f('animado',
     'No tempo! A trilha subiu. A próxima vem um tiquinho maior, viu?',
     'Missão cumprida. Eu disse que dava. Ok, eu só pensei.',
     'Subiu de nível na trilha! Daqui a pouco eu que vou pedir dica.'),
-  missao_falhou: f('neutro',
+  missao_falhou: f('triste',
     'O relógio ganhou essa. A trilha desceu um degrau, e a próxima vem do seu tamanho.',
     'Não deu tempo. Sem drama: a próxima missão já vem menor.',
     'Dessa vez não foi. Descer um nível não é castigo, é ajuste de rota.'),
-  missao_teto: f('animado',
+  missao_teto: f('orgulhoso',
     'Você zerou o que o grátis tinha nessa trilha. Respeito.',
     'Topo do nível cinco! Daqui para cima é com o Pro, mas o mérito já é seu.'),
   trilha_nova: f('feliz',
@@ -151,14 +159,14 @@ export const FALAS: Record<Situacao, Fala[]> = {
   gym_plano: f('feliz',
     'Plano montado. Ele cresce junto com você, sem pular degrau.',
     'Treino pronto! Eu fico com a parte difícil: contar o descanso.'),
-  gym_inicio: f('animado',
+  gym_inicio: f('determinado',
     'Bora. Capricho na execução vale mais que peso no ego.',
     'Aquecimento primeiro. Eu sei, eu sei. Mas primeiro.'),
   gym_fim: f('animado',
     'Treino feito! Agora água e proteína. Ordem do treinador de moletom.',
     'Acabou! O músculo cresce no descanso, então descansar também é treinar.',
     'Mais um treino na conta. Constância ganha de intensidade.'),
-  gym_carga: f('animado',
+  gym_carga: f('orgulhoso',
     'Hora de subir a carga! Pouquinho, do jeito certo.',
     'Você bateu a meta em tudo. O peso que se cuide.'),
   gym_leve: f('feliz',
@@ -177,7 +185,7 @@ export const FALAS: Record<Situacao, Fala[]> = {
   fin_conta: f('feliz',
     'Conta paga. Uma coisa a menos morando na sua cabeça.',
     'Paga antes de vencer. Os juros ficaram sem assunto.'),
-  fin_meta: f('animado',
+  fin_meta: f('orgulhoso',
     'Meta batida! Isso aí foi você, parcela por parcela.',
     'Chegou! Guardar aos poucos funciona. Eu vi acontecer.'),
   fin_estourou: f('neutro',
@@ -212,11 +220,11 @@ export const FALAS: Record<Situacao, Fala[]> = {
   sono_boa: f('animado',
     'Noite bem dormida. Dá para ver daqui: você está quase com a minha disposição.',
     'Dormiu o que precisava. Hoje a cabeça agradece.'),
-  sono_curta: f('neutro',
+  sono_curta: f('cansado',
     'Noite curta. Acontece. Hoje a gente pega leve e deita mais cedo.',
     'Faltou sono. Não é dia de exigir muito de você. Uma coisa de cada vez.'),
 
-  estudo_inicio: f('animado',
+  estudo_inicio: f('determinado',
     'Valendo. Eu fico quieto. É raro, aproveita.',
     'Relógio rodando. Uma matéria só, sem abrir outra aba.'),
   estudo_fim: f('animado',
@@ -234,7 +242,7 @@ export const FALAS: Record<Situacao, Fala[]> = {
   estudo_topico: f('feliz',
     'Anotado. Amanhã eu cobro. Com carinho, mas cobro.',
     'Tópico guardado. Eu apareço na hora certa de revisar.'),
-  estudo_em_dia: f('animado',
+  estudo_em_dia: f('orgulhoso',
     'Revisões em dia! Minha memória é de massinha e nem eu consigo isso.',
     'Zerou as revisões de hoje. Pode fechar o caderno sem culpa.'),
 
@@ -263,7 +271,7 @@ export const FALAS: Record<Situacao, Fala[]> = {
     'Faltam moedas para essa. Missão e desafio rendem, e eu espero.',
     'Ainda não dá. Mais umas tarefas e ela é minha. Digo, nossa.'),
 
-  resumo_boa: f('animado',
+  resumo_boa: f('orgulhoso',
     'Li a sua semana. Teve bastante coisa feita. Eu guardei tudo.',
     'Semana movimentada. Olha o resumo com calma, tem motivo para gostar.'),
   resumo_fraca: f('feliz',

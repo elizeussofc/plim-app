@@ -19,6 +19,8 @@ type Nivel = {
 };
 
 // O Plim não dá bronca: o nível mais baixo é um convite, não um alerta vermelho.
+// A cara do avatar sobe junto com o dia: neutro, feliz, determinado, orgulhoso e animado.
+// Triste e cansado nunca saem daqui: só aparecem por um instante, junto com uma fala (lib/falas.ts).
 const NIVEIS: Nivel[] = [
   {
     label: 'Dia em branco',
@@ -29,19 +31,19 @@ const NIVEIS: Nivel[] = [
   {
     label: 'Primeiros passos',
     cor: C.accent, fundo: C.accentSoft,
-    icone: 'humor-4', emoji: '🙂', expressao: 'neutro',
+    icone: 'humor-4', emoji: '🙂', expressao: 'feliz',
     dica: 'Você já começou. Mais uma e o dia engrena.',
   },
   {
     label: 'No caminho',
     cor: C.gold, fundo: C.goldSoft,
-    icone: 'humor-4', emoji: '🙂', expressao: 'feliz',
+    icone: 'humor-4', emoji: '🙂', expressao: 'determinado',
     dica: 'Bom ritmo. Siga no seu tempo.',
   },
   {
     label: 'Indo muito bem',
     cor: C.success, fundo: C.successSoft,
-    icone: 'humor-5', emoji: '😊', expressao: 'feliz',
+    icone: 'humor-5', emoji: '😊', expressao: 'orgulhoso',
   },
   {
     label: 'Em chamas',

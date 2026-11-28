@@ -1,10 +1,14 @@
-import { Image, Pressable, View } from 'react-native';
+import { Image, Platform, Pressable, View } from 'react-native';
+import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { Text } from '@/components/Texto';
 import {
-  OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE, type AvatarConfig,
+  OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_FUNDO, OPCOES_MOLETOM, OPCOES_PELE, avatarConfigPadrao, type AvatarConfig,
 } from '@/lib/avatar';
 import { somToque, somVestir } from '@/lib/sons';
 import { C, F, R } from '@/lib/theme';
+
+/** Com o boneco novo em prova (só na web), os cartões mostram o retrato dele em vez da imagem fixa do antigo. */
+const BONECO_NOVO = process.env.EXPO_PUBLIC_BONECO === 'v2' && Platform.OS === 'web';
 
 const RETRATO = {
   curto: require('../assets/avatar/busto-curto.webp'),
@@ -85,9 +89,13 @@ function CartaoBoneco({ id, rotulo, ativo, fundo, aoTocar }: { id: keyof typeof 
         borderColor: ativo ? C.primary : C.border,
       })}
     >
-      <View style={{ width: 84, height: 84, borderRadius: 42, overflow: 'hidden', backgroundColor: `#${fundo}` }}>
-        <Image source={RETRATO[id]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-      </View>
+      {BONECO_NOVO ? (
+        <AvatarPersonagem config={{ ...avatarConfigPadrao, cabelo: id, fundo }} size={84} />
+      ) : (
+        <View style={{ width: 84, height: 84, borderRadius: 42, overflow: 'hidden', backgroundColor: `#${fundo}` }}>
+          <Image source={RETRATO[id]} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        </View>
+      )}
       <Text style={{ fontFamily: F.display, fontSize: 16, color: ativo ? C.primaryLight : C.textSub, marginTop: 8 }}>{rotulo}</Text>
     </Pressable>
   );

@@ -5,7 +5,15 @@
  *   - criarPalco(): um palco vivo num <canvas>, que gira ao arrastar e acena ao toque.
  * three.js só é baixado quando o primeiro avatar aparece (import dinâmico).
  */
-import { COBRE_O_TOPO, chaveAvatar, escurecer, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import { COBRE_O_TOPO, chaveAvatar, escurecer, expressaoDoBonecoAntigo, type AvatarConfig, type Expressao } from '@/lib/avatar';
+import * as novo from '@/lib/boneco3dWeb';
+
+/**
+ * Boneco novo (v2): personagem com esqueleto e rosto em peças. Fica desligado até a variável
+ * EXPO_PUBLIC_BONECO=v2 existir (hoje só no .env.local de quem está testando). Sem ela, tudo
+ * neste arquivo continua igual.
+ */
+const BONECO_NOVO = process.env.EXPO_PUBLIC_BONECO === 'v2';
 
 type Three = typeof import('three');
 type Object3D = import('three').Object3D;
@@ -71,7 +79,8 @@ function abrirBraco(THREE: Three, b: Boneco, lado: 'L' | 'R', angulo: number) {
   junta.quaternion.setFromAxisAngle(eixo, 2 * Math.acos(Math.min(1, Math.abs(q0.w))) * (angulo / ABERTURA_EXPORTADA) * Math.sign(q0.w || 1));
 }
 
-function aplicarVisual(THREE: Three, raiz: Object3D, cfg: AvatarConfig, expressao: Expressao) {
+function aplicarVisual(THREE: Three, raiz: Object3D, cfg: AvatarConfig, expressaoPedida: Expressao) {
+  const expressao = expressaoDoBonecoAntigo(expressaoPedida);
   const cores: Record<string, string> = {
     skin: cfg.pele,
     hair: cfg.corCabelo,
@@ -181,11 +190,13 @@ function montarEstudio(): Promise<Estudio> {
 }
 
 export function retratoEmCache(cfg: AvatarConfig, expressao: Expressao, enq: Enquadramento): string | undefined {
+  if (BONECO_NOVO) return novo.retratoEmCache(cfg, expressao, enq);
   return cacheRetrato.get(enq + '|' + chaveAvatar(cfg, expressao));
 }
 
 /** Devolve a imagem (data URL, fundo transparente) do avatar com este visual. */
 export async function retratoAvatar(cfg: AvatarConfig, expressao: Expressao, enq: Enquadramento = 'busto'): Promise<string> {
+  if (BONECO_NOVO) return novo.retratoAvatar(cfg, expressao, enq);
   const chave = enq + '|' + chaveAvatar(cfg, expressao);
   const pronto = cacheRetrato.get(chave);
   if (pronto) return pronto;
@@ -215,6 +226,7 @@ export interface Palco {
  * Arrastar gira o boneco; tocar faz ele acenar. Com `parado`, não há movimento sozinho.
  */
 export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressao: Expressao, parado = false, aoTocar?: () => void): Promise<Palco> {
+  if (BONECO_NOVO) return novo.criarPalco(caixa, cfg, expressao, parado, aoTocar);
   const b = await carregarBase();
   const { THREE } = b;
   const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
