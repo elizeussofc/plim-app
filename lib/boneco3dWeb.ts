@@ -31,7 +31,7 @@ export interface Palco {
 
 type Modelo = 'm' | 'f';
 /** Sobe quando um arquivo muda, para o navegador não usar o antigo guardado. */
-const VERSAO = '3';
+const VERSAO = '4';
 const ARQUIVOS: Record<Modelo, { glb: string; mapa: string }> = {
   m: { glb: '/avatar/v2/plim_v2_m.glb?v=' + VERSAO, mapa: '/avatar/v2/corpo_mapa_m.png?v=' + VERSAO },
   f: { glb: '/avatar/v2/plim_v2_f.glb?v=' + VERSAO, mapa: '/avatar/v2/corpo_mapa_f.png?v=' + VERSAO },
@@ -54,6 +54,9 @@ const ROSTO: Record<Expressao, { olho: string; palpebra: string | null }> = {
   orgulhoso: { olho: 'sorrindo', palpebra: null },
 };
 
+/** Chapéus que escondem o alto do cabelo (o coque e os topetes). Coroa e chapéu de festa ficam por cima dele. */
+const COBRE_O_ALTO = ['bone', 'gorro'];
+
 interface Mapa { lado: number; sombra: Uint8Array; regiao: Uint8Array }
 interface Base {
   THREE: Three;
@@ -61,8 +64,15 @@ interface Base {
   cena: Object3D;
   clonar: (o: Object3D) => Object3D;
   mapa: Mapa;
-  /** Altura do ponto mais alto, contando o cabelo. */
+  /** Altura do ponto mais alto, contando o cabelo (sem chapéu). */
   topo: number;
+  /** Altura do ponto mais alto de cada chapéu. */
+  topoChapeu: Record<string, number>;
+}
+
+/** Até onde o boneco vai com o chapéu escolhido: é o que a câmera precisa enquadrar. */
+function topoDe(b: Base, cfg: AvatarConfig): number {
+  return Math.max(b.topo, b.topoChapeu[cfg.chapeu] ?? 0);
 }
 
 const bases: Partial<Record<Modelo, Promise<Base>>> = {};
@@ -98,8 +108,18 @@ function carregarBase(modelo: Modelo): Promise<Base> {
       ]);
       const gltf = await new GLTFLoader().loadAsync(ARQUIVOS[modelo].glb);
       gltf.scene.updateMatrixWorld(true);
-      const topo = new THREE.Box3().setFromObject(gltf.scene).max.y;
-      return { THREE, modelo, cena: gltf.scene, clonar: (o: Object3D) => SkeletonUtils.clone(o), mapa, topo };
+      // Altura do boneco sem chapéu (corpo e cabelo) e de cada chapéu, para a câmera enquadrar certo.
+      let topo = 0;
+      const topoChapeu: Record<string, number> = {};
+      const caixa = new THREE.Box3();
+      gltf.scene.traverse((o) => {
+        if (!(o as Mesh).isMesh) return;
+        const p = o.name.split('__');
+        const alto = caixa.setFromObject(o).max.y;
+        if (p[0] === 'hat') topoChapeu[p[1]] = Math.max(topoChapeu[p[1]] ?? 0, alto);
+        else if (p.length < 3 || p[0] === 'hair' || p[0] === 'hairtop') topo = Math.max(topo, alto);
+      });
+      return { THREE, modelo, cena: gltf.scene, clonar: (o: Object3D) => SkeletonUtils.clone(o), mapa, topo, topoChapeu };
     })();
     bases[modelo] = p;
     p.catch(() => { delete bases[modelo]; }); // falhou (sem rede?): tenta de novo na próxima vez
@@ -222,7 +242,18 @@ function aplicarRosto(bo: Boneco, expressao: Expressao, piscando: boolean) {
     if (p.slot === 'eye') p.malha.visible = p.item === olho;
     else if (p.slot === 'lid') p.malha.visible = p.item === palpebra;
     else if (p.slot === 'brow' || p.slot === 'mouth') p.malha.visible = p.item === expressao;
-    else p.malha.visible = true; // cabelo: por enquanto cada boneco tem um só
+  }
+}
+
+/** Guarda-roupa: mostra só a peça escolhida de cada lugar. Boné e gorro escondem o alto do cabelo. */
+function aplicarRoupas(bo: Boneco, cfg: AvatarConfig) {
+  for (const p of bo.pecas) {
+    if (p.slot === 'hat') p.malha.visible = p.item === cfg.chapeu;
+    else if (p.slot === 'neck') p.malha.visible = p.item === cfg.pescoco;
+    else if (p.slot === 'back') p.malha.visible = p.item === cfg.costas;
+    else if (p.slot === 'acc') p.malha.visible = p.item === 'oculos' ? cfg.oculos : p.item === 'fone' ? cfg.fone : false;
+    else if (p.slot === 'hairtop') p.malha.visible = !COBRE_O_ALTO.includes(cfg.chapeu);
+    else if (p.slot === 'hair') p.malha.visible = true; // por enquanto cada boneco tem um cabelo só
   }
 }
 
@@ -237,6 +268,11 @@ function aplicarVisual(bo: Boneco, cfg: AvatarConfig, expressao: Expressao, pisc
   bo.mats.hair?.color.set('#' + cfg.corCabelo);
   bo.mats.brow?.color.set('#' + escurecer(cfg.corCabelo, 0.72));
   bo.mats.skin?.color.set('#' + cfg.pele);
+  bo.mats.hat?.color.set('#' + cfg.corChapeu);
+  bo.mats.hat_detail?.color.set('#' + escurecer(cfg.corChapeu));
+  bo.mats.extra?.color.set('#' + cfg.corExtra);
+  bo.mats.extra_detail?.color.set('#' + escurecer(cfg.corExtra));
+  aplicarRoupas(bo, cfg);
   aplicarRosto(bo, expressao, piscando);
 }
 
@@ -329,7 +365,7 @@ export function retratoAvatar(cfg: AvatarConfig, expressao: Expressao, enq: Enqu
     const [l, a] = enq === 'busto' ? [320, 320] : [360, 480];
     e.renderer.setSize(l, a, false);
     e.cam.aspect = l / a;
-    enquadrar(e.cam, enq, b.topo);
+    enquadrar(e.cam, enq, topoDe(b, cfg));
     aplicarVisual(bo, cfg, expressao);
     e.renderer.render(e.cena, e.cam);
     const url = e.renderer.domElement.toDataURL('image/png');
@@ -385,7 +421,7 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
     const a = Math.max(1, caixa.clientHeight);
     renderer.setSize(l, a, false);
     cam.aspect = l / a;
-    enquadrar(cam, 'corpo', boneco.base.topo);
+    enquadrar(cam, 'corpo', topoDe(boneco.base, atual));
   }
 
   function desenhar(agora: number) {
@@ -447,7 +483,7 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
     boneco = novo;
     cena.add(boneco.raiz);
     aplicarVisual(boneco, atual, expr, piscando);
-    enquadrar(cam, 'corpo', boneco.base.topo);
+    enquadrar(cam, 'corpo', topoDe(boneco.base, atual));
     acordar();
   }
 
@@ -483,7 +519,10 @@ export async function criarPalco(caixa: HTMLElement, cfg: AvatarConfig, expressa
       atual = novo;
       expr = novaExpr;
       if (modeloDe(novo) !== boneco.base.modelo) void trocarBoneco(modeloDe(novo)).catch(() => {});
-      else aplicarVisual(boneco, atual, expr, piscando);
+      else {
+        aplicarVisual(boneco, atual, expr, piscando);
+        enquadrar(cam, 'corpo', topoDe(boneco.base, atual)); // chapéu alto: a câmera recua para ele caber
+      }
       acordar();
     },
     acenar() { acenoInicio = performance.now(); acordar(); },

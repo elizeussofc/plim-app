@@ -2,7 +2,7 @@ import AvatarPalco from '@/components/AvatarPalco';
 import AvatarPersonagem from '@/components/AvatarPersonagem';
 import { Text } from '@/components/Texto';
 import {
-  EXPRESSOES, OPCOES_BONECO, OPCOES_CALCA, OPCOES_COR_CABELO, OPCOES_MOLETOM, OPCOES_PELE, OPCOES_RAIO, OPCOES_TENIS,
+  CHAPEUS, COSTAS, EXPRESSOES, OPCOES_BONECO, OPCOES_CALCA, PESCOCOS, OPCOES_COR_CABELO, OPCOES_MOLETOM, OPCOES_PELE, OPCOES_RAIO, OPCOES_TENIS,
   avatarConfigPadrao, type AvatarConfig, type Expressao,
 } from '@/lib/avatar';
 import { C, F } from '@/lib/theme';
@@ -56,6 +56,28 @@ export default function BonecoProva() {
           <Pressable key={o.id} onPress={() => mudar({ cabelo: o.id })} accessibilityRole="button" accessibilityLabel={`Boneco ${o.label}`}
             style={{ paddingHorizontal: 18, paddingVertical: 10, borderRadius: 999, backgroundColor: o.id === cfg.cabelo ? C.primary : C.surface, borderWidth: 2, borderColor: o.id === cfg.cabelo ? C.primary : C.border }}>
             <Text style={{ fontFamily: F.display, fontSize: 15, color: o.id === cfg.cabelo ? '#FFFFFF' : C.text }}>{o.label}</Text>
+          </Pressable>
+        ))}
+      </View>
+
+      {([['Chapéu', 'chapeu', CHAPEUS], ['Pescoço', 'pescoco', PESCOCOS], ['Costas', 'costas', COSTAS]] as const).map(([titulo, campo, opcoes]) => (
+        <View key={campo}>
+          <Text style={{ fontFamily: F.display, fontSize: 14, color: C.text, marginTop: 10, marginBottom: 6 }}>{titulo}</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {['', ...opcoes].map((id) => (
+              <Pressable key={id || 'nada'} onPress={() => mudar({ [campo]: id } as Partial<AvatarConfig>)} accessibilityRole="button" accessibilityLabel={`${titulo} ${id || 'nenhum'}`}
+                style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: cfg[campo] === id ? C.primary : C.surface, borderWidth: 2, borderColor: cfg[campo] === id ? C.primary : C.border }}>
+                <Text style={{ fontSize: 13, color: cfg[campo] === id ? '#FFFFFF' : C.text }}>{id || 'nenhum'}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+      ))}
+      <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+        {(['oculos', 'fone'] as const).map((campo) => (
+          <Pressable key={campo} onPress={() => mudar({ [campo]: !cfg[campo] } as Partial<AvatarConfig>)} accessibilityRole="button" accessibilityLabel={`Acessório ${campo}`}
+            style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: cfg[campo] ? C.primary : C.surface, borderWidth: 2, borderColor: cfg[campo] ? C.primary : C.border }}>
+            <Text style={{ fontSize: 13, color: cfg[campo] ? '#FFFFFF' : C.text }}>{campo === 'oculos' ? 'óculos' : 'fone'}</Text>
           </Pressable>
         ))}
       </View>
